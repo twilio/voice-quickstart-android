@@ -65,7 +65,7 @@ public class VoiceGCMListenerService extends GcmListenerService {
             intent.setAction(VoiceActivity.ACTION_INCOMING_CALL);
             intent.putExtra(VoiceActivity.INCOMING_CALL_MESSAGE, incomingCallMessage);
             intent.putExtra(VoiceActivity.INCOMING_CALL_NOTIFICATION_ID, notificationId);
-            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
             PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
 

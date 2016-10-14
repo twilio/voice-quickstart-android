@@ -112,19 +112,25 @@ public class VoiceActivity extends AppCompatActivity {
          */
         setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
 
-        Intent intent = getIntent();
-        if (intent != null && intent.getAction() != null && intent.getAction() == VoiceActivity.ACTION_INCOMING_CALL) {
-            IncomingCallMessage incomingCallMessage = intent.getParcelableExtra(INCOMING_CALL_MESSAGE);
-            VoiceClient.handleIncomingCallMessage(getApplicationContext(), incomingCallMessage, incomingCallMessageListener);
-        } else {
-            registerReceiver();
-        }
+        /*
+         * Validates whether intent contains incoming call message and displays accept/reject dialog
+         * if incoming call is available.
+         */
+        handleIncomingCallIntent(getIntent());
+
+        registerReceiver();
 
         if (!checkPermissionForMicrophone()) {
             requestPermissionForMicrophone();
         } else {
             startGCMRegistration();
         }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        handleIncomingCallIntent(intent);
     }
 
     private void startGCMRegistration() {
@@ -263,6 +269,13 @@ public class VoiceActivity extends AppCompatActivity {
         super.onPause();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(voiceClientBroadcastReceiver);
         isReceiverRegistered = false;
+    }
+
+    private void handleIncomingCallIntent(Intent intent) {
+        if (intent != null && intent.getAction() != null && intent.getAction() == VoiceActivity.ACTION_INCOMING_CALL) {
+            IncomingCallMessage incomingCallMessage = intent.getParcelableExtra(INCOMING_CALL_MESSAGE);
+            VoiceClient.handleIncomingCallMessage(getApplicationContext(), incomingCallMessage, incomingCallMessageListener);
+        }
     }
 
     private void registerReceiver() {
