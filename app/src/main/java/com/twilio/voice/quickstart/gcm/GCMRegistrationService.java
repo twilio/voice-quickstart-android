@@ -1,6 +1,5 @@
 package com.twilio.voice.quickstart.gcm;
 
-
 import android.app.IntentService;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
@@ -11,12 +10,12 @@ import com.google.android.gms.iid.InstanceID;
 import com.twilio.voice.quickstart.R;
 import com.twilio.voice.quickstart.VoiceActivity;
 
-public class RegistrationIntentService extends IntentService {
+public class GCMRegistrationService extends IntentService {
 
-    private static final String TAG = "RegistrationIntentSvc";
+    private static final String TAG = "GCMRegistration";
 
-    public RegistrationIntentService() {
-        super("RegistrationIntentService");
+    public GCMRegistrationService() {
+        super("GCMRegistrationService");
     }
 
     @Override
@@ -31,21 +30,25 @@ public class RegistrationIntentService extends IntentService {
             String token = instanceID.getToken(getString(R.string.gcm_defaultSenderId),
                     GoogleCloudMessaging.INSTANCE_ID_SCOPE,
                     null);
-            sendRegistrationToVoiceClient(token);
+            sendGCMTokenToActivity(token);
         } catch (Exception e) {
+            /*
+             * If we are unable to retrieve the GCM token we notify the Activity
+             * letting the user know this step failed.
+             */
             Log.e(TAG, "Failed to retrieve GCM token", e);
-            sendRegistrationToVoiceClient(null);
+            sendGCMTokenToActivity(null);
         }
     }
 
     /**
-     * Persist registration to Voice Application .
+     * Send the GCM Token to the Voice Activity.
      *
-     * @param token The new token.
+     * @param gcmToken The new token.
      */
-    private void sendRegistrationToVoiceClient(String token) {
-        Intent setGcmToken = new Intent(VoiceActivity.ACTION_SET_GCM_TOKEN);
-        setGcmToken.putExtra(VoiceActivity.KEY_GCM_TOKEN, token);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(setGcmToken);
+    private void sendGCMTokenToActivity(String gcmToken) {
+        Intent intent = new Intent(VoiceActivity.ACTION_SET_GCM_TOKEN);
+        intent.putExtra(VoiceActivity.KEY_GCM_TOKEN, gcmToken);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 }
