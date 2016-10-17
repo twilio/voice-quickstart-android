@@ -86,7 +86,7 @@ public class VoiceGCMListenerService extends GcmListenerService {
             extras.putString(CALL_SID_KEY, callSid);
 
             /*
-             * Create the notification show in the notification drawer
+             * Create the notification shown in the notification drawer
              */
             NotificationCompat.Builder notificationBuilder =
                     new NotificationCompat.Builder(this)
@@ -120,10 +120,10 @@ public class VoiceGCMListenerService extends GcmListenerService {
                  * active notifications so we lazily clear all the notifications when
                  * receiving a cancelled call.
                  *
-                 * In order to properly cancel a specific notification using
+                 * In order to properly cancel a notification using
                  * NotificationManager.cancel(notificationId) we should store the call sid &
-                 * notification id of any incoming calls using shared preferences or
-                 * some other form of persisted storage.
+                 * notification id of any incoming calls using shared preferences or some other form
+                 * of persistent storage.
                  */
                 notificationManager.cancelAll();
             }
