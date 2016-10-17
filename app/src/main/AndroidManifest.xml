@@ -8,16 +8,6 @@
     <uses-permission android:name="com.twilio.voice.quickstart.permission.C2D_MESSAGE" />
     <permission android:name="com.twilio.voice.quickstart.permission.C2D_MESSAGE" android:protectionLevel="signature"/>
 
-    <!-- Needed for monitoring network availability -->
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-    <!-- Needed for processing on the network -->
-    <uses-permission android:name="android.permission.INTERNET" />
-
-    <!-- Needed to receive audio from microphone during a call -->
-    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
-
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -61,7 +51,7 @@
         </service>
 
         <service
-            android:name=".gcm.RegistrationIntentService"
+            android:name=".gcm.GCMRegistrationService"
             android:exported="false"></service>
 
         <meta-data

@@ -42,10 +42,18 @@ public class VoiceGCMListenerService extends GcmListenerService {
         Log.d(TAG, "onMessageReceived " + from);
 
         if (IncomingCallMessage.isValidMessage(bundle)) {
+            /*
+             * Generate a unique notification id using the system time
+             */
             int notificationId = (int)System.currentTimeMillis();
+
+            /*
+             * Create an IncomingCallMessage from the bundle
+             */
             IncomingCallMessage incomingCallMessage = new IncomingCallMessage(bundle);
+
             showNotification(incomingCallMessage, notificationId);
-            sendToActivity(incomingCallMessage, notificationId);
+            sendIncomingCallMessageToActivity(incomingCallMessage, notificationId);
         }
 
     }
@@ -57,28 +65,34 @@ public class VoiceGCMListenerService extends GcmListenerService {
     private void showNotification(IncomingCallMessage incomingCallMessage, int notificationId) {
         String callSid = incomingCallMessage.getCallSid();
 
-        if(!incomingCallMessage.isCancelled()) {
+        if (!incomingCallMessage.isCancelled()) {
             /*
-             * Display a notification for the incoming call
+             * Create a PendingIntent to specify the action when the notification is
+             * selected in the notification drawer
              */
             Intent intent = new Intent(this, VoiceActivity.class);
             intent.setAction(VoiceActivity.ACTION_INCOMING_CALL);
             intent.putExtra(VoiceActivity.INCOMING_CALL_MESSAGE, incomingCallMessage);
             intent.putExtra(VoiceActivity.INCOMING_CALL_NOTIFICATION_ID, notificationId);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
             PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
 
-            // Pass the notification id and call sid to cancel notifications later
+            /*
+             * Pass the notification id and call sid to use as an identifier to cancel the
+             * notification later
+             */
             Bundle extras = new Bundle();
             extras.putInt(NOTIFICATION_ID_KEY, notificationId);
             extras.putString(CALL_SID_KEY, callSid);
 
+            /*
+             * Create the notification show in the notification drawer
+             */
             NotificationCompat.Builder notificationBuilder =
                     new NotificationCompat.Builder(this)
                             .setSmallIcon(R.drawable.ic_call_white_24px)
-                            .setContentTitle("Voice Quickstart")
-                            .setContentText(incomingCallMessage.getFrom() + " is calling...")
+                            .setContentTitle(getString(R.string.app_name))
+                            .setContentText(incomingCallMessage.getFrom() + " is calling.")
                             .setAutoCancel(true)
                             .setExtras(extras)
                             .setContentIntent(pendingIntent)
@@ -88,8 +102,8 @@ public class VoiceGCMListenerService extends GcmListenerService {
         } else {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
                 /*
-                 * If the incoming call was cancelled then remove the notification matching
-                 * the call sid from the Android notification drawer.
+                 * If the incoming call was cancelled then remove the notification by matching
+                 * it with the call sid from the list of notifications in the notification drawer.
                  */
                 StatusBarNotification[] activeNotifications = notificationManager.getActiveNotifications();
                 for (StatusBarNotification statusBarNotification : activeNotifications) {
@@ -106,10 +120,10 @@ public class VoiceGCMListenerService extends GcmListenerService {
                  * active notifications so we lazily clear all the notifications when
                  * receiving a cancelled call.
                  *
-                 * In order to properly clear this specific notification using
-                 * NotificationManager.cancel() we should store the call sid & notification id
-                 * of incoming calls using shared preferences or some other form of persisted storage.
-                 *
+                 * In order to properly cancel a specific notification using
+                 * NotificationManager.cancel(notificationId) we should store the call sid &
+                 * notification id of any incoming calls using shared preferences or
+                 * some other form of persisted storage.
                  */
                 notificationManager.cancelAll();
             }
@@ -117,9 +131,9 @@ public class VoiceGCMListenerService extends GcmListenerService {
     }
 
     /*
-     * Provide the IncomingCallMessage to the VoiceActivity
+     * Send the IncomingCallMessage to the VoiceActivity
      */
-    private void sendToActivity(IncomingCallMessage incomingCallMessage, int notificationId) {
+    private void sendIncomingCallMessageToActivity(IncomingCallMessage incomingCallMessage, int notificationId) {
         Intent intent = new Intent(VoiceActivity.ACTION_INCOMING_CALL);
         intent.putExtra(VoiceActivity.INCOMING_CALL_MESSAGE, incomingCallMessage);
         intent.putExtra(VoiceActivity.INCOMING_CALL_NOTIFICATION_ID, notificationId);

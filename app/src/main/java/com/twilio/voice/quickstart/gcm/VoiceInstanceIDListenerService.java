@@ -15,7 +15,7 @@ public class VoiceInstanceIDListenerService extends InstanceIDListenerService {
 
         Log.d(TAG, "onTokenRefresh");
 
-        Intent intent = new Intent(this, RegistrationIntentService.class);
+        Intent intent = new Intent(this, GCMRegistrationService.class);
         startService(intent);
     }
 }
