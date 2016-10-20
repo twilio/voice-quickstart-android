@@ -37,7 +37,7 @@ import com.twilio.voice.OutgoingCall;
 import com.twilio.voice.RegistrationException;
 import com.twilio.voice.RegistrationListener;
 import com.twilio.voice.VoiceClient;
-import com.twilio.voice.quickstart.gcm.RegistrationIntentService;
+import com.twilio.voice.quickstart.gcm.GCMRegistrationService;
 
 import java.util.HashMap;
 
@@ -55,7 +55,7 @@ public class VoiceActivity extends AppCompatActivity {
     private int savedAudioMode = AudioManager.MODE_INVALID;
 
     private boolean isReceiverRegistered;
-    private VoiceClientBroadcastReceiver voiceClientBroadcastReceiver;
+    private VoiceBroadcastReceiver voiceBroadcastReceiver;
 
     // Empty HashMap, never populated for the Quickstart
     HashMap<String, String> twiMLParams = new HashMap<>();
@@ -81,10 +81,10 @@ public class VoiceActivity extends AppCompatActivity {
     private String accessToken;
     private AlertDialog alertDialog;
 
+    RegistrationListener registrationListener = registrationListener();
     OutgoingCall.Listener outgoingCallListener = outgoingCallListener();
     IncomingCall.Listener incomingCallListener = incomingCallListener();
     IncomingCallMessageListener incomingCallMessageListener = incomingCallMessageListener();
-    RegistrationListener registrationListener = registrationListener();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,14 +96,21 @@ public class VoiceActivity extends AppCompatActivity {
         speakerActionFab = (FloatingActionButton) findViewById(R.id.speakerphone_action_fab);
         chronometer = (Chronometer) findViewById(R.id.chronometer);
 
+        callActionFab.setOnClickListener(callActionFabClickListener());
+        hangupActionFab.setOnClickListener(hangupActionFabClickListener());
+        speakerActionFab.setOnClickListener(speakerphoneActionFabClickListener());
+
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-        setCallAction();
-
-        voiceClientBroadcastReceiver = new VoiceClientBroadcastReceiver();
+        /*
+         * Setup the broadcast receiver to be notified of GCM Token updates
+         * or incoming call messages in this Activity.
+         */
+        voiceBroadcastReceiver = new VoiceBroadcastReceiver();
+        registerReceiver();
 
         /*
-         * Needed for setting/abandoning audio focus during call
+         * Needed for setting/abandoning audio focus during a call
          */
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
@@ -113,13 +120,14 @@ public class VoiceActivity extends AppCompatActivity {
         setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
 
         /*
-         * Validates whether intent contains incoming call message and displays accept/reject dialog
-         * if incoming call is available.
+         * Displays a call dialog if the intent contains an incoming call message
          */
         handleIncomingCallIntent(getIntent());
 
-        registerReceiver();
 
+        /*
+         * Ensure the microphone permission is enabled
+         */
         if (!checkPermissionForMicrophone()) {
             requestPermissionForMicrophone();
         } else {
@@ -135,7 +143,7 @@ public class VoiceActivity extends AppCompatActivity {
 
     private void startGCMRegistration() {
         if (checkPlayServices()) {
-            Intent intent = new Intent(this, RegistrationIntentService.class);
+            Intent intent = new Intent(this, GCMRegistrationService.class);
             startService(intent);
         }
     }
@@ -144,15 +152,18 @@ public class VoiceActivity extends AppCompatActivity {
         return new IncomingCallMessageListener() {
             @Override
             public void onIncomingCall(IncomingCall incomingCall) {
-                Log.d(TAG, "Incoming call");
+                Log.d(TAG, "Incoming call from " + incomingCall.getFrom());
                 activeIncomingCall = incomingCall;
-                alertDialog = createIncomingCallDialog(VoiceActivity.this, answerCallClickListener(), cancelCallClickListener());
+                alertDialog = createIncomingCallDialog(VoiceActivity.this,
+                        incomingCall,
+                        answerCallClickListener(),
+                        cancelCallClickListener());
                 alertDialog.show();
             }
 
             @Override
             public void onIncomingCallCancelled(IncomingCall incomingCall) {
-                Log.d(TAG, "Incoming call cancelled");
+                Log.d(TAG, "Incoming call from " + incomingCall.getFrom() + " was cancelled");
                 if(activeIncomingCall != null &&
                         incomingCall.getCallSid() == activeIncomingCall.getCallSid() &&
                         incomingCall.getState() == CallState.PENDING) {
@@ -223,15 +234,6 @@ public class VoiceActivity extends AppCompatActivity {
     }
 
     /*
-     * The initial state when there is no active connection
-     */
-    private void setCallAction() {
-        callActionFab.setOnClickListener(callActionFabClickListener());
-        hangupActionFab.setOnClickListener(hangupActionFabClickListener());
-        speakerActionFab.setOnClickListener(speakerphoneActionFabClickListener());
-    }
-
-    /*
      * The UI state when there is an active call
      */
     private void setCallUI() {
@@ -267,7 +269,7 @@ public class VoiceActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(voiceClientBroadcastReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(voiceBroadcastReceiver);
         isReceiverRegistered = false;
     }
 
@@ -284,12 +286,12 @@ public class VoiceActivity extends AppCompatActivity {
             intentFilter.addAction(ACTION_SET_GCM_TOKEN);
             intentFilter.addAction(ACTION_INCOMING_CALL);
             LocalBroadcastManager.getInstance(this).registerReceiver(
-                    voiceClientBroadcastReceiver, intentFilter);
+                    voiceBroadcastReceiver, intentFilter);
             isReceiverRegistered = true;
         }
     }
 
-    private class VoiceClientBroadcastReceiver extends BroadcastReceiver {
+    private class VoiceBroadcastReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -300,13 +302,13 @@ public class VoiceActivity extends AppCompatActivity {
                 VoiceActivity.this.gcmToken = gcmToken;
                 if(gcmToken == null) {
                     Snackbar.make(coordinatorLayout,
-                            "Failed to get GCM Token. Unable to register to receive calls",
+                            "Failed to get GCM Token. Unable to receive calls",
                             Snackbar.LENGTH_LONG).show();
                 }
                 retrieveAccessToken();
             } else if (action.equals(ACTION_INCOMING_CALL)) {
                 /*
-                 * Remove the notification from the Android notification drawer
+                 * Remove the notification from the notification drawer
                  */
                 notificationManager.cancel(intent.getIntExtra(VoiceActivity.INCOMING_CALL_NOTIFICATION_ID, 0));
                 /*
@@ -340,16 +342,19 @@ public class VoiceActivity extends AppCompatActivity {
         };
     }
 
-    public static AlertDialog createIncomingCallDialog(Context context, DialogInterface.OnClickListener answerCallClickListener, DialogInterface.OnClickListener cancelClickListener) {
+    public static AlertDialog createIncomingCallDialog(Context context, IncomingCall incomingCall, DialogInterface.OnClickListener answerCallClickListener, DialogInterface.OnClickListener cancelClickListener) {
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
         alertDialogBuilder.setIcon(R.drawable.ic_call_black_24dp);
         alertDialogBuilder.setTitle("Incoming Call");
         alertDialogBuilder.setPositiveButton("Accept", answerCallClickListener);
         alertDialogBuilder.setNegativeButton("Reject", cancelClickListener);
-        alertDialogBuilder.setMessage("Incoming call");
+        alertDialogBuilder.setMessage(incomingCall.getFrom() + " is calling.");
         return alertDialogBuilder.create();
     }
 
+    /*
+     * Register your GCM token with Twilio to enable receiving incoming calls via GCM
+     */
     private void register() {
         VoiceClient.register(getApplicationContext(), accessToken, gcmToken, registrationListener);
     }
@@ -384,6 +389,13 @@ public class VoiceActivity extends AppCompatActivity {
     }
 
     /*
+     * Accept an incoming Call
+     */
+    private void answer() {
+        activeIncomingCall.accept(incomingCallListener);
+    }
+
+    /*
      * Disconnect an active Call
      */
     private void disconnect() {
@@ -396,6 +408,9 @@ public class VoiceActivity extends AppCompatActivity {
         }
     }
 
+    /*
+     * Get an access token from your Twilio access token server
+     */
     private void retrieveAccessToken() {
         Ion.with(getApplicationContext()).load(ACCESS_TOKEN_SERVICE_URL).asString().setCallback(new FutureCallback<String>() {
             @Override
@@ -428,21 +443,6 @@ public class VoiceActivity extends AppCompatActivity {
             speakerActionFab.setImageDrawable(ContextCompat.getDrawable(VoiceActivity.this, R.drawable.ic_volume_down_white_24px));
         }
     }
-    /*
-     * Accept an incoming Call
-     */
-    private void answer() {
-        activeIncomingCall.accept(incomingCallListener);
-    }
-
-
-    private boolean checkPermissionForMicrophone() {
-        int resultMic = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO);
-        if (resultMic == PackageManager.PERMISSION_GRANTED) {
-            return true;
-        }
-        return false;
-    }
 
     private void setAudioFocus(boolean setFocus) {
         if (audioManager != null) {
@@ -464,6 +464,14 @@ public class VoiceActivity extends AppCompatActivity {
                 audioManager.abandonAudioFocus(null);
             }
         }
+    }
+
+    private boolean checkPermissionForMicrophone() {
+        int resultMic = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO);
+        if (resultMic == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        }
+        return false;
     }
 
     private void requestPermissionForMicrophone() {
