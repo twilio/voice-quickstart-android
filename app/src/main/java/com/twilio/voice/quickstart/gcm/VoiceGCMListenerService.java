@@ -75,7 +75,7 @@ public class VoiceGCMListenerService extends GcmListenerService {
             intent.putExtra(VoiceActivity.INCOMING_CALL_MESSAGE, incomingCallMessage);
             intent.putExtra(VoiceActivity.INCOMING_CALL_NOTIFICATION_ID, notificationId);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
+            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
 
             /*
              * Pass the notification id and call sid to use as an identifier to cancel the
