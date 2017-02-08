@@ -26,6 +26,8 @@ import android.widget.Chronometer;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
+import com.koushikdutta.async.future.FutureCallback;
+import com.koushikdutta.ion.Ion;
 import com.twilio.voice.Call;
 import com.twilio.voice.CallAttempt;
 import com.twilio.voice.CallException;
@@ -36,10 +38,6 @@ import com.twilio.voice.VoiceClient;
 import com.twilio.voice.quickstart.gcm.GCMRegistrationService;
 
 import java.util.HashMap;
-
-import retrofit.Callback;
-import retrofit.RetrofitError;
-import retrofit.client.Response;
 
 public class VoiceActivity extends AppCompatActivity {
 
@@ -81,7 +79,7 @@ public class VoiceActivity extends AppCompatActivity {
     private CallAttempt activeCallAttempt;
 
     RegistrationListener registrationListener = registrationListener();
-    Call.Listener outgoingCallListener = callListener();
+    Call.Listener callListener = callListener();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -161,18 +159,18 @@ public class VoiceActivity extends AppCompatActivity {
     private Call.Listener callListener() {
         return new Call.Listener() {
             @Override
-            public void onConnected(Call outgoingCall) {
+            public void onConnected(Call call) {
                 Log.d(TAG, "Connected");
             }
 
             @Override
-            public void onDisconnected(Call outgoingCall) {
+            public void onDisconnected(Call call) {
                 resetUI();
                 Log.d(TAG, "Disconnect");
             }
 
             @Override
-            public void onDisconnected(Call outgoingCall, CallException error) {
+            public void onDisconnected(Call call, CallException error) {
                 resetUI();
                 Log.e(TAG, String.format("Error: %d, %s", error.getErrorCode(), error.getMessage()));
             }
@@ -219,11 +217,18 @@ public class VoiceActivity extends AppCompatActivity {
         isReceiverRegistered = false;
     }
 
+    @Override
+    public void onDestroy() {
+        SoundPoolManager.getInstance(this).release();
+        super.onDestroy();
+    }
+
     private void handleIncomingCallIntent(Intent intent) {
 
         if (intent != null && intent.getAction() != null && intent.getAction() == ACTION_INCOMING_CALL) {
             CallInvite callInvite = intent.getParcelableExtra(INCOMING_CALL_INVITE);
             if (!callInvite.isCancelled()) {
+                SoundPoolManager.getInstance(this).playRinging();
                 alertDialog = createIncomingCallDialog(VoiceActivity.this,
                         callInvite,
                         answerCallClickListener(),
@@ -318,7 +323,7 @@ public class VoiceActivity extends AppCompatActivity {
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                activeCallAttempt = VoiceClient.call(getApplicationContext(), accessToken, twiMLParams, outgoingCallListener);
+                activeCallAttempt = VoiceClient.call(getApplicationContext(), accessToken, twiMLParams, callListener);
                 setCallUI();
             }
         };
@@ -328,6 +333,7 @@ public class VoiceActivity extends AppCompatActivity {
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                SoundPoolManager.getInstance(VoiceActivity.this).playDisconnect();
                 resetUI();
                 disconnect();
             }
@@ -347,7 +353,7 @@ public class VoiceActivity extends AppCompatActivity {
      * Accept an incoming Call
      */
     private void answer() {
-        activeCallInvite.accept(VoiceActivity.this, callListener());
+        activeCallInvite.accept(VoiceActivity.this, callListener);
     }
 
     /*
@@ -367,7 +373,6 @@ public class VoiceActivity extends AppCompatActivity {
      * Get an access token from your Twilio access token server
      */
     private void retrieveAccessToken() {
-        /*
         Ion.with(getApplicationContext()).load(ACCESS_TOKEN_SERVICE_URL).asString().setCallback(new FutureCallback<String>() {
             @Override
             public void onCompleted(Exception e, String accessToken) {
@@ -383,22 +388,6 @@ public class VoiceActivity extends AppCompatActivity {
                             "Error retrieving access token. Unable to make calls",
                             Snackbar.LENGTH_LONG).show();
                 }
-            }
-        }); */
-
-        AccessTokenProvider.getAccessToken("kumkum", new Callback<String>() {
-            @Override
-            public void success(String s, Response response) {
-                VoiceActivity.this.accessToken = s;
-                callActionFab.show();
-                if (gcmToken != null) {
-                    register();
-                }
-            }
-
-            @Override
-            public void failure(RetrofitError error) {
-
             }
         });
     }
