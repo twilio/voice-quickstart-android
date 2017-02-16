@@ -29,7 +29,6 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.koushikdutta.async.future.FutureCallback;
 import com.koushikdutta.ion.Ion;
 import com.twilio.voice.Call;
-import com.twilio.voice.CallAttempt;
 import com.twilio.voice.CallException;
 import com.twilio.voice.CallInvite;
 import com.twilio.voice.RegistrationException;
@@ -76,7 +75,7 @@ public class VoiceActivity extends AppCompatActivity {
     private String accessToken;
     private AlertDialog alertDialog;
     private CallInvite activeCallInvite;
-    private CallAttempt activeCallAttempt;
+    private Call activeCall;
 
     RegistrationListener registrationListener = registrationListener();
     Call.Listener callListener = callListener();
@@ -99,7 +98,7 @@ public class VoiceActivity extends AppCompatActivity {
 
         /*
          * Setup the broadcast receiver to be notified of GCM Token updates
-         * or incoming call messages in this Activity.
+         * or incoming call invite in this Activity.
          */
         voiceBroadcastReceiver = new VoiceBroadcastReceiver();
         registerReceiver();
@@ -115,7 +114,7 @@ public class VoiceActivity extends AppCompatActivity {
         setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
 
         /*
-         * Displays a call dialog if the intent contains an incoming call message
+         * Displays a call dialog if the intent contains a call invite
          */
         handleIncomingCallIntent(getIntent());
 
@@ -161,6 +160,7 @@ public class VoiceActivity extends AppCompatActivity {
             @Override
             public void onConnected(Call call) {
                 Log.d(TAG, "Connected");
+                activeCall = call;
             }
 
             @Override
@@ -226,11 +226,11 @@ public class VoiceActivity extends AppCompatActivity {
     private void handleIncomingCallIntent(Intent intent) {
 
         if (intent != null && intent.getAction() != null && intent.getAction() == ACTION_INCOMING_CALL) {
-            CallInvite callInvite = intent.getParcelableExtra(INCOMING_CALL_INVITE);
-            if (!callInvite.isCancelled()) {
+            activeCallInvite = intent.getParcelableExtra(INCOMING_CALL_INVITE);
+            if (!activeCallInvite.isCancelled()) {
                 SoundPoolManager.getInstance(this).playRinging();
                 alertDialog = createIncomingCallDialog(VoiceActivity.this,
-                        callInvite,
+                        activeCallInvite,
                         answerCallClickListener(),
                         cancelCallClickListener());
                 alertDialog.show();
@@ -272,7 +272,7 @@ public class VoiceActivity extends AppCompatActivity {
                 retrieveAccessToken();
             } else if (action.equals(ACTION_INCOMING_CALL)) {
                 /*
-                 * Handle the incoming call message
+                 * Handle the incoming call invite
                  */
                 handleIncomingCallIntent(intent);
             }
@@ -323,7 +323,7 @@ public class VoiceActivity extends AppCompatActivity {
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                activeCallAttempt = VoiceClient.call(getApplicationContext(), accessToken, twiMLParams, callListener);
+                activeCall = VoiceClient.call(getApplicationContext(), accessToken, twiMLParams, callListener);
                 setCallUI();
             }
         };
@@ -360,12 +360,9 @@ public class VoiceActivity extends AppCompatActivity {
      * Disconnect an active Call
      */
     private void disconnect() {
-        if (activeCallAttempt != null) {
-            activeCallAttempt.cancel();
-            activeCallAttempt = null;
-        } else if (activeCallInvite != null) {
-            activeCallInvite.reject(VoiceActivity.this);
-            activeCallInvite = null;
+        if (activeCall != null) {
+            activeCall.disconnect();
+            activeCall = null;
         }
     }
 
