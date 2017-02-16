@@ -28,12 +28,9 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.koushikdutta.async.future.FutureCallback;
 import com.koushikdutta.ion.Ion;
+import com.twilio.voice.Call;
 import com.twilio.voice.CallException;
-import com.twilio.voice.CallState;
-import com.twilio.voice.IncomingCall;
-import com.twilio.voice.IncomingCallMessage;
-import com.twilio.voice.IncomingCallMessageListener;
-import com.twilio.voice.OutgoingCall;
+import com.twilio.voice.CallInvite;
 import com.twilio.voice.RegistrationException;
 import com.twilio.voice.RegistrationListener;
 import com.twilio.voice.VoiceClient;
@@ -66,11 +63,8 @@ public class VoiceActivity extends AppCompatActivity {
     private FloatingActionButton speakerActionFab;
     private Chronometer chronometer;
 
-    private OutgoingCall activeOutgoingCall;
-    private IncomingCall activeIncomingCall;
-
     public static final String ACTION_SET_GCM_TOKEN = "SET_GCM_TOKEN";
-    public static final String INCOMING_CALL_MESSAGE = "INCOMING_CALL_MESSAGE";
+    public static final String INCOMING_CALL_INVITE = "INCOMING_CALL_INVITE";
     public static final String INCOMING_CALL_NOTIFICATION_ID = "INCOMING_CALL_NOTIFICATION_ID";
     public static final String ACTION_INCOMING_CALL = "INCOMING_CALL";
 
@@ -80,11 +74,11 @@ public class VoiceActivity extends AppCompatActivity {
     private String gcmToken;
     private String accessToken;
     private AlertDialog alertDialog;
+    private CallInvite activeCallInvite;
+    private Call activeCall;
 
     RegistrationListener registrationListener = registrationListener();
-    OutgoingCall.Listener outgoingCallListener = outgoingCallListener();
-    IncomingCall.Listener incomingCallListener = incomingCallListener();
-    IncomingCallMessageListener incomingCallMessageListener = incomingCallMessageListener();
+    Call.Listener callListener = callListener();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,7 +98,7 @@ public class VoiceActivity extends AppCompatActivity {
 
         /*
          * Setup the broadcast receiver to be notified of GCM Token updates
-         * or incoming call messages in this Activity.
+         * or incoming call invite in this Activity.
          */
         voiceBroadcastReceiver = new VoiceBroadcastReceiver();
         registerReceiver();
@@ -120,10 +114,9 @@ public class VoiceActivity extends AppCompatActivity {
         setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
 
         /*
-         * Displays a call dialog if the intent contains an incoming call message
+         * Displays a call dialog if the intent contains a call invite
          */
         handleIncomingCallIntent(getIntent());
-
 
         /*
          * Ensure the microphone permission is enabled
@@ -148,35 +141,6 @@ public class VoiceActivity extends AppCompatActivity {
         }
     }
 
-    private IncomingCallMessageListener incomingCallMessageListener() {
-        return new IncomingCallMessageListener() {
-            @Override
-            public void onIncomingCall(IncomingCall incomingCall) {
-                Log.d(TAG, "Incoming call from " + incomingCall.getFrom());
-                activeIncomingCall = incomingCall;
-                alertDialog = createIncomingCallDialog(VoiceActivity.this,
-                        incomingCall,
-                        answerCallClickListener(),
-                        cancelCallClickListener());
-                alertDialog.show();
-            }
-
-            @Override
-            public void onIncomingCallCancelled(IncomingCall incomingCall) {
-                Log.d(TAG, "Incoming call from " + incomingCall.getFrom() + " was cancelled");
-                if(activeIncomingCall != null &&
-                        incomingCall.getCallSid() == activeIncomingCall.getCallSid() &&
-                        incomingCall.getState() == CallState.PENDING) {
-                    activeIncomingCall = null;
-                    if (alertDialog != null) {
-                        alertDialog.dismiss();
-                    }
-                }
-            }
-
-        };
-    }
-
     private RegistrationListener registrationListener() {
         return new RegistrationListener() {
             @Override
@@ -191,42 +155,22 @@ public class VoiceActivity extends AppCompatActivity {
         };
     }
 
-    private OutgoingCall.Listener outgoingCallListener() {
-        return new OutgoingCall.Listener() {
+    private Call.Listener callListener() {
+        return new Call.Listener() {
             @Override
-            public void onConnected(OutgoingCall outgoingCall) {
+            public void onConnected(Call call) {
                 Log.d(TAG, "Connected");
+                activeCall = call;
             }
 
             @Override
-            public void onDisconnected(OutgoingCall outgoingCall) {
+            public void onDisconnected(Call call) {
                 resetUI();
                 Log.d(TAG, "Disconnect");
             }
 
             @Override
-            public void onDisconnected(OutgoingCall outgoingCall, CallException error) {
-                resetUI();
-                Log.e(TAG, String.format("Error: %d, %s", error.getErrorCode(), error.getMessage()));
-            }
-        };
-    }
-
-    private IncomingCall.Listener incomingCallListener() {
-        return new IncomingCall.Listener() {
-            @Override
-            public void onConnected(IncomingCall incomingCall) {
-                Log.d(TAG, "Connected");
-            }
-
-            @Override
-            public void onDisconnected(IncomingCall incomingCall) {
-                resetUI();
-                Log.d(TAG, "Disconnected");
-            }
-
-            @Override
-            public void onDisconnected(IncomingCall incomingCall, CallException error) {
+            public void onDisconnected(Call call, CallException error) {
                 resetUI();
                 Log.e(TAG, String.format("Error: %d, %s", error.getErrorCode(), error.getMessage()));
             }
@@ -273,10 +217,30 @@ public class VoiceActivity extends AppCompatActivity {
         isReceiverRegistered = false;
     }
 
+    @Override
+    public void onDestroy() {
+        SoundPoolManager.getInstance(this).release();
+        super.onDestroy();
+    }
+
     private void handleIncomingCallIntent(Intent intent) {
-        if (intent != null && intent.getAction() != null && intent.getAction() == VoiceActivity.ACTION_INCOMING_CALL) {
-            IncomingCallMessage incomingCallMessage = intent.getParcelableExtra(INCOMING_CALL_MESSAGE);
-            VoiceClient.handleIncomingCallMessage(getApplicationContext(), incomingCallMessage, incomingCallMessageListener);
+
+        if (intent != null && intent.getAction() != null && intent.getAction() == ACTION_INCOMING_CALL) {
+            activeCallInvite = intent.getParcelableExtra(INCOMING_CALL_INVITE);
+            if (!activeCallInvite.isCancelled()) {
+                SoundPoolManager.getInstance(this).playRinging();
+                alertDialog = createIncomingCallDialog(VoiceActivity.this,
+                        activeCallInvite,
+                        answerCallClickListener(),
+                        cancelCallClickListener());
+                alertDialog.show();
+                notificationManager.cancel(intent.getIntExtra(INCOMING_CALL_NOTIFICATION_ID, 0));
+            } else {
+                if (alertDialog != null && alertDialog.isShowing()) {
+                    SoundPoolManager.getInstance(this).stopRinging();
+                    alertDialog.cancel();
+                }
+            }
         }
     }
 
@@ -308,13 +272,9 @@ public class VoiceActivity extends AppCompatActivity {
                 retrieveAccessToken();
             } else if (action.equals(ACTION_INCOMING_CALL)) {
                 /*
-                 * Remove the notification from the notification drawer
+                 * Handle the incoming call invite
                  */
-                notificationManager.cancel(intent.getIntExtra(VoiceActivity.INCOMING_CALL_NOTIFICATION_ID, 0));
-                /*
-                 * Handle the incoming call message
-                 */
-                VoiceClient.handleIncomingCallMessage(getApplicationContext(), (IncomingCallMessage)intent.getParcelableExtra(INCOMING_CALL_MESSAGE), incomingCallMessageListener);
+                handleIncomingCallIntent(intent);
             }
         }
     }
@@ -336,19 +296,19 @@ public class VoiceActivity extends AppCompatActivity {
 
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                activeIncomingCall.reject();
+                activeCallInvite.reject(VoiceActivity.this);
                 alertDialog.dismiss();
             }
         };
     }
 
-    public static AlertDialog createIncomingCallDialog(Context context, IncomingCall incomingCall, DialogInterface.OnClickListener answerCallClickListener, DialogInterface.OnClickListener cancelClickListener) {
+    public static AlertDialog createIncomingCallDialog(Context context, CallInvite callInvite, DialogInterface.OnClickListener answerCallClickListener, DialogInterface.OnClickListener cancelClickListener) {
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
         alertDialogBuilder.setIcon(R.drawable.ic_call_black_24dp);
         alertDialogBuilder.setTitle("Incoming Call");
         alertDialogBuilder.setPositiveButton("Accept", answerCallClickListener);
         alertDialogBuilder.setNegativeButton("Reject", cancelClickListener);
-        alertDialogBuilder.setMessage(incomingCall.getFrom() + " is calling.");
+        alertDialogBuilder.setMessage(callInvite.getFrom() + " is calling.");
         return alertDialogBuilder.create();
     }
 
@@ -363,7 +323,7 @@ public class VoiceActivity extends AppCompatActivity {
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                activeOutgoingCall = VoiceClient.call(getApplicationContext(), accessToken, twiMLParams, outgoingCallListener);
+                activeCall = VoiceClient.call(getApplicationContext(), accessToken, twiMLParams, callListener);
                 setCallUI();
             }
         };
@@ -373,6 +333,7 @@ public class VoiceActivity extends AppCompatActivity {
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                SoundPoolManager.getInstance(VoiceActivity.this).playDisconnect();
                 resetUI();
                 disconnect();
             }
@@ -392,19 +353,16 @@ public class VoiceActivity extends AppCompatActivity {
      * Accept an incoming Call
      */
     private void answer() {
-        activeIncomingCall.accept(incomingCallListener);
+        activeCallInvite.accept(VoiceActivity.this, callListener);
     }
 
     /*
      * Disconnect an active Call
      */
     private void disconnect() {
-        if (activeOutgoingCall != null) {
-            activeOutgoingCall.disconnect();
-            activeOutgoingCall = null;
-        } else if (activeIncomingCall != null) {
-            activeIncomingCall.reject();
-            activeIncomingCall = null;
+        if (activeCall != null) {
+            activeCall.disconnect();
+            activeCall = null;
         }
     }
 

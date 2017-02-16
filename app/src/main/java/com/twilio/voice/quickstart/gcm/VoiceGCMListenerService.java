@@ -13,11 +13,13 @@ import android.service.notification.StatusBarNotification;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import com.twilio.voice.CallInvite;
 
 import com.google.android.gms.gcm.GcmListenerService;
-import com.twilio.voice.IncomingCallMessage;
 import com.twilio.voice.quickstart.R;
 import com.twilio.voice.quickstart.VoiceActivity;
+
+import static android.R.attr.data;
 
 public class VoiceGCMListenerService extends GcmListenerService {
 
@@ -41,38 +43,39 @@ public class VoiceGCMListenerService extends GcmListenerService {
     public void onMessageReceived(String from, Bundle bundle) {
         Log.d(TAG, "onMessageReceived " + from);
 
-        if (IncomingCallMessage.isValidMessage(bundle)) {
-            /*
+        Log.d(TAG, "Received onMessageReceived()");
+        Log.d(TAG, "From: " + from);
+        Log.d(TAG, "Bundle data: " + bundle.toString());
+
+        if (CallInvite.isValidMessage(bundle)) {
+             /*
              * Generate a unique notification id using the system time
              */
-            int notificationId = (int)System.currentTimeMillis();
-
+            int notificationId = (int) System.currentTimeMillis();
             /*
-             * Create an IncomingCallMessage from the bundle
+             * Create an CallInvite from the bundle
              */
-            IncomingCallMessage incomingCallMessage = new IncomingCallMessage(bundle);
-
-            showNotification(incomingCallMessage, notificationId);
-            sendIncomingCallMessageToActivity(incomingCallMessage, notificationId);
+            CallInvite callInvite = CallInvite.create(bundle);
+            sendCallInviteToActivity(callInvite, notificationId);
+            showNotification(callInvite, notificationId);
         }
-
     }
 
     /*
      * Show the notification in the Android notification drawer
      */
     @TargetApi(Build.VERSION_CODES.KITKAT_WATCH)
-    private void showNotification(IncomingCallMessage incomingCallMessage, int notificationId) {
-        String callSid = incomingCallMessage.getCallSid();
+    private void showNotification(CallInvite callInvite, int notificationId) {
+        String callSid = callInvite.getCallSid();
 
-        if (!incomingCallMessage.isCancelled()) {
+        if (!callInvite.isCancelled()) {
             /*
              * Create a PendingIntent to specify the action when the notification is
              * selected in the notification drawer
              */
             Intent intent = new Intent(this, VoiceActivity.class);
             intent.setAction(VoiceActivity.ACTION_INCOMING_CALL);
-            intent.putExtra(VoiceActivity.INCOMING_CALL_MESSAGE, incomingCallMessage);
+            intent.putExtra(VoiceActivity.INCOMING_CALL_INVITE, callInvite);
             intent.putExtra(VoiceActivity.INCOMING_CALL_NOTIFICATION_ID, notificationId);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
@@ -92,10 +95,11 @@ public class VoiceGCMListenerService extends GcmListenerService {
                     new NotificationCompat.Builder(this)
                             .setSmallIcon(R.drawable.ic_call_white_24px)
                             .setContentTitle(getString(R.string.app_name))
-                            .setContentText(incomingCallMessage.getFrom() + " is calling.")
+                            .setContentText(callInvite.getFrom() + " is calling.")
                             .setAutoCancel(true)
                             .setExtras(extras)
                             .setContentIntent(pendingIntent)
+                            .setGroup("quickstart_app_notification")
                             .setColor(Color.rgb(214, 10, 37));
 
             notificationManager.notify(notificationId, notificationBuilder.build());
@@ -133,9 +137,9 @@ public class VoiceGCMListenerService extends GcmListenerService {
     /*
      * Send the IncomingCallMessage to the VoiceActivity
      */
-    private void sendIncomingCallMessageToActivity(IncomingCallMessage incomingCallMessage, int notificationId) {
+    private void sendCallInviteToActivity(CallInvite incomingCallMessage, int notificationId) {
         Intent intent = new Intent(VoiceActivity.ACTION_INCOMING_CALL);
-        intent.putExtra(VoiceActivity.INCOMING_CALL_MESSAGE, incomingCallMessage);
+        intent.putExtra(VoiceActivity.INCOMING_CALL_INVITE, incomingCallMessage);
         intent.putExtra(VoiceActivity.INCOMING_CALL_NOTIFICATION_ID, notificationId);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
