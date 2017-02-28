@@ -26,8 +26,6 @@ import android.widget.Chronometer;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
-import com.koushikdutta.async.future.FutureCallback;
-import com.koushikdutta.ion.Ion;
 import com.twilio.voice.Call;
 import com.twilio.voice.CallException;
 import com.twilio.voice.CallInvite;
@@ -42,7 +40,10 @@ public class VoiceActivity extends AppCompatActivity {
 
     private static final String TAG = "VoiceActivity";
 
-    private static final String ACCESS_TOKEN_SERVICE_URL = "PROVIDE_YOUR_ACCESS_TOKEN_SERVER";
+    /*
+     * You must provide a Twilio Access Token to connect to the Voice service
+     */
+    private static final String TWILIO_ACCESS_TOKEN = "TWILIO_ACCESS_TOKEN";
 
     private static final int MIC_PERMISSION_REQUEST_CODE = 1;
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
@@ -72,7 +73,6 @@ public class VoiceActivity extends AppCompatActivity {
 
     private NotificationManager notificationManager;
     private String gcmToken;
-    private String accessToken;
     private AlertDialog alertDialog;
     private CallInvite activeCallInvite;
     private Call activeCall;
@@ -269,7 +269,10 @@ public class VoiceActivity extends AppCompatActivity {
                             "Failed to get GCM Token. Unable to receive calls",
                             Snackbar.LENGTH_LONG).show();
                 }
-                retrieveAccessToken();
+                callActionFab.show();
+                if (VoiceActivity.this.gcmToken != null) {
+                    register();
+                }
             } else if (action.equals(ACTION_INCOMING_CALL)) {
                 /*
                  * Handle the incoming call invite
@@ -316,14 +319,14 @@ public class VoiceActivity extends AppCompatActivity {
      * Register your GCM token with Twilio to enable receiving incoming calls via GCM
      */
     private void register() {
-        VoiceClient.register(getApplicationContext(), accessToken, gcmToken, registrationListener);
+        VoiceClient.register(getApplicationContext(), TWILIO_ACCESS_TOKEN, gcmToken, registrationListener);
     }
 
     private View.OnClickListener callActionFabClickListener() {
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                activeCall = VoiceClient.call(getApplicationContext(), accessToken, twiMLParams, callListener);
+                activeCall = VoiceClient.call(getApplicationContext(), TWILIO_ACCESS_TOKEN, twiMLParams, callListener);
                 setCallUI();
             }
         };
@@ -364,29 +367,6 @@ public class VoiceActivity extends AppCompatActivity {
             activeCall.disconnect();
             activeCall = null;
         }
-    }
-
-    /*
-     * Get an access token from your Twilio access token server
-     */
-    private void retrieveAccessToken() {
-        Ion.with(getApplicationContext()).load(ACCESS_TOKEN_SERVICE_URL).asString().setCallback(new FutureCallback<String>() {
-            @Override
-            public void onCompleted(Exception e, String accessToken) {
-                if (e == null) {
-                    Log.d(TAG, "Access token: " + accessToken);
-                    VoiceActivity.this.accessToken = accessToken;
-                    callActionFab.show();
-                    if (gcmToken != null) {
-                        register();
-                    }
-                } else {
-                    Snackbar.make(coordinatorLayout,
-                            "Error retrieving access token. Unable to make calls",
-                            Snackbar.LENGTH_LONG).show();
-                }
-            }
-        });
     }
 
     private void toggleSpeakerPhone() {

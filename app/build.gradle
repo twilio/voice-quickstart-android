@@ -12,17 +12,28 @@ android {
         versionName "1.0"
     }
 
-    signingConfigs {
-        debug {
-            storeFile file("${System.env.HOME}/.android/debug.keystore")
-        }
-    }
-
     buildTypes {
         release {
             minifyEnabled
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.debug
+        }
+    }
+
+    // Specify that we want to split up the APK based on ABI
+    splits {
+        abi {
+            // Enable ABI split
+            enable true
+
+            // Clear list of ABIs
+            reset()
+
+            // Specify each architecture currently supported by the Video SDK
+            include "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+
+            // Specify that we do not want an additional universal SDK
+            universalApk false
         }
     }
 }
