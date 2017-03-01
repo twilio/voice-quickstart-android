@@ -32,7 +32,7 @@ For now you will see an error in the console stating `Failed to retrieve GCM tok
 
 ### <a name="bullet2"></a>2. Create a Voice API key
 
-Go to the API Keys page and create a new API key
+Go to the [API Keys page](https://www.twilio.com/console/voice/dev-tools/api-keys) and create a new API key.
 
 <img width="700px" src="images/quickstart/add_api_key.png"/>
 
@@ -41,7 +41,7 @@ Save the generated `API_KEY` and `API_KEY_SECRET` in your notepad. You will need
 
 ### <a name="bullet3"></a>3. Configure a server to generate an access token to use in the app
 
-Download starter project for the server.
+[Download starter project for the server.](https://github.com/twilio/voice-quickstart-server-python)
 Follow the instructions in the server's README to get the application server up and running locally and accessible via the public Internet. For now just add the Twilio Account SID that you can obtain from the console, and  the `API_KEY` and `API_SECRET` you obtained in the previous step. 
 
     ACCOUNT_SID = 'AC***'
