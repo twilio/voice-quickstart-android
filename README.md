@@ -19,7 +19,7 @@ To get started with the Quickstart application follow these steps. Steps 1-6 wil
 5. [Configure your application server](#bullet5)
 6. [Run the app](#bullet6)
 7. [Generate google-services.json from the Google Developer Console](#bullet7)
-8. [Add a Push Credential using your GCM `Server API Key`](#bullet8)
+8. [Add a Push Credential using your GCM Server API Key](#bullet8)
 9. [Receiving an Incoming Notification](#bullet9)
 
 
@@ -133,6 +133,9 @@ Once you’ve done that, restart the server so it uses the new configuration inf
 <img height="500px" src="images/quickstart/incoming_notification.png">"
 
 
+
+
+
 ## Reducing APK Size
 
 Our library is built using native libraries. As a result, if you use the default gradle build you will generate an APK with all four architectures(armeabi-v7a, arm64-v8a, x86, x86_64) in your APK.
@@ -187,10 +190,10 @@ You can find more documentation on getting started as well as our latest Javadoc
 * [Getting Started](https://www.twilio.com/docs/api/voice-sdk/android/getting-started)
 * [Javadoc](https://media.twiliocdn.com/sdk/android/voice/latest/docs/)
 
-## Issues & Support
+## Issues and Support
 
 Please file any issues you find here on Github.
 For general inquiries related to the Video SDK you can file a support ticket
 
-### License
+## License
 MIT
