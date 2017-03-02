@@ -193,7 +193,7 @@ You can find more documentation on getting started as well as our latest Javadoc
 ## Issues and Support
 
 Please file any issues you find here on Github.
-For general inquiries related to the Video SDK you can file a support ticket
+For general inquiries related to the Voice SDK you can file a support ticket
 
 ## License
 MIT
