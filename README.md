@@ -13,7 +13,7 @@ To get started with the Quickstart application follow these steps. Steps 1-6 wil
 
 
 1. [Open this project in Android Studio](#bullet1)
-2. [Create a Voice API key] (#bullet2)
+2. [Create a Voice API key](#bullet2)
 3. [Configure a server to generate an access token to use in the app](#bullet3)
 4. [Create a TwiML application](#bullet4)
 5. [Configure your application server](#bullet5)
