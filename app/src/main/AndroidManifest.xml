@@ -35,7 +35,7 @@
         </receiver>
 
         <service
-            android:name=".gcm.VoiceGCMListenerService"
+            android:name=".fcm.VoiceGCMListenerService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
@@ -43,7 +43,7 @@
         </service>
 
         <service
-            android:name=".gcm.VoiceInstanceIDListenerService"
+            android:name=".fcm.VoiceInstanceIDListenerService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.android.gms.iid.InstanceID" />
@@ -51,7 +51,7 @@
         </service>
 
         <service
-            android:name=".gcm.GCMRegistrationService"
+            android:name=".fcm.GCMRegistrationService"
             android:exported="false"></service>
 
         <meta-data
