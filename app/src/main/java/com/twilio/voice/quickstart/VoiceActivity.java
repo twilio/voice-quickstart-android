@@ -24,15 +24,13 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Chronometer;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.twilio.voice.Call;
 import com.twilio.voice.CallException;
 import com.twilio.voice.CallInvite;
 import com.twilio.voice.RegistrationException;
 import com.twilio.voice.RegistrationListener;
-import com.twilio.voice.VoiceClient;
-import com.twilio.voice.quickstart.gcm.GCMRegistrationService;
+import com.twilio.voice.Voice;
 
 import java.util.HashMap;
 
@@ -46,7 +44,6 @@ public class VoiceActivity extends AppCompatActivity {
     private static final String TWILIO_ACCESS_TOKEN = "TWILIO_ACCESS_TOKEN";
 
     private static final int MIC_PERMISSION_REQUEST_CODE = 1;
-    private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
 
     private boolean speakerPhone;
     private AudioManager audioManager;
@@ -69,10 +66,8 @@ public class VoiceActivity extends AppCompatActivity {
     public static final String INCOMING_CALL_NOTIFICATION_ID = "INCOMING_CALL_NOTIFICATION_ID";
     public static final String ACTION_INCOMING_CALL = "INCOMING_CALL";
 
-    public static final String KEY_GCM_TOKEN = "GCM_TOKEN";
 
     private NotificationManager notificationManager;
-    private String gcmToken;
     private AlertDialog alertDialog;
     private CallInvite activeCallInvite;
     private Call activeCall;
@@ -123,8 +118,6 @@ public class VoiceActivity extends AppCompatActivity {
          */
         if (!checkPermissionForMicrophone()) {
             requestPermissionForMicrophone();
-        } else {
-            startGCMRegistration();
         }
     }
 
@@ -132,13 +125,6 @@ public class VoiceActivity extends AppCompatActivity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         handleIncomingCallIntent(intent);
-    }
-
-    private void startGCMRegistration() {
-        if (checkPlayServices()) {
-            Intent intent = new Intent(this, GCMRegistrationService.class);
-            startService(intent);
-        }
     }
 
     private RegistrationListener registrationListener() {
@@ -161,12 +147,6 @@ public class VoiceActivity extends AppCompatActivity {
             public void onConnected(Call call) {
                 Log.d(TAG, "Connected");
                 activeCall = call;
-            }
-
-            @Override
-            public void onDisconnected(Call call) {
-                resetUI();
-                Log.d(TAG, "Disconnect");
             }
 
             @Override
@@ -227,7 +207,7 @@ public class VoiceActivity extends AppCompatActivity {
 
         if (intent != null && intent.getAction() != null && intent.getAction() == ACTION_INCOMING_CALL) {
             activeCallInvite = intent.getParcelableExtra(INCOMING_CALL_INVITE);
-            if (!activeCallInvite.isCancelled()) {
+            if (activeCallInvite != null && (activeCallInvite.getState() == CallInvite.State.PENDING)) {
                 SoundPoolManager.getInstance(this).playRinging();
                 alertDialog = createIncomingCallDialog(VoiceActivity.this,
                         activeCallInvite,
@@ -260,20 +240,7 @@ public class VoiceActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if (action.equals(ACTION_SET_GCM_TOKEN)) {
-                String gcmToken = intent.getStringExtra(KEY_GCM_TOKEN);
-                Log.i(TAG, "GCM Token : " + gcmToken);
-                VoiceActivity.this.gcmToken = gcmToken;
-                if(gcmToken == null) {
-                    Snackbar.make(coordinatorLayout,
-                            "Failed to get GCM Token. Unable to receive calls",
-                            Snackbar.LENGTH_LONG).show();
-                }
-                callActionFab.show();
-                if (VoiceActivity.this.gcmToken != null) {
-                    register();
-                }
-            } else if (action.equals(ACTION_INCOMING_CALL)) {
+            if (action.equals(ACTION_INCOMING_CALL)) {
                 /*
                  * Handle the incoming call invite
                  */
@@ -319,14 +286,15 @@ public class VoiceActivity extends AppCompatActivity {
      * Register your GCM token with Twilio to enable receiving incoming calls via GCM
      */
     private void register() {
-        VoiceClient.register(getApplicationContext(), TWILIO_ACCESS_TOKEN, gcmToken, registrationListener);
+        final String fcmToken = FirebaseInstanceId.getInstance().getToken();
+        Voice.register(getApplicationContext(), TWILIO_ACCESS_TOKEN, fcmToken, registrationListener);
     }
 
     private View.OnClickListener callActionFabClickListener() {
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                activeCall = VoiceClient.call(getApplicationContext(), TWILIO_ACCESS_TOKEN, twiMLParams, callListener);
+                activeCall = Voice.call(getApplicationContext(), TWILIO_ACCESS_TOKEN, twiMLParams, callListener);
                 setCallUI();
             }
         };
@@ -433,33 +401,12 @@ public class VoiceActivity extends AppCompatActivity {
         if (requestCode == MIC_PERMISSION_REQUEST_CODE && permissions.length > 0) {
             boolean granted = true;
             if (granted) {
-                startGCMRegistration();
+                register();
             } else {
                 Snackbar.make(coordinatorLayout,
                         "Microphone permissions needed. Please allow in your application settings.",
                         Snackbar.LENGTH_LONG).show();
             }
         }
-    }
-
-    /**
-     * Check the device to make sure it has the Google Play Services APK. If
-     * it doesn't, display a dialog that allows users to download the APK from
-     * the Google Play Store or enable it in the device's system settings.
-     */
-    private boolean checkPlayServices() {
-        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
-        int resultCode = apiAvailability.isGooglePlayServicesAvailable(this);
-        if (resultCode != ConnectionResult.SUCCESS) {
-            if (apiAvailability.isUserResolvableError(resultCode)) {
-                apiAvailability.getErrorDialog(this, resultCode, PLAY_SERVICES_RESOLUTION_REQUEST)
-                        .show();
-            } else {
-                Log.e(TAG, "This device is not supported.");
-                finish();
-            }
-            return false;
-        }
-        return true;
     }
 }
