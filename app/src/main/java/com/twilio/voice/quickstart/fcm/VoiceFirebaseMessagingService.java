@@ -76,9 +76,9 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
             intent.setAction(VoiceActivity.ACTION_INCOMING_CALL);
             intent.putExtra(VoiceActivity.INCOMING_CALL_NOTIFICATION_ID, notificationId);
             intent.putExtra(VoiceActivity.INCOMING_CALL_INVITE, callInvite);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             PendingIntent pendingIntent =
-                    PendingIntent.getActivity(this, notificationId, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+                    PendingIntent.getActivity(this, notificationId, intent, PendingIntent.FLAG_ONE_SHOT);
             /*
              * Pass the notification id and call sid to use as an identifier to cancel the
              * notification later
@@ -100,7 +100,7 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
 
             notificationManager.notify(notificationId, notificationBuilder.build());
         } else {
-            SoundPoolManager.getInstance((this)).stopRinging();
+            SoundPoolManager.getInstance(this).stopRinging();
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
                 /*
                  * If the incoming call was cancelled then remove the notification by matching

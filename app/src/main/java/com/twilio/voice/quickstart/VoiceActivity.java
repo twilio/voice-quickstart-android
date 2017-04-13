@@ -24,6 +24,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Chronometer;
 
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.twilio.voice.Call;
 import com.twilio.voice.CallException;
@@ -41,15 +42,15 @@ public class VoiceActivity extends AppCompatActivity {
     /*
      * You must provide a Twilio Access Token to connect to the Voice service
      */
-    private static final String TWILIO_ACCESS_TOKEN = "TWILIO_ACCESS_TOKEN";
+    private static final String TWILIO_ACCESS_TOKEN = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCIsICJjdHkiOiAidHdpbGlvLWZwYTt2PTEifQ.eyJpc3MiOiAiU0s4NzYxZWFlYmMwYTE4NWFhNjUyZjlhYjg0MjYwYmEyZSIsICJncmFudHMiOiB7InZvaWNlIjogeyJvdXRnb2luZyI6IHsiYXBwbGljYXRpb25fc2lkIjogIkFQODhjMjAyNDk0ODM1ZTdkYjgzMDNkMDU4YjA0YmNmOWIifSwgInB1c2hfY3JlZGVudGlhbF9zaWQiOiAiQ1JlMWQ4Nzk4MzRmYmRhYjBiNDg0YzcwZjJiOTE0ZGNlYiJ9LCAiaWRlbnRpdHkiOiAidm9pY2VfdGVzdCJ9LCAianRpIjogIlNLODc2MWVhZWJjMGExODVhYTY1MmY5YWI4NDI2MGJhMmUtMTQ5MjEwOTY4MyIsICJzdWIiOiAiQUNjZWViMGU3N2RjMTY1Y2ZmYTJkMzg5YzJmMWU2ZjM0MCIsICJleHAiOiAxNDkyMTEzMjgzfQ.KJQW9I-GkqOBXAxEPDv1KfjtESzOeotQcgZ1ag6SfbA";
 
     private static final int MIC_PERMISSION_REQUEST_CODE = 1;
+    private static final int SNACKBAR_DURATION = 4000;
 
-    private boolean speakerPhone;
     private AudioManager audioManager;
     private int savedAudioMode = AudioManager.MODE_INVALID;
 
-    private boolean isReceiverRegistered;
+    private boolean isReceiverRegistered = false;
     private VoiceBroadcastReceiver voiceBroadcastReceiver;
 
     // Empty HashMap, never populated for the Quickstart
@@ -60,10 +61,12 @@ public class VoiceActivity extends AppCompatActivity {
     private FloatingActionButton hangupActionFab;
     private FloatingActionButton speakerActionFab;
     private Chronometer chronometer;
+    private SoundPoolManager soundPoolManager;
 
     public static final String INCOMING_CALL_INVITE = "INCOMING_CALL_INVITE";
     public static final String INCOMING_CALL_NOTIFICATION_ID = "INCOMING_CALL_NOTIFICATION_ID";
-    public static final String ACTION_INCOMING_CALL = "INCOMING_CALL";
+    public static final String ACTION_INCOMING_CALL = "ACTION_INCOMING_CALL";
+    public static final String ACTION_FCM_TOKEN = "ACTION_FCM_TOKEN";
 
     private NotificationManager notificationManager;
     private AlertDialog alertDialog;
@@ -89,6 +92,8 @@ public class VoiceActivity extends AppCompatActivity {
 
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
+        soundPoolManager = SoundPoolManager.getInstance(this);
+
         /*
          * Setup the broadcast receiver to be notified of FCM Token updates
          * or incoming call invite in this Activity.
@@ -107,6 +112,11 @@ public class VoiceActivity extends AppCompatActivity {
         setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
 
         /*
+         * Setup the UI
+         */
+        resetUI();
+
+        /*
          * Displays a call dialog if the intent contains a call invite
          */
         handleIncomingCallIntent(getIntent());
@@ -116,6 +126,8 @@ public class VoiceActivity extends AppCompatActivity {
          */
         if (!checkPermissionForMicrophone()) {
             requestPermissionForMicrophone();
+        } else {
+            registerForCallInvites();
         }
     }
 
@@ -128,13 +140,15 @@ public class VoiceActivity extends AppCompatActivity {
     private RegistrationListener registrationListener() {
         return new RegistrationListener() {
             @Override
-            public void onRegistered(String accessToken, String gcmToken) {
-                Log.d(TAG, "Successfully registered");
+            public void onRegistered(String accessToken, String fcmToken) {
+                Log.d(TAG, "Successfully registered FCM " + fcmToken);
             }
 
             @Override
-            public void onError(RegistrationException error, String accessToken, String gcmToken) {
-                Log.e(TAG, String.format("Registration Error: %d, %s", error.getErrorCode(), error.getMessage()));
+            public void onError(RegistrationException error, String accessToken, String fcmToken) {
+                String message = String.format("Registration Error: %d, %s", error.getErrorCode(), error.getMessage());
+                Log.e(TAG, message);
+                Snackbar.make(coordinatorLayout, message, SNACKBAR_DURATION).show();
             }
         };
     }
@@ -143,17 +157,21 @@ public class VoiceActivity extends AppCompatActivity {
         return new Call.Listener() {
             @Override
             public void onConnected(Call call) {
+                setAudioFocus(true);
                 Log.d(TAG, "Connected");
                 activeCall = call;
             }
 
             @Override
             public void onDisconnected(Call call, CallException error) {
+                setAudioFocus(false);
                 Log.d(TAG, "Disconnected");
-                resetUI();
                 if(error != null) {
-                    Log.e(TAG, String.format("Error: %d, %s", error.getErrorCode(), error.getMessage()));
+                    String message = String.format("Call Error: %d, %s", error.getErrorCode(), error.getMessage());
+                    Log.e(TAG, message);
+                    Snackbar.make(coordinatorLayout, message, SNACKBAR_DURATION).show();
                 }
+                resetUI();
             }
         };
     }
@@ -174,10 +192,9 @@ public class VoiceActivity extends AppCompatActivity {
      * Reset UI elements
      */
     private void resetUI() {
-        speakerPhone = false;
-        audioManager.setSpeakerphoneOn(speakerPhone);
-        setAudioFocus(speakerPhone);
-        speakerActionFab.setImageDrawable(ContextCompat.getDrawable(VoiceActivity.this, R.drawable.ic_volume_down_white_24px));
+        if (!audioManager.isSpeakerphoneOn()) {
+            toggleSpeakerPhone();
+        }
         speakerActionFab.hide();
         callActionFab.show();
         hangupActionFab.hide();
@@ -199,26 +216,30 @@ public class VoiceActivity extends AppCompatActivity {
 
     @Override
     public void onDestroy() {
-        SoundPoolManager.getInstance(this).release();
+        soundPoolManager.release();
         super.onDestroy();
     }
 
     private void handleIncomingCallIntent(Intent intent) {
-        if (intent != null && intent.getAction() != null && intent.getAction() == ACTION_INCOMING_CALL) {
-            activeCallInvite = intent.getParcelableExtra(INCOMING_CALL_INVITE);
-            if (activeCallInvite != null && (activeCallInvite.getState() == CallInvite.State.PENDING)) {
-                SoundPoolManager.getInstance(this).playRinging();
-                alertDialog = createIncomingCallDialog(VoiceActivity.this,
-                        activeCallInvite,
-                        answerCallClickListener(),
-                        cancelCallClickListener());
-                alertDialog.show();
-                notificationManager.cancel(intent.getIntExtra(INCOMING_CALL_NOTIFICATION_ID, 0));
-            } else {
-                if (alertDialog != null && alertDialog.isShowing()) {
-                    SoundPoolManager.getInstance(this).stopRinging();
-                    alertDialog.cancel();
+        if (intent != null && intent.getAction() != null) {
+            if (intent.getAction() == ACTION_INCOMING_CALL) {
+                activeCallInvite = intent.getParcelableExtra(INCOMING_CALL_INVITE);
+                if (activeCallInvite != null && (activeCallInvite.getState() == CallInvite.State.PENDING)) {
+                    soundPoolManager.playRinging();
+                    alertDialog = createIncomingCallDialog(VoiceActivity.this,
+                            activeCallInvite,
+                            answerCallClickListener(),
+                            cancelCallClickListener());
+                    alertDialog.show();
+                    notificationManager.cancel(intent.getIntExtra(INCOMING_CALL_NOTIFICATION_ID, 0));
+                } else {
+                    if (alertDialog != null && alertDialog.isShowing()) {
+                        soundPoolManager.stopRinging();
+                        alertDialog.cancel();
+                    }
                 }
+            } else if(intent.getAction() == ACTION_FCM_TOKEN) {
+                registerForCallInvites();
             }
         }
     }
@@ -227,6 +248,7 @@ public class VoiceActivity extends AppCompatActivity {
         if (!isReceiverRegistered) {
             IntentFilter intentFilter = new IntentFilter();
             intentFilter.addAction(ACTION_INCOMING_CALL);
+            intentFilter.addAction(ACTION_FCM_TOKEN);
             LocalBroadcastManager.getInstance(this).registerReceiver(
                     voiceBroadcastReceiver, intentFilter);
             isReceiverRegistered = true;
@@ -293,10 +315,22 @@ public class VoiceActivity extends AppCompatActivity {
 
     /*
      * Register your FCM token with Twilio to receive incoming call invites
+     *
+     * If a valid google-services.json has not been provided or the FirebaseInstanceId has not been
+     * initialized the fcmToken will be null.
+     *
+     * In the case where the FirebaseInstanceId has not yet been initialized the
+     * VoiceFirebaseInstanceIDService.onTokenRefresh should result in a LocalBroadcast to this
+     * activity which will attempt registerForCallInvites again.
+     *
      */
-    private void register() {
+    private void registerForCallInvites() {
+        FirebaseApp.initializeApp(this);
         final String fcmToken = FirebaseInstanceId.getInstance().getToken();
-        Voice.register(this, TWILIO_ACCESS_TOKEN, fcmToken, registrationListener);
+        if (fcmToken != null) {
+            Log.i(TAG, "Registering with FCM");
+            Voice.register(this, TWILIO_ACCESS_TOKEN, fcmToken, registrationListener);
+        }
     }
 
     private View.OnClickListener callActionFabClickListener() {
@@ -313,7 +347,7 @@ public class VoiceActivity extends AppCompatActivity {
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SoundPoolManager.getInstance(VoiceActivity.this).playDisconnect();
+                soundPoolManager.playDisconnect();
                 resetUI();
                 disconnect();
             }
@@ -347,14 +381,11 @@ public class VoiceActivity extends AppCompatActivity {
     }
 
     private void toggleSpeakerPhone() {
-        speakerPhone = !speakerPhone;
-
-        setAudioFocus(speakerPhone);
-        audioManager.setSpeakerphoneOn(speakerPhone);
-
-        if(speakerPhone) {
+        if (audioManager.isSpeakerphoneOn()) {
+            audioManager.setSpeakerphoneOn(false);
             speakerActionFab.setImageDrawable(ContextCompat.getDrawable(VoiceActivity.this, R.drawable.ic_volume_mute_white_24px));
         } else {
+            audioManager.setSpeakerphoneOn(true);
             speakerActionFab.setImageDrawable(ContextCompat.getDrawable(VoiceActivity.this, R.drawable.ic_volume_down_white_24px));
         }
     }
@@ -383,17 +414,14 @@ public class VoiceActivity extends AppCompatActivity {
 
     private boolean checkPermissionForMicrophone() {
         int resultMic = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO);
-        if (resultMic == PackageManager.PERMISSION_GRANTED) {
-            return true;
-        }
-        return false;
+        return resultMic == PackageManager.PERMISSION_GRANTED;
     }
 
     private void requestPermissionForMicrophone() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
             Snackbar.make(coordinatorLayout,
                     "Microphone permissions needed. Please allow in your application settings.",
-                    Snackbar.LENGTH_LONG).show();
+                    SNACKBAR_DURATION).show();
         } else {
             ActivityCompat.requestPermissions(
                     this,
@@ -408,14 +436,14 @@ public class VoiceActivity extends AppCompatActivity {
          * Check if microphone permissions is granted
          */
         if (requestCode == MIC_PERMISSION_REQUEST_CODE && permissions.length > 0) {
-            boolean granted = true;
-            if (granted) {
-                register();
-            } else {
+            if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                 Snackbar.make(coordinatorLayout,
                         "Microphone permissions needed. Please allow in your application settings.",
-                        Snackbar.LENGTH_LONG).show();
+                        SNACKBAR_DURATION).show();
+            } else {
+                registerForCallInvites();
             }
         }
     }
+
 }

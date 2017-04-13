@@ -3,6 +3,7 @@ package com.twilio.voice.quickstart;
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.SoundPool;
+import android.os.Build;
 
 import static android.content.Context.AUDIO_SERVICE;
 
@@ -21,7 +22,6 @@ public class SoundPoolManager {
     private static SoundPoolManager instance;
 
     private SoundPoolManager(Context context) {
-
         // AudioManager audio settings for adjusting the volume
         audioManager = (AudioManager) context.getSystemService(AUDIO_SERVICE);
         actualVolume = (float) audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
@@ -29,7 +29,15 @@ public class SoundPoolManager {
         volume = actualVolume / maxVolume;
 
         // Load the sounds
-        soundPool = new SoundPool(1, AudioManager.STREAM_MUSIC, 0);
+        int maxStreams = 1;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            soundPool = new SoundPool.Builder()
+                    .setMaxStreams(maxStreams)
+                    .build();
+        } else {
+            soundPool = new SoundPool(maxStreams, AudioManager.STREAM_MUSIC, 0);
+        }
+
         soundPool.setOnLoadCompleteListener(new SoundPool.OnLoadCompleteListener() {
             @Override
             public void onLoadComplete(SoundPool soundPool, int sampleId, int status) {
@@ -78,7 +86,4 @@ public class SoundPoolManager {
         }
     }
 
-    public boolean isRinging() {
-        return playing;
-    }
 }
