@@ -98,8 +98,9 @@ Login to Firebase console and make a note of generated `Server API Key` and `Sen
 
 <img width="700px" src="images/quickstart/server_key_sender_id.png">"
 
-Make sure the generated `google-services.json` is downloaded to the `/app` directory of the quickstart project to replace the existing `/app/google-services.json` .
+Make sure the generated `google-services.json` is downloaded to the `/app` directory of the quickstart project to replace the existing `/app/google-services.json` stub json file.
 
+As a final step re-run the application from Android Studio to ensure the APK now has the latest `google-services.json` file.
 
 ### <a name="bullet8"></a>8. Add a Push Credential using your FCM `Server API Key` 
 
