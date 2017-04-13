@@ -61,11 +61,9 @@ public class VoiceActivity extends AppCompatActivity {
     private FloatingActionButton speakerActionFab;
     private Chronometer chronometer;
 
-    public static final String ACTION_SET_GCM_TOKEN = "SET_GCM_TOKEN";
     public static final String INCOMING_CALL_INVITE = "INCOMING_CALL_INVITE";
     public static final String INCOMING_CALL_NOTIFICATION_ID = "INCOMING_CALL_NOTIFICATION_ID";
     public static final String ACTION_INCOMING_CALL = "INCOMING_CALL";
-
 
     private NotificationManager notificationManager;
     private AlertDialog alertDialog;
@@ -92,7 +90,7 @@ public class VoiceActivity extends AppCompatActivity {
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         /*
-         * Setup the broadcast receiver to be notified of GCM Token updates
+         * Setup the broadcast receiver to be notified of FCM Token updates
          * or incoming call invite in this Activity.
          */
         voiceBroadcastReceiver = new VoiceBroadcastReceiver();
@@ -136,7 +134,7 @@ public class VoiceActivity extends AppCompatActivity {
 
             @Override
             public void onError(RegistrationException error, String accessToken, String gcmToken) {
-                Log.e(TAG, String.format("Error: %d, %s", error.getErrorCode(), error.getMessage()));
+                Log.e(TAG, String.format("Registration Error: %d, %s", error.getErrorCode(), error.getMessage()));
             }
         };
     }
@@ -151,8 +149,11 @@ public class VoiceActivity extends AppCompatActivity {
 
             @Override
             public void onDisconnected(Call call, CallException error) {
+                Log.d(TAG, "Disconnected");
                 resetUI();
-                Log.e(TAG, String.format("Error: %d, %s", error.getErrorCode(), error.getMessage()));
+                if(error != null) {
+                    Log.e(TAG, String.format("Error: %d, %s", error.getErrorCode(), error.getMessage()));
+                }
             }
         };
     }
@@ -193,8 +194,7 @@ public class VoiceActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(voiceBroadcastReceiver);
-        isReceiverRegistered = false;
+        unregisterReceiver();
     }
 
     @Override
@@ -204,7 +204,6 @@ public class VoiceActivity extends AppCompatActivity {
     }
 
     private void handleIncomingCallIntent(Intent intent) {
-
         if (intent != null && intent.getAction() != null && intent.getAction() == ACTION_INCOMING_CALL) {
             activeCallInvite = intent.getParcelableExtra(INCOMING_CALL_INVITE);
             if (activeCallInvite != null && (activeCallInvite.getState() == CallInvite.State.PENDING)) {
@@ -227,11 +226,17 @@ public class VoiceActivity extends AppCompatActivity {
     private void registerReceiver() {
         if (!isReceiverRegistered) {
             IntentFilter intentFilter = new IntentFilter();
-            intentFilter.addAction(ACTION_SET_GCM_TOKEN);
             intentFilter.addAction(ACTION_INCOMING_CALL);
             LocalBroadcastManager.getInstance(this).registerReceiver(
                     voiceBroadcastReceiver, intentFilter);
             isReceiverRegistered = true;
+        }
+    }
+
+    private void unregisterReceiver() {
+        if (isReceiverRegistered) {
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(voiceBroadcastReceiver);
+            isReceiverRegistered = false;
         }
     }
 
@@ -272,7 +277,11 @@ public class VoiceActivity extends AppCompatActivity {
         };
     }
 
-    public static AlertDialog createIncomingCallDialog(Context context, CallInvite callInvite, DialogInterface.OnClickListener answerCallClickListener, DialogInterface.OnClickListener cancelClickListener) {
+    public static AlertDialog createIncomingCallDialog(
+            Context context,
+            CallInvite callInvite,
+            DialogInterface.OnClickListener answerCallClickListener,
+            DialogInterface.OnClickListener cancelClickListener) {
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
         alertDialogBuilder.setIcon(R.drawable.ic_call_black_24dp);
         alertDialogBuilder.setTitle("Incoming Call");
@@ -283,18 +292,18 @@ public class VoiceActivity extends AppCompatActivity {
     }
 
     /*
-     * Register your GCM token with Twilio to enable receiving incoming calls via GCM
+     * Register your FCM token with Twilio to receive incoming call invites
      */
     private void register() {
         final String fcmToken = FirebaseInstanceId.getInstance().getToken();
-        Voice.register(getApplicationContext(), TWILIO_ACCESS_TOKEN, fcmToken, registrationListener);
+        Voice.register(this, TWILIO_ACCESS_TOKEN, fcmToken, registrationListener);
     }
 
     private View.OnClickListener callActionFabClickListener() {
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                activeCall = Voice.call(getApplicationContext(), TWILIO_ACCESS_TOKEN, twiMLParams, callListener);
+                activeCall = Voice.call(VoiceActivity.this, TWILIO_ACCESS_TOKEN, twiMLParams, callListener);
                 setCallUI();
             }
         };
@@ -324,11 +333,11 @@ public class VoiceActivity extends AppCompatActivity {
      * Accept an incoming Call
      */
     private void answer() {
-        activeCallInvite.accept(VoiceActivity.this, callListener);
+        activeCallInvite.accept(this, callListener);
     }
 
     /*
-     * Disconnect an active Call
+     * Disconnect from Call
      */
     private void disconnect() {
         if (activeCall != null) {

@@ -24,9 +24,9 @@ import com.twilio.voice.quickstart.VoiceActivity;
 
 import java.util.Map;
 
-public class AppFirebaseMessagingService extends FirebaseMessagingService {
+public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
 
-    private static final String TAG = "AppFCMService";
+    private static final String TAG = "VoiceFCMService";
     private static final String NOTIFICATION_ID_KEY = "NOTIFICATION_ID";
     private static final String CALL_SID_KEY = "CALL_SID";
 
@@ -56,20 +56,15 @@ public class AppFirebaseMessagingService extends FirebaseMessagingService {
             Voice.handleMessage(this, data, new MessageListener() {
                 @Override
                 public void onCallInvite(CallInvite callInvite) {
-                    AppFirebaseMessagingService.this.notify(callInvite, notificationId);
-                    AppFirebaseMessagingService.this.sendCallInviteToActivity(callInvite, notificationId);
+                    VoiceFirebaseMessagingService.this.notify(callInvite, notificationId);
+                    VoiceFirebaseMessagingService.this.sendCallInviteToActivity(callInvite, notificationId);
                 }
 
                 @Override
                 public void onError(MessageException messageException) {
-
+                    Log.e(TAG, messageException.getLocalizedMessage());
                 }
             });
-        }
-
-        // Check if message contains a notification payload.
-        if (remoteMessage.getNotification() != null) {
-            Log.d(TAG, "Message Notification Body: " + remoteMessage.getNotification().getBody());
         }
     }
 

@@ -138,17 +138,6 @@ The following snippet shows an example `build.gradle` with APK splits enabled.
     apply plugin: 'com.android.application'
 
     android {
-        compileSdkVersion 24
-        buildToolsVersion "24.0.2"
-
-        defaultConfig {
-            applicationId "com.twilio.voice.quickstart"
-            minSdkVersion 16
-            targetSdkVersion 24
-            versionCode 1
-            versionName "1.0"
-        }
-
         // Specify that we want to split up the APK based on ABI
         splits {
             abi {
@@ -167,9 +156,6 @@ The following snippet shows an example `build.gradle` with APK splits enabled.
         }
     }
 
-    dependencies {
-        compile 'com.twilio:voice-android:2.0.0-beta4'
-    }
 
 The adoption of APK splits requires developers to submit multiple APKs to the Play Store. Refer to [Google’s documentation](https://developer.android.com/google/play/publishing/multiple-apks.html)  for how to support this in your application.
 
