@@ -1,4 +1,4 @@
-//Follow the steps in https://developers.google.com/mobile/add to generate your own google-services.json file.
+// Follow the steps in https://developers.google.com/mobile/add to generate your own google-services.json file.
 {
   "project_info": {
     "project_number": "your_project_number",

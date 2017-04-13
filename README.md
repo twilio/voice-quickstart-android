@@ -9,7 +9,7 @@ Get started with Voice on Android:
 
 ## Quickstart
 
-To get started with the Quickstart application follow these steps. Steps 1-6 will allow you to make a call. The remaining steps 7-8 will enable push notifications using GCM.
+To get started with the Quickstart application follow these steps. Steps 1-6 will allow you to make a call. The remaining steps 7-8 will enable push notifications using FCM.
 
 
 1. [Open this project in Android Studio](#bullet1)
@@ -18,17 +18,13 @@ To get started with the Quickstart application follow these steps. Steps 1-6 wil
 4. [Create a TwiML application](#bullet4)
 5. [Configure your application server](#bullet5)
 6. [Run the app](#bullet6)
-7. [Generate google-services.json from the Google Developer Console](#bullet7)
-8. [Add a Push Credential using your GCM Server API Key](#bullet8)
+7. [Generate google-services.json](#bullet7)
+8. [Add a Push Credential using your FCM Server API Key](#bullet8)
 9. [Receiving an Incoming Notification](#bullet9)
 
 
 ### <a name="bullet1"></a>1. Open the project in Android Studio
 <img width="700px" src="images/quickstart/import_project.png"/>
-
-For now you will see an error in the console stating `Failed to retrieve GCM token`  and this is because you don’t have a valid `google-services.json` file yet to enable push notifications. We will obtain it in step 7.
-
-<img width="700px" src="images/quickstart/invalid_sender.png"/>
 
 ### <a name="bullet2"></a>2. Create a Voice API key
 
@@ -92,31 +88,29 @@ Press the call button to connect to Twilio
 
 <img height="500px" src="images/quickstart/voice_make_call.png">
 
-### <a name="bullet7"></a>7. Generate `google-services.json` from the Google Developer Console
+### <a name="bullet7"></a>7. Generate `google-services.json`
 
-The Programmable Voice Android SDK uses Google Cloud Messaging push notifications to let your application know when it is receiving an incoming call. If you want your users to receive incoming calls, you’ll need to enable GCM in your application.
+The Programmable Voice Android SDK uses Firebase Cloud Messaging push notifications to let your application know when it is receiving an incoming call. If you want your users to receive incoming calls, you’ll need to enable FCM in your application.
 
-Follow the steps in the [Google Developers Console](https://developers.google.com/mobile/add). You must enter the correct Android package name, in this case  `com.twilio.voice.quickstart` .
+Follow the steps under **Use the Firebase Assistant** in the [Firebase Developers Guide](https://firebase.google.com/docs/android/setup). Once you connect and sync to Firebase successfully, you will be able to download the `google-services.json` for your application. 
 
-<img width="700px" src="images/quickstart/create_choose_app.png">
+Login to Firebase console and make a note of generated `Server API Key` and `Sender ID` in your notepad. You will need them in the next step.
 
+<img width="700px" src="images/quickstart/server_key_sender_id.png">"
 
-Save the generated `Server API Key` and `Sender ID` in your notepad. You will need them in the next step.
+Make sure the generated `google-services.json` is downloaded to the `app` directory of the quickstart project to replace the existing `app/google-services.json` stub json file. If you are using the Firebase plugin make sure to remove the stub `google-services.json` file first.
 
-<img width="700px" src="images/quickstart/save_server_api_key.png">"
+As a final step re-run the application from Android Studio to ensure the APK now has the latest `google-services.json` file.
 
-Copy the generated `google-services.json` into the `/app` directory of the quickstart project to replace the existing `/app/google-services.json` .
+### <a name="bullet8"></a>8. Add a Push Credential using your FCM `Server API Key` 
 
-
-### <a name="bullet8"></a>8. Add a Push Credential using your GCM `Server API Key` 
-
-You will need to store the GCM `Server API Key` with Twilio so that we can send push notifications to your app on your behalf. Once you store the API Key with Twilio it will get assigned a Push Credential SID so that you can later specify which key we should use to send push notifications.
+You will need to store the FCM `Server API Key` with Twilio so that we can send push notifications to your app on your behalf. Once you store the API Key with Twilio, it will get assigned a Push Credential SID so that you can later specify which key we should use to send push notifications.
 
 Go to the Push Credentials page and create a new Push Credential.
 
 Paste in the `Server API Key` and press Save.
 
-<img width="700px" src="images/quickstart/add_push_cred.png">"
+<img width="700px" src="images/quickstart/add_fcm_push_cred.png">"
 
 ### <a name="bullet9"></a>9. Receiving an Incoming Notification
 
@@ -134,8 +128,6 @@ Once you’ve done that, restart the server so it uses the new configuration inf
 
 
 
-
-
 ## Reducing APK Size
 
 Our library is built using native libraries. As a result, if you use the default gradle build you will generate an APK with all four architectures(armeabi-v7a, arm64-v8a, x86, x86_64) in your APK.
@@ -147,17 +139,6 @@ The following snippet shows an example `build.gradle` with APK splits enabled.
     apply plugin: 'com.android.application'
 
     android {
-        compileSdkVersion 24
-        buildToolsVersion "24.0.2"
-
-        defaultConfig {
-            applicationId "com.twilio.voice.quickstart"
-            minSdkVersion 16
-            targetSdkVersion 24
-            versionCode 1
-            versionName "1.0"
-        }
-
         // Specify that we want to split up the APK based on ABI
         splits {
             abi {
@@ -176,9 +157,6 @@ The following snippet shows an example `build.gradle` with APK splits enabled.
         }
     }
 
-    dependencies {
-        compile 'com.twilio:voice-android:2.0.0-beta4'
-    }
 
 The adoption of APK splits requires developers to submit multiple APKs to the Play Store. Refer to [Google’s documentation](https://developer.android.com/google/play/publishing/multiple-apks.html)  for how to support this in your application.
 

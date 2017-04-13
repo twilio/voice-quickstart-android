@@ -2,12 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.twilio.voice.quickstart">
 
-    <!-- GCM Permissions -->
-    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="com.twilio.voice.quickstart.permission.C2D_MESSAGE" />
-    <permission android:name="com.twilio.voice.quickstart.permission.C2D_MESSAGE" android:protectionLevel="signature"/>
-
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -22,41 +16,23 @@
             </intent-filter>
         </activity>
 
-        <receiver
-            android:name="com.google.android.gms.gcm.GcmReceiver"
-            android:exported="true"
-            android:permission="com.google.android.c2dm.permission.SEND">
-            <intent-filter>
-                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
-                <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
-
-                <category android:name="com.twilio.voice.quickstart" />
-            </intent-filter>
-        </receiver>
-
+        <!-- [START fcm_listener] -->
         <service
-            android:name=".gcm.VoiceGCMListenerService"
-            android:exported="false">
+            android:name=".fcm.VoiceFirebaseMessagingService">
             <intent-filter>
-                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-
-        <service
-            android:name=".gcm.VoiceInstanceIDListenerService"
+        <!-- [END fcm_listener] -->
+        <!-- [START instanceId_listener] -->
+            <service
+                android:name=".fcm.VoiceFirebaseInstanceIDService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.android.gms.iid.InstanceID" />
             </intent-filter>
         </service>
-
-        <service
-            android:name=".gcm.GCMRegistrationService"
-            android:exported="false"></service>
-
-        <meta-data
-            android:name="com.google.android.gms.version"
-            android:value="@integer/google_play_services_version" />
+        <!-- [END instanceId_listener] -->
 
     </application>
 </manifest>
