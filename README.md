@@ -3,7 +3,7 @@
 Get started with Voice on Android:
 
 - [Quickstart](#quickstart) - Run the quickstart app
-- [Migrating from GCM to FCM](#migrating-from-gcm-to-fcm) - Migrating your app to 2.0.0-beta5 from a prior beta release
+- [Migrating from GCM to FCM](#migrating-from-gcm-to-fcm) - Migrating your app from 2.0.0-beta4 or lower 
 - [Reducing APK Size](#reducing-apk-size) - Use ABI splits to reduce APK size
 - [More Documentation](#more-documentation) - More documentation related to the Video Android SDK
 - [Issues & Support](#issues-and-support) - Filing issues and general support
