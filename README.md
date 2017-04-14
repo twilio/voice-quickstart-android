@@ -3,7 +3,7 @@
 Get started with Voice on Android:
 
 - [Quickstart](#quickstart) - Run the quickstart app
-- [Upgrade from GCM to FCM](#upgrading-from-gcm-to-fcm) - Migrating your app to 2.0.0-beta5 from an older beta release
+- [Migrating from GCM to FCM](#migrating-from-gcm-to-fcm) - Migrating your app to 2.0.0-beta5 from a prior beta release
 - [Reducing APK Size](#reducing-apk-size) - Use ABI splits to reduce APK size
 - [More Documentation](#more-documentation) - More documentation related to the Video Android SDK
 - [Issues & Support](#issues-and-support) - Filing issues and general support
@@ -128,16 +128,17 @@ Once you’ve done that, restart the server so it uses the new configuration inf
 <img height="500px" src="images/quickstart/incoming_notification.png">"
 
 
-## Upgrading from GCM to FCM
+## Migrating from GCM to FCM
 
 In 2.0.0-beta5 we replaced support for GCM with FCM. Starting with 2.0.0-beta5, **FCM is the only supported** way to register for push notifications to receive CallInvite's for incoming calls.
-As a result, it is important that you take this into account when migrating from a 2.0.0-beta4 or lower.
+As a result, it is important that you take this into account when migrating from a 2.0.0-beta4 or lower release.
 
-To upgrade properly you will need to do the following:
+To upgrade you need to do the following:
 
-1. **Add an FCM Push credential** to your service as described in step [8. Add a Push Credential using your FCM Server API Key](#bullet8). If you were using a previous beta
+1. **Generate a FCM google-services.json to replace the existing one in your app** by following step [7. Generate google-services.json](#bullet7)
+1. **Add an FCM Push credential** to your Programmable Voice service as described in step [8. Add a Push Credential using your FCM Server API Key](#bullet8). If you were using a previous beta
 you will have registered a GCM Push credential. You now need to add an FCM Push credential
-2. Upgrade your Android app to use FCM. When calling `register(Context context, String accessToken, String fcmToken, RegistrationListener listener)` must be an FCM token.
+1. **Upgrade your Android app to use FCM**. When calling `Voice.register(Context context, String accessToken, String fcmToken, RegistrationListener listener)` you must provide an FCM token.
 Registering with a GCM token will not work. Review this app to see how to integrate FCM in your own Android app.
 
 
