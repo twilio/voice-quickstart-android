@@ -107,7 +107,7 @@ As a final step re-run the application from Android Studio to ensure the APK now
 
 You will need to store the FCM `Server API Key` with Twilio so that we can send push notifications to your app on your behalf. Once you store the API Key with Twilio, it will get assigned a Push Credential SID so that you can later specify which key we should use to send push notifications.
 
-Go to the Push Credentials page and create a new Push Credential.
+Go to the [Push Credentials page](https://www.twilio.com/console/voice/credentials) and create a new Push Credential.
 
 Paste in the `Server API Key` and press Save.
 
