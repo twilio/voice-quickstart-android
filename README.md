@@ -130,7 +130,7 @@ Once you’ve done that, restart the server so it uses the new configuration inf
 
 ## Migrating from GCM to FCM
 
-In 2.0.0-beta5 we **replaced support for GCM with FCM**. Starting with 2.0.0-beta5, **FCM is the only supported** way to register for push notifications to receive CallInvite's for incoming calls.
+In 2.0.0-beta5 we **replaced support for GCM with FCM**. Starting with 2.0.0-beta5, **FCM is the only supported** way to register for push notifications to receive `CallInvite` messages for incoming calls.
 As a result, it is important that you take this into account when migrating from a 2.0.0-beta4 or lower release.
 
 To upgrade you need to do the following:
