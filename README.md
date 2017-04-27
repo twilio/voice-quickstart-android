@@ -5,7 +5,8 @@ Get started with Voice on Android:
 - [Quickstart](#quickstart) - Run the quickstart app
 - [Migrating from GCM to FCM](#migrating-from-gcm-to-fcm) - Migrating your app from 2.0.0-beta4 or lower 
 - [Reducing APK Size](#reducing-apk-size) - Use ABI splits to reduce APK size
-- [More Documentation](#more-documentation) - More documentation related to the Video Android SDK
+- [More Documentation](#more-documentation) - More documentation related to the Voice Android SDK
+- [Twilio Helper Libraries](#twilio-helper-libraries) - TwiML quickstarts.
 - [Issues & Support](#issues-and-support) - Filing issues and general support
 
 ## Quickstart
@@ -162,7 +163,7 @@ The following snippet shows an example `build.gradle` with APK splits enabled.
                 // Clear list of ABIs
                 reset()
 
-                // Specify each architecture currently supported by the Video SDK
+                // Specify each architecture currently supported by the Voice SDK
                 include "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
 
                 // Specify that we do not want an additional universal SDK
@@ -181,6 +182,16 @@ You can find more documentation on getting started as well as our latest Javadoc
 
 * [Getting Started](https://www.twilio.com/docs/api/voice-sdk/android/getting-started)
 * [Javadoc](https://media.twiliocdn.com/sdk/android/voice/latest/docs/)
+
+## Twilio Helper Libraries
+
+To learn more about how to use TwiML and the Programmable Voice Calls API, check out our TwiML quickstarts:
+
+* [TwiML Quickstart for Python](https://www.twilio.com/docs/quickstart/python/twiml)
+* [TwiML Quickstart for Ruby](https://www.twilio.com/docs/quickstart/ruby/twiml)
+* [TwiML Quickstart for PHP](https://www.twilio.com/docs/quickstart/php/twiml)
+* [TwiML Quickstart for Java](https://www.twilio.com/docs/quickstart/java/twiml)
+* [TwiML Quickstart for C#](https://www.twilio.com/docs/quickstart/csharp/twiml)
 
 ## Issues and Support
 
