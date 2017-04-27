@@ -182,6 +182,15 @@ You can find more documentation on getting started as well as our latest Javadoc
 * [Getting Started](https://www.twilio.com/docs/api/voice-sdk/android/getting-started)
 * [Javadoc](https://media.twiliocdn.com/sdk/android/voice/latest/docs/)
 
+## Twilio Helper Libraries
+To learn more about how to use TwiML and the Programmable Voice Calls API, check out our TwiML quickstarts:
+
+* [TwiML Quickstart for Python](https://www.twilio.com/docs/quickstart/python/twiml)
+* [TwiML Quickstart for Ruby](https://www.twilio.com/docs/quickstart/ruby/twiml)
+* [TwiML Quickstart for PHP](https://www.twilio.com/docs/quickstart/php/twiml)
+* [TwiML Quickstart for Java](https://www.twilio.com/docs/quickstart/java/twiml)
+* [TwiML Quickstart for C#](https://www.twilio.com/docs/quickstart/csharp/twiml)
+
 ## Issues and Support
 
 Please file any issues you find here on Github.
