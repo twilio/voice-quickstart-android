@@ -222,7 +222,7 @@ public class VoiceActivity extends AppCompatActivity {
 
     private void handleIncomingCallIntent(Intent intent) {
         if (intent != null && intent.getAction() != null) {
-            if (intent.getAction().compareTo(ACTION_INCOMING_CALL) == 0) {
+            if (intent.getAction().equals(ACTION_INCOMING_CALL)) {
                 activeCallInvite = intent.getParcelableExtra(INCOMING_CALL_INVITE);
                 if (activeCallInvite != null && (activeCallInvite.getState() == CallInvite.State.PENDING)) {
                     soundPoolManager.playRinging();
@@ -238,7 +238,7 @@ public class VoiceActivity extends AppCompatActivity {
                         alertDialog.cancel();
                     }
                 }
-            } else if (intent.getAction().compareTo(ACTION_FCM_TOKEN) == 0) {
+            } else if (intent.getAction().equals(ACTION_FCM_TOKEN)) {
                 registerForCallInvites();
             }
         }
