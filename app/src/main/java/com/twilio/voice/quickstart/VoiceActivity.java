@@ -166,7 +166,7 @@ public class VoiceActivity extends AppCompatActivity {
             public void onDisconnected(Call call, CallException error) {
                 setAudioFocus(false);
                 Log.d(TAG, "Disconnected");
-                if(error != null) {
+                if (error != null) {
                     String message = String.format("Call Error: %d, %s", error.getErrorCode(), error.getMessage());
                     Log.e(TAG, message);
                     Snackbar.make(coordinatorLayout, message, SNACKBAR_DURATION).show();
@@ -222,7 +222,7 @@ public class VoiceActivity extends AppCompatActivity {
 
     private void handleIncomingCallIntent(Intent intent) {
         if (intent != null && intent.getAction() != null) {
-            if (intent.getAction() == ACTION_INCOMING_CALL) {
+            if (intent.getAction().compareToIgnoreCase(ACTION_INCOMING_CALL) == 0) {
                 activeCallInvite = intent.getParcelableExtra(INCOMING_CALL_INVITE);
                 if (activeCallInvite != null && (activeCallInvite.getState() == CallInvite.State.PENDING)) {
                     soundPoolManager.playRinging();
@@ -238,7 +238,7 @@ public class VoiceActivity extends AppCompatActivity {
                         alertDialog.cancel();
                     }
                 }
-            } else if(intent.getAction() == ACTION_FCM_TOKEN) {
+            } else if (intent.getAction().compareToIgnoreCase(ACTION_FCM_TOKEN) == 0) {
                 registerForCallInvites();
             }
         }
