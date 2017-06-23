@@ -325,7 +325,6 @@ public class VoiceActivity extends AppCompatActivity {
      *
      */
     private void registerForCallInvites() {
-        FirebaseApp.initializeApp(this);
         final String fcmToken = FirebaseInstanceId.getInstance().getToken();
         if (fcmToken != null) {
             Log.i(TAG, "Registering with FCM");
