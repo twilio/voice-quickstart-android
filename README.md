@@ -151,7 +151,7 @@ The SDK supports using emulators except in the following known cases:
 2. Emulators must have Google Play services support to use FCM to receive call invites
 3. Running on x86 API 25 emulators results in system crashes
 
-In general we advise using a real device when doing development with our SDK since real-time audio is a performance driven operation.
+In general we advise using a real device when doing development with our SDK since real-time audio is a performance oriented operation.
 
 ## Reducing APK Size
 
