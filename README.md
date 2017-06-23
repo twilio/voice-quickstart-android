@@ -3,7 +3,8 @@
 Get started with Voice on Android:
 
 - [Quickstart](#quickstart) - Run the quickstart app
-- [Migrating from GCM to FCM](#migrating-from-gcm-to-fcm) - Migrating your app from 2.0.0-beta4 or lower 
+- [Migrating from GCM to FCM](#migrating-from-gcm-to-fcm) - Migrating your app from 2.0.0-beta4 or lower
+- [Emulator Support](#emulator-support) - Android emulator support
 - [Reducing APK Size](#reducing-apk-size) - Use ABI splits to reduce APK size
 - [More Documentation](#more-documentation) - More documentation related to the Voice Android SDK
 - [Twilio Helper Libraries](#twilio-helper-libraries) - TwiML quickstarts.
@@ -142,6 +143,15 @@ you will have registered a GCM Push credential. You now need to add an FCM Push 
 1. **Upgrade your Android app to use FCM**. When calling `Voice.register(Context context, String accessToken, String fcmToken, RegistrationListener listener)` you must provide an FCM token.
 Registering with a GCM token will not work. Review this app to see how to integrate FCM in your own Android app.
 
+## Emulator Support
+
+The SDK supports using emulators except in the following known cases:
+
+1. Emulators with API 22 or lower have bad audio emulation, the sound is generally inaudible
+2. Emulators must have Google Play services support to use FCM to receive call invites
+3. Running on x86 API 25 emulators results in application crashes
+
+In general we advise using a real device when doing development with our SDK since real-time audio is a performance oriented operation.
 
 ## Reducing APK Size
 
