@@ -31,7 +31,7 @@ To get started with the Quickstart application follow these steps. Steps 1-6 wil
 
 ### <a name="bullet2"></a>2. Create a Voice API key
 
-Go to the [API Keys page](https://www.twilio.com/console/voice/dev-tools/api-keys) and create a new API key.
+Go to the [API Keys page](https://www.twilio.com/console/voice/runtime/api-keys) and create a new API key.
 
 <img width="700px" src="images/quickstart/add_api_key.png"/>
 
