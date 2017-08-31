@@ -401,15 +401,15 @@ public class VoiceActivity extends AppCompatActivity {
                 savedAudioMode = audioManager.getMode();
                 // Request audio focus before making any device switch.
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    AudioAttributes mPlaybackAttributes = new AudioAttributes.Builder()
-                            .setUsage(AudioAttributes.USAGE_MEDIA)
+                    AudioAttributes playbackAttributes = new AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
                             .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                             .build();
-                    AudioFocusRequest mFocusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
-                            .setAudioAttributes(mPlaybackAttributes)
+                    AudioFocusRequest focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+                            .setAudioAttributes(playbackAttributes)
                             .setAcceptsDelayedFocusGain(true)
                             .build();
-                    audioManager.requestAudioFocus(mFocusRequest);
+                    audioManager.requestAudioFocus(focusRequest);
                 } else {
                     audioManager.requestAudioFocus(null, AudioManager.STREAM_VOICE_CALL,
                             -                        AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
