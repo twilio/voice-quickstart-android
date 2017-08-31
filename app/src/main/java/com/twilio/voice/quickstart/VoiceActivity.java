@@ -1,6 +1,7 @@
 package com.twilio.voice.quickstart;
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -8,7 +9,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
 import android.media.AudioManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
@@ -34,6 +38,8 @@ import com.twilio.voice.RegistrationListener;
 import com.twilio.voice.Voice;
 
 import java.util.HashMap;
+
+import static android.os.Build.VERSION.SDK;
 
 public class VoiceActivity extends AppCompatActivity {
 
@@ -394,9 +400,20 @@ public class VoiceActivity extends AppCompatActivity {
             if (setFocus) {
                 savedAudioMode = audioManager.getMode();
                 // Request audio focus before making any device switch.
-                audioManager.requestAudioFocus(null, AudioManager.STREAM_VOICE_CALL,
-                        AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
-
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    AudioAttributes mPlaybackAttributes = new AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_MEDIA)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                            .build();
+                    AudioFocusRequest mFocusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+                            .setAudioAttributes(mPlaybackAttributes)
+                            .setAcceptsDelayedFocusGain(true)
+                            .build();
+                    audioManager.requestAudioFocus(mFocusRequest);
+                } else {
+                    audioManager.requestAudioFocus(null, AudioManager.STREAM_VOICE_CALL,
+                            -                        AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+                }
                 /*
                  * Start by setting MODE_IN_COMMUNICATION as default audio mode. It is
                  * required to be in this mode when playout and/or recording starts for

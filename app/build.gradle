@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 25
+    compileSdkVersion 26
     buildToolsVersion "25.0.2"
 
     defaultConfig {
         applicationId "com.twilio.voice.quickstart"
-        minSdkVersion 16
-        targetSdkVersion 25
+        minSdkVersion 21
+        targetSdkVersion 26
         versionCode 1
         versionName "1.0"
     }
