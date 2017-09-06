@@ -281,6 +281,7 @@ public class VoiceActivity extends AppCompatActivity {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                soundPoolManager.stopRinging();
                 answer();
                 setCallUI();
                 alertDialog.dismiss();
@@ -293,6 +294,7 @@ public class VoiceActivity extends AppCompatActivity {
 
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
+                soundPoolManager.stopRinging();
                 activeCallInvite.reject(VoiceActivity.this);
                 alertDialog.dismiss();
             }
