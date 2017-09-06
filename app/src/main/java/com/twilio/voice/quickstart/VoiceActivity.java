@@ -1,7 +1,6 @@
 package com.twilio.voice.quickstart;
 
 import android.Manifest;
-import android.annotation.TargetApi;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -28,7 +27,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Chronometer;
 
-import com.google.firebase.FirebaseApp;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.twilio.voice.Call;
 import com.twilio.voice.CallException;
@@ -38,8 +36,6 @@ import com.twilio.voice.RegistrationListener;
 import com.twilio.voice.Voice;
 
 import java.util.HashMap;
-
-import static android.os.Build.VERSION.SDK;
 
 public class VoiceActivity extends AppCompatActivity {
 
@@ -336,7 +332,7 @@ public class VoiceActivity extends AppCompatActivity {
         final String fcmToken = FirebaseInstanceId.getInstance().getToken();
         if (fcmToken != null) {
             Log.i(TAG, "Registering with FCM");
-            Voice.register(this, TWILIO_ACCESS_TOKEN, fcmToken, registrationListener);
+            Voice.register(this, TWILIO_ACCESS_TOKEN, Voice.RegistrationChannel.FCM, fcmToken, registrationListener);
         }
     }
 
