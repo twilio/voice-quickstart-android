@@ -160,7 +160,7 @@ public class VoiceActivity extends AppCompatActivity {
             @Override
             public void onConnectFailure(Call call, CallException error) {
                 setAudioFocus(false);
-                Log.d(TAG, "Disconnected");
+                Log.d(TAG, "Connect failure");
                 String message = String.format("Call Error: %d, %s", error.getErrorCode(), error.getMessage());
                 Log.e(TAG, message);
                 Snackbar.make(coordinatorLayout, message, SNACKBAR_DURATION).show();
