@@ -158,6 +158,16 @@ public class VoiceActivity extends AppCompatActivity {
     private Call.Listener callListener() {
         return new Call.Listener() {
             @Override
+            public void onConnectFailure(Call call, CallException error) {
+                setAudioFocus(false);
+                Log.d(TAG, "Disconnected");
+                String message = String.format("Call Error: %d, %s", error.getErrorCode(), error.getMessage());
+                Log.e(TAG, message);
+                Snackbar.make(coordinatorLayout, message, SNACKBAR_DURATION).show();
+                resetUI();
+            }
+
+            @Override
             public void onConnected(Call call) {
                 setAudioFocus(true);
                 Log.d(TAG, "Connected");
