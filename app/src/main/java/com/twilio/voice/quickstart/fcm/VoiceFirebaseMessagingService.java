@@ -1,11 +1,14 @@
 package com.twilio.voice.quickstart.fcm;
 
+import android.annotation.TargetApi;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.service.notification.StatusBarNotification;
 import android.support.v4.app.NotificationCompat;
@@ -29,6 +32,7 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
     private static final String TAG = "VoiceFCMService";
     private static final String NOTIFICATION_ID_KEY = "NOTIFICATION_ID";
     private static final String CALL_SID_KEY = "CALL_SID";
+    private static final String VOICE_CHANNEL = "default";
 
     private NotificationManager notificationManager;
 
@@ -70,6 +74,7 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
 
     private void notify(CallInvite callInvite, int notificationId) {
         String callSid = callInvite.getCallSid();
+        Notification notification = null;
 
         if (callInvite.getState() == CallInvite.State.PENDING) {
             Intent intent = new Intent(this, VoiceActivity.class);
@@ -87,18 +92,29 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
             extras.putInt(NOTIFICATION_ID_KEY, notificationId);
             extras.putString(CALL_SID_KEY, callSid);
 
-            NotificationCompat.Builder notificationBuilder =
-                    new NotificationCompat.Builder(this)
-                            .setSmallIcon(R.drawable.ic_call_end_white_24px)
-                            .setContentTitle(getString(R.string.app_name))
-                            .setContentText(callInvite.getFrom() + " is calling.")
-                            .setAutoCancel(true)
-                            .setExtras(extras)
-                            .setContentIntent(pendingIntent)
-                            .setGroup("test_app_notification")
-                            .setColor(Color.rgb(214, 10, 37));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                NotificationChannel callInviteChannel = new NotificationChannel(VOICE_CHANNEL,
+                        "Pimary Voice Channel", NotificationManager.IMPORTANCE_DEFAULT);
+                callInviteChannel.setLightColor(Color.GREEN);
+                callInviteChannel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+                notificationManager.createNotificationChannel(callInviteChannel);
 
-            notificationManager.notify(notificationId, notificationBuilder.build());
+                notification = buildNotification(callInvite.getFrom() + " is calling.", pendingIntent, extras);
+                notificationManager.notify(notificationId, notification);
+            } else {
+                NotificationCompat.Builder notificationBuilder =
+                        new NotificationCompat.Builder(this)
+                                .setSmallIcon(R.drawable.ic_call_end_white_24px)
+                                .setContentTitle(getString(R.string.app_name))
+                                .setContentText(callInvite.getFrom() + " is calling.")
+                                .setAutoCancel(true)
+                                .setExtras(extras)
+                                .setContentIntent(pendingIntent)
+                                .setGroup("test_app_notification")
+                                .setColor(Color.rgb(214, 10, 37));
+
+                notificationManager.notify(notificationId, notificationBuilder.build());
+            }
         } else {
             SoundPoolManager.getInstance(this).stopRinging();
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
@@ -108,7 +124,7 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
                  */
                 StatusBarNotification[] activeNotifications = notificationManager.getActiveNotifications();
                 for (StatusBarNotification statusBarNotification : activeNotifications) {
-                    Notification notification = statusBarNotification.getNotification();
+                    notification = statusBarNotification.getNotification();
                     Bundle extras = notification.extras;
                     String notificationCallSid = extras.getString(CALL_SID_KEY);
 
@@ -142,5 +158,25 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
         intent.putExtra(VoiceActivity.INCOMING_CALL_NOTIFICATION_ID, notificationId);
         intent.putExtra(VoiceActivity.INCOMING_CALL_INVITE, callInvite);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+    /**
+     * Build a notification.
+     *
+     * @param text the text of the notification
+     * @param pendingIntent the body, pending intent for the notification
+     * @param extras extras passed with the notification
+     * @return the builder
+     */
+    @TargetApi(Build.VERSION_CODES.O)
+    public Notification buildNotification(String text, PendingIntent pendingIntent, Bundle extras) {
+        return new Notification.Builder(getApplicationContext(), VOICE_CHANNEL)
+                .setSmallIcon(R.drawable.ic_call_end_white_24px)
+                .setContentTitle(getString(R.string.app_name))
+                .setContentText(text)
+                .setContentIntent(pendingIntent)
+                .setExtras(extras)
+                .setAutoCancel(true)
+                .build();
     }
 }
