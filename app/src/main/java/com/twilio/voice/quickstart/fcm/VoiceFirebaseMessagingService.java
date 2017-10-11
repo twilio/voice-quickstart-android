@@ -94,7 +94,7 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 NotificationChannel callInviteChannel = new NotificationChannel(VOICE_CHANNEL,
-                        "Pimary Voice Channel", NotificationManager.IMPORTANCE_DEFAULT);
+                        "Primary Voice Channel", NotificationManager.IMPORTANCE_DEFAULT);
                 callInviteChannel.setLightColor(Color.GREEN);
                 callInviteChannel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
                 notificationManager.createNotificationChannel(callInviteChannel);
