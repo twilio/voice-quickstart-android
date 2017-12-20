@@ -104,7 +104,7 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
             } else {
                 NotificationCompat.Builder notificationBuilder =
                         new NotificationCompat.Builder(this)
-                                .setSmallIcon(R.drawable.ic_call_end_white_24px)
+                                .setSmallIcon(R.drawable.ic_call_end_white_24dp)
                                 .setContentTitle(getString(R.string.app_name))
                                 .setContentText(callInvite.getFrom() + " is calling.")
                                 .setAutoCancel(true)
@@ -171,7 +171,7 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
     @TargetApi(Build.VERSION_CODES.O)
     public Notification buildNotification(String text, PendingIntent pendingIntent, Bundle extras) {
         return new Notification.Builder(getApplicationContext(), VOICE_CHANNEL)
-                .setSmallIcon(R.drawable.ic_call_end_white_24px)
+                .setSmallIcon(R.drawable.ic_call_end_white_24dp)
                 .setContentTitle(getString(R.string.app_name))
                 .setContentText(text)
                 .setContentIntent(pendingIntent)

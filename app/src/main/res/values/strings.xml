@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Voice Quickstart</string>
+    <string name="turn_speaker_on">Speaker ON</string>
 </resources>
