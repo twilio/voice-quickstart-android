@@ -9,52 +9,53 @@
     tools:context="com.twilio.voice.quickstart.VoiceActivity">
 
     <Chronometer
+        android:id="@+id/chronometer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/chronometer"
-        android:textSize="60dp"
-        android:layout_gravity="bottom|top"
+        android:layout_gravity="top|center"
         android:layout_marginTop="@dimen/activity_vertical_margin"
         android:textColor="@color/colorAccent"
-        android:visibility="invisible"
-        />
+        android:textSize="60sp"
+        android:visibility="invisible" />
 
     <android.support.design.widget.FloatingActionButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/call_action_fab"
-        android:src="@drawable/ic_call_white_24px"
+        android:src="@drawable/ic_call_white_24dp"
         android:layout_gravity="bottom|center"
         android:layout_marginBottom="@dimen/activity_vertical_margin"
         android:layout_marginRight="@dimen/activity_horizontal_margin"
-        android:visibility="invisible"
-        />
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:visibility="invisible" />
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:layout_gravity="bottom|right"
+        android:layout_gravity="bottom|end"
         android:orientation="vertical">
 
         <android.support.design.widget.FloatingActionButton
-            android:id="@+id/speakerphone_action_fab"
+            android:id="@+id/mute_action_fab"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom|right"
-            android:src="@drawable/ic_volume_down_white_24px"
+            android:layout_gravity="bottom|end"
+            android:src="@drawable/ic_mic_white_24dp"
             android:layout_marginBottom="@dimen/activity_vertical_margin"
             android:layout_marginRight="@dimen/activity_horizontal_margin"
+            android:layout_marginEnd="@dimen/activity_horizontal_margin"
             android:visibility="invisible" />
 
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/hangup_action_fab"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom|right"
-            android:src="@drawable/ic_call_end_white_24px"
+            android:layout_gravity="bottom|end"
+            android:src="@drawable/ic_call_end_white_24dp"
             android:layout_marginBottom="@dimen/activity_vertical_margin"
             android:layout_marginRight="@dimen/activity_horizontal_margin"
+            android:layout_marginEnd="@dimen/activity_horizontal_margin"
             android:visibility="invisible" />
     </LinearLayout>
 </android.support.design.widget.CoordinatorLayout>

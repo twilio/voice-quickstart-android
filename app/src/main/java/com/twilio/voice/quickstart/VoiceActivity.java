@@ -24,6 +24,9 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Chronometer;
 
@@ -61,7 +64,7 @@ public class VoiceActivity extends AppCompatActivity {
     private CoordinatorLayout coordinatorLayout;
     private FloatingActionButton callActionFab;
     private FloatingActionButton hangupActionFab;
-    private FloatingActionButton speakerActionFab;
+    private FloatingActionButton muteActionFab;
     private Chronometer chronometer;
     private SoundPoolManager soundPoolManager;
 
@@ -82,15 +85,15 @@ public class VoiceActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_voice);
-        coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinator_layout);
-        callActionFab = (FloatingActionButton) findViewById(R.id.call_action_fab);
-        hangupActionFab = (FloatingActionButton) findViewById(R.id.hangup_action_fab);
-        speakerActionFab = (FloatingActionButton) findViewById(R.id.speakerphone_action_fab);
-        chronometer = (Chronometer) findViewById(R.id.chronometer);
+        coordinatorLayout = findViewById(R.id.coordinator_layout);
+        callActionFab = findViewById(R.id.call_action_fab);
+        hangupActionFab = findViewById(R.id.hangup_action_fab);
+        muteActionFab = findViewById(R.id.mute_action_fab);
+        chronometer = findViewById(R.id.chronometer);
 
         callActionFab.setOnClickListener(callActionFabClickListener());
         hangupActionFab.setOnClickListener(hangupActionFabClickListener());
-        speakerActionFab.setOnClickListener(speakerphoneActionFabClickListener());
+        muteActionFab.setOnClickListener(muteActionFabClickListener());
 
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
@@ -107,6 +110,7 @@ public class VoiceActivity extends AppCompatActivity {
          * Needed for setting/abandoning audio focus during a call
          */
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        audioManager.setSpeakerphoneOn(true);
 
         /*
          * Enable changing the volume using the up/down keys during a conversation
@@ -194,7 +198,7 @@ public class VoiceActivity extends AppCompatActivity {
     private void setCallUI() {
         callActionFab.hide();
         hangupActionFab.show();
-        speakerActionFab.show();
+        muteActionFab.show();
         chronometer.setVisibility(View.VISIBLE);
         chronometer.setBase(SystemClock.elapsedRealtime());
         chronometer.start();
@@ -204,11 +208,9 @@ public class VoiceActivity extends AppCompatActivity {
      * Reset UI elements
      */
     private void resetUI() {
-        if (!audioManager.isSpeakerphoneOn()) {
-            toggleSpeakerPhone();
-        }
-        speakerActionFab.hide();
         callActionFab.show();
+        muteActionFab.setImageDrawable(ContextCompat.getDrawable(VoiceActivity.this, R.drawable.ic_mic_white_24dp));
+        muteActionFab.hide();
         hangupActionFab.hide();
         chronometer.setVisibility(View.INVISIBLE);
         chronometer.stop();
@@ -367,11 +369,11 @@ public class VoiceActivity extends AppCompatActivity {
         };
     }
 
-    private View.OnClickListener speakerphoneActionFabClickListener() {
+    private View.OnClickListener muteActionFabClickListener() {
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                toggleSpeakerPhone();
+                mute();
             }
         };
     }
@@ -393,13 +395,15 @@ public class VoiceActivity extends AppCompatActivity {
         }
     }
 
-    private void toggleSpeakerPhone() {
-        if (audioManager.isSpeakerphoneOn()) {
-            audioManager.setSpeakerphoneOn(false);
-            speakerActionFab.setImageDrawable(ContextCompat.getDrawable(VoiceActivity.this, R.drawable.ic_volume_mute_white_24px));
-        } else {
-            audioManager.setSpeakerphoneOn(true);
-            speakerActionFab.setImageDrawable(ContextCompat.getDrawable(VoiceActivity.this, R.drawable.ic_volume_down_white_24px));
+    private void mute() {
+        if (activeCall != null) {
+            boolean mute = !activeCall.isMuted();
+            activeCall.mute(mute);
+            if (mute) {
+                muteActionFab.setImageDrawable(ContextCompat.getDrawable(VoiceActivity.this, R.drawable.ic_mic_white_off_24dp));
+            } else {
+                muteActionFab.setImageDrawable(ContextCompat.getDrawable(VoiceActivity.this, R.drawable.ic_mic_white_24dp));
+            }
         }
     }
 
@@ -474,4 +478,26 @@ public class VoiceActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.speaker_menu_item:
+                if (audioManager.isSpeakerphoneOn()) {
+                    audioManager.setSpeakerphoneOn(false);
+                    item.setIcon(R.drawable.ic_phonelink_ring_white_24dp);
+                } else {
+                    audioManager.setSpeakerphoneOn(true);
+                    item.setIcon(R.drawable.ic_volume_up_white_24dp);
+                }
+                break;
+        }
+        return true;
+    }
 }
