@@ -24,11 +24,13 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Chronometer;
+import android.widget.EditText;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.twilio.voice.Call;
@@ -45,8 +47,8 @@ public class VoiceActivity extends AppCompatActivity {
     private static final String TAG = "VoiceActivity";
 
     /*
-     * You must provide a Twilio Access Token to connect to the Voice service
-     */
+    * You must provide a Twilio Access Token to connect to the Voice service
+    */
     private static final String TWILIO_ACCESS_TOKEN = "TWILIO_ACCESS_TOKEN";
 
     private static final int MIC_PERMISSION_REQUEST_CODE = 1;
@@ -303,6 +305,24 @@ public class VoiceActivity extends AppCompatActivity {
         };
     }
 
+    private DialogInterface.OnClickListener callClickListener() {
+        return new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                /*
+                 * Making an outgoing call
+                 */
+                EditText contact = (EditText) ((AlertDialog) dialog).findViewById(R.id.contact);
+
+                // Create an outgoing connection
+                twiMLParams.put("server_param_to", contact.getText().toString());
+                activeCall = Voice.call(VoiceActivity.this, TWILIO_ACCESS_TOKEN, twiMLParams, callListener);
+                setCallUI();
+                alertDialog.dismiss();
+            }
+        };
+    }
+
     private DialogInterface.OnClickListener cancelCallClickListener() {
         return new DialogInterface.OnClickListener() {
 
@@ -352,8 +372,8 @@ public class VoiceActivity extends AppCompatActivity {
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                activeCall = Voice.call(VoiceActivity.this, TWILIO_ACCESS_TOKEN, twiMLParams, callListener);
-                setCallUI();
+                alertDialog = createCallDialog(callClickListener(), cancelCallClickListener(), VoiceActivity.this);
+                alertDialog.show();
             }
         };
     }
@@ -499,5 +519,24 @@ public class VoiceActivity extends AppCompatActivity {
                 break;
         }
         return true;
+    }
+
+    public static AlertDialog createCallDialog(DialogInterface.OnClickListener callClickListener, DialogInterface.OnClickListener cancelClickListener, final Context context){
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
+
+        alertDialogBuilder.setIcon(R.drawable.ic_call_black_24dp);
+        alertDialogBuilder.setTitle("Call");
+        alertDialogBuilder.setPositiveButton("Call", callClickListener);
+        alertDialogBuilder.setNegativeButton("Cancel", cancelClickListener);
+        alertDialogBuilder.setCancelable(false);
+
+        LayoutInflater li = LayoutInflater.from(context);
+        View dialogView = li.inflate(R.layout.dialog_call, null);
+        final EditText contact = (EditText) dialogView.findViewById(R.id.contact);
+        contact.setHint(R.string.callee);
+        alertDialogBuilder.setView(dialogView);
+
+        return alertDialogBuilder.create();
+
     }
 }
