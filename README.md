@@ -60,34 +60,34 @@ Save your TwiML Application configuration, and grab the TwiML Application SID (a
 
 You can also use `Twilio Functions` to create the TwiML application. Go to the [Functions Page](https://www.twilio.com/console/runtime/functions/manage) and create a new `Functions` by choosing the `Blank` template. Provide `FUNCTION NAME` and `PATH`.
 
-The code snippet below demonstrates a simple TwiML application using `Twilio Functions`. 
+The code snippet below demonstrates a simple TwiML application using `Twilio Functions` that enables making outgoing call to a client or a phone number provided as `server_param_from` argument. 
 
-`
+```
 exports.handler = function(context, event, callback) {
-let twiml = new Twilio.twiml.VoiceResponse();
-from = event.server_param_from;
-from = (from)? "client:" + from : event.From;
-console.log(from);
-to = event.server_param_to;
+    let twiml = new Twilio.twiml.VoiceResponse();
+    from = event.server_param_from;
+    from = (from)? "client:" + from : event.From;
+    console.log(from);
+    to = event.server_param_to;
 
-// check if the call is made to a number or an identity
-defaultCallerId = "12525445359";
-phoneNumberChars = "+1234567890";
-if (!to) {
-console.log("TwiML Say");
-twiml.say("Hello! Goodbye!");
-} else if (phoneNumberChars.indexOf(to[0]) != -1) {
-console.log("TwiML Dial Number");
-twiml.dial({callerId : defaultCallerId}).number(to);
-} else {
-console.log("TwiML Dial Client");
-twiml.dial({callerId : from}).client(to);
-}
+    // check if the call is made to a number or an identity
+    defaultCallerId = "12525445359";
+    phoneNumberChars = "+1234567890";
+    if (!to) {
+        console.log("TwiML Say");
+        twiml.say("Hello! Goodbye!");
+    } else if (phoneNumberChars.indexOf(to[0]) != -1) {
+        console.log("TwiML Dial Number");
+        twiml.dial({callerId : defaultCallerId}).number(to);
+    } else {
+        console.log("TwiML Dial Client");
+        twiml.dial({callerId : from}).client(to);
+    }
 
-console.log(twiml.toString());
-callback(null, twiml);
+    console.log(twiml.toString());
+    callback(null, twiml);
 };
-`
+```
 
 ### <a name="bullet5"></a>5. Configure your application server
 
@@ -114,9 +114,11 @@ Run the quickstart app on an Android device
 <img height="500px" src="images/quickstart/voice_activity.png">"
 
 
-Press the call button to connect to Twilio
+Press the call button to connect to Twilio. Enter a client name or a PSTN number in the call dialog. 
 
 <img height="500px" src="images/quickstart/voice_make_call_dialog.png">
+
+Press the call button to start the call.
 
 <img height="500px" src="images/quickstart/voice_make_call.png">
 
