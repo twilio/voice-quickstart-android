@@ -60,7 +60,7 @@ Save your TwiML Application configuration, and grab the TwiML Application SID (a
 
 You can also use `Twilio Functions` to create the TwiML application. Go to the [Functions Page](https://www.twilio.com/console/runtime/functions/manage) and create a new `Functions` by choosing the `Blank` template. Provide `FUNCTION NAME` and `PATH`.
 
-The code snippet below demonstrates a simple TwiML application using `Twilio Functions` that enables making outgoing call to a client or a phone number provided as `server_param_from` argument. 
+The code snippet below demonstrates a simple TwiML application using `Twilio Functions` that enables making outgoing call to a client or a phone number provided as `server_param_to` argument. 
 
 ```
 exports.handler = function(context, event, callback) {
