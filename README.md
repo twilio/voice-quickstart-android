@@ -70,9 +70,11 @@ exports.handler = function(context, event, callback) {
     console.log(from);
     to = event.server_param_to;
 
-    // check if the call is made to a number or an identity
-    defaultCallerId = "12525445359";
+     // Change to a Twilio number or a verified caller ID on your account
+    defaultCallerId = "1234567890";
     phoneNumberChars = "+1234567890";
+
+    // Check if the call is made to a number or an identity. For simplicity, the following code assumes that identity name starts only with letters and not with numbers.
     if (!to) {
         console.log("TwiML Say");
         twiml.say("Hello! Goodbye!");
