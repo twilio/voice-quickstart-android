@@ -442,7 +442,8 @@ public class VoiceActivity extends AppCompatActivity {
                             .setAcceptsDelayedFocusGain(true)
                             .setOnAudioFocusChangeListener(new AudioManager.OnAudioFocusChangeListener() {
                                 @Override
-                                public void onAudioFocusChange(int i) { }
+                                public void onAudioFocusChange(int i) {
+                                }
                             })
                             .build();
                     audioManager.requestAudioFocus(focusRequest);
@@ -521,7 +522,9 @@ public class VoiceActivity extends AppCompatActivity {
         return true;
     }
 
-    public static AlertDialog createCallDialog(DialogInterface.OnClickListener callClickListener, DialogInterface.OnClickListener cancelClickListener, final Context context){
+    public static AlertDialog createCallDialog(final DialogInterface.OnClickListener callClickListener,
+                                               final DialogInterface.OnClickListener cancelClickListener,
+                                               final Context context) {
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
 
         alertDialogBuilder.setIcon(R.drawable.ic_call_black_24dp);

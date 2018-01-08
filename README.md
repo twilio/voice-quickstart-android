@@ -58,15 +58,16 @@ As you can see we’ve used our ngrok public address in the Request URL field ab
 
 Save your TwiML Application configuration, and grab the TwiML Application SID (a long identifier beginning with the characters "AP").
 
-You can also use `Twilio Functions` to create the TwiML application. Go to the [Functions Page](https://www.twilio.com/console/runtime/functions/manage) and create a new `Functions` by choosing the `Blank` template. Provide `FUNCTION NAME` and `PATH`.
+You can also use `Twilio Functions` to create the TwiML application. Go to the [Functions Page](https://www.twilio.com/console/runtime/functions/manage) and create a new `Function` by choosing the `Blank` template. Provide `FUNCTION NAME` and `PATH`.
 
-The code snippet below demonstrates a simple TwiML application using `Twilio Functions` that enables making outgoing call to a client or a phone number provided as `server_param_to` argument. 
+The code snippet below demonstrates a simple TwiML application using `Twilio Functions` that enables making outgoing calls to a client or a phone number provided as `server_param_to` argument. 
 
 ```
 exports.handler = function(context, event, callback) {
     let twiml = new Twilio.twiml.VoiceResponse();
-    from = event.server_param_from;
-    from = (from)? "client:" + from : event.From;
+    let from = (event.server_param_from) ?
+               ("client:" + event.server_param_from) :
+               (event.From);
     console.log(from);
     to = event.server_param_to;
 
