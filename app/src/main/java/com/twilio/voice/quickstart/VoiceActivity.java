@@ -41,6 +41,7 @@ import com.twilio.voice.RegistrationListener;
 import com.twilio.voice.Voice;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class VoiceActivity extends AppCompatActivity {
 
@@ -309,13 +310,9 @@ public class VoiceActivity extends AppCompatActivity {
         return new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                /*
-                 * Making an outgoing call
-                 */
+                // Place a call
                 EditText contact = (EditText) ((AlertDialog) dialog).findViewById(R.id.contact);
-
-                // Create an outgoing connection
-                twiMLParams.put("server_param_to", contact.getText().toString());
+                twiMLParams.put("to", contact.getText().toString());
                 activeCall = Voice.call(VoiceActivity.this, TWILIO_ACCESS_TOKEN, twiMLParams, callListener);
                 setCallUI();
                 alertDialog.dismiss();
@@ -329,7 +326,9 @@ public class VoiceActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 soundPoolManager.stopRinging();
-                activeCallInvite.reject(VoiceActivity.this);
+                if(activeCallInvite != null) {
+                    activeCallInvite.reject(VoiceActivity.this);
+                }
                 alertDialog.dismiss();
             }
         };
