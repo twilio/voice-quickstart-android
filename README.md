@@ -144,7 +144,7 @@ To make client to client calls, you need the application running on two devices.
 
 Enter the client identity of the newly registered device to initiate a client to client call from the first device.
 
-<img height="500px" src="images/quickstart/make_call_to_client.png">|<img height="500px" src="images/quickstart/incoming_call_from_alice.png">
+![caller alice](images/quickstart/make_call_to_client.png "caller alice") ![callee bob](images/quickstart/incoming_call_from_alice.png "callee bob")
 
 ### <a name="bullet11"></a>11. Make client to PSTN call
 
