@@ -84,12 +84,11 @@ Run the quickstart app on an Android device
 
 <img height="500px" src="images/quickstart/voice_activity.png">"
 
-
-Press the call button to connect to Twilio.
+Press the call button to open the call dialog.
 
 <img height="500px" src="images/quickstart/voice_make_call_dialog.png">
 
-Press the call button to start a call. You will hear the congratulatory message.
+Leave the dialog text field empty and press the call button to start a call. You will hear the congratulatory message. Dialing another client or a number is described in steps 10 and 11.
 
 <img height="500px" src="images/quickstart/voice_make_call.png">
 
@@ -127,7 +126,7 @@ Put the `PUSH_CREDENTIAL_SID` configuration info into your application server by
     PUSH_CREDENTIAL_SID = 'CR***'
     APP_SID = 'AP***'
 
-Once you’ve done that, restart the server so it uses the new configuration info. Now it's time to test. Hit your application server's `placeCall` endpoint. This will trigger a Twilio REST API request that will make an inbound call to your mobile app. You will receive a incoming call notification.
+Once you’ve done that, restart the server so it uses the new configuration info. Now it's time to test. Use your browser to initiate an incoming call by navigating to the "localhost:5000/placeCall" . This will trigger a Twilio REST API request that will make an inbound call to your mobile app. You will receive an incoming call notification.
 
 <img height="500px" src="images/quickstart/incoming_notification.png">"
 
@@ -139,11 +138,11 @@ Once your app accepts the call, you should hear a congratulatory message.
 
 ### <a name="bullet10"></a>10. Make client to client call
 
-To make client to client calls, follow step 6 through step 8 to run the application in two devices. Press the call button to connect to Twilio.  
+To make client to client calls, you need the application running on two devices. To run the application on an additional device, make sure you use a different identity in your access token when registering the new device. Press the call button to open the call dialog.
 
 <img height="500px" src="images/quickstart/voice_make_call_dialog.png">
 
-Enter a client name and press the call button to place a call.
+Enter the client identity of the newly registered device to initiate a client to client call from the first device.
 
 <img height="500px" src="images/quickstart/make_call_to_client.png">
 
@@ -151,9 +150,9 @@ Enter a client name and press the call button to place a call.
 
 A verified phone number is one that you can use as your Caller ID when making outbound calls with Twilio. This number has not been ported into Twilio and you do not pay Twilio for this phone number.
 
-To make client to number calls, first get a valid Twilio number to your account via https://www.twilio.com/console/phone-numbers/verified. Update `server.py` and replace `CALLER_NUMBER` with the verified number.  
+To make client to number calls, first get a valid Twilio number to your account via https://www.twilio.com/console/phone-numbers/verified. Update `server.py` and replace `CALLER_NUMBER` with the verified number. Restart the server so it uses the new value.
 
-Follow step 6 through step 8 to run the application in a device. Press the call button to connect to Twilio.
+Press the call button to open the call dialog.
 
 <img height="500px" src="images/quickstart/voice_make_call_dialog.png">
 

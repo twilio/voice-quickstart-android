@@ -31,7 +31,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Chronometer;
 import android.widget.EditText;
-
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.twilio.voice.Call;
 import com.twilio.voice.CallException;
@@ -41,7 +40,6 @@ import com.twilio.voice.RegistrationListener;
 import com.twilio.voice.Voice;
 
 import java.util.HashMap;
-import java.util.Map;
 
 public class VoiceActivity extends AppCompatActivity {
 
