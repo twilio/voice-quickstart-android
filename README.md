@@ -88,7 +88,7 @@ Press the call button to open the call dialog.
 
 <img height="500px" src="images/quickstart/voice_make_call_dialog.png">
 
-Leave the dialog text field empty and press the call button to start a call. You will hear the congratulatory message. Dialing another client or a number is described in steps 10 and 11.
+Leave the dialog text field empty and press the call button to start a call. You will hear the congratulatory message. Support for dialing another client or number is described in steps 10 and 11.
 
 <img height="500px" src="images/quickstart/voice_make_call.png">
 
@@ -130,7 +130,7 @@ Once you’ve done that, restart the server so it uses the new configuration inf
 
 <img height="500px" src="images/quickstart/incoming_notification.png">"
 
-if your applicaion is in the foreground, you will see an alert dialog.
+If your applicaion is in the foreground, you will see an alert dialog.
 
 <img height="500px" src="images/quickstart/incoming_call.png">"
 
