@@ -48,7 +48,7 @@ public class VoiceActivity extends AppCompatActivity {
     /*
     * You must provide a Twilio Access Token to connect to the Voice service
     */
-    private static final String TWILIO_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJpc3MiOiJTS2QwMjkwNWY0OTNiMzNiNTBmZDNlMzJmYmRmNDMyMTIxIiwiZ3JhbnRzIjp7InZvaWNlIjp7Im91dGdvaW5nIjp7ImFwcGxpY2F0aW9uX3NpZCI6IkFQZTc1ODg5Yzk3YjNhZjBmMzM4NjlhOGM1N2Q4ZDg0MjUifSwicHVzaF9jcmVkZW50aWFsX3NpZCI6IkNSZmM4NzE1NmY5YjJiNDBjN2M3ODY2NjA5Y2I4Zjk3MzQifSwiaWRlbnRpdHkiOiJib2IifSwic3ViIjoiQUM5NmNjYzkwNDc1M2IzMzY0ZjI0MjExZThkOTc0NmE5MyIsImV4cCI6MTUxNTcyMDEwNywibmJmIjoxNTE1NjMzNzA3fQ.f6E63lBFLNSUBN7UBxNXT-ZutdXe6skquS13Z7CRyEA";
+    private static final String TWILIO_ACCESS_TOKEN = "TWILIO_ACCESS_TOKEN";
 
     private static final int MIC_PERMISSION_REQUEST_CODE = 1;
     private static final int SNACKBAR_DURATION = 4000;
