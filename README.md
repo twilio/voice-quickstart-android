@@ -23,6 +23,8 @@ To get started with the Quickstart application follow these steps. Steps 1-6 wil
 7. [Generate google-services.json](#bullet7)
 8. [Add a Push Credential using your FCM Server API Key](#bullet8)
 9. [Receiving an Incoming Notification](#bullet9)
+10. [Make client to client call](#bullet10)
+11. [Make client to PSTN call](#bullet11)
 
 
 ### <a name="bullet1"></a>1. Open the project in Android Studio
@@ -39,27 +41,29 @@ Save the generated `API_KEY` and `API_KEY_SECRET` in your notepad. You will need
 
 ### <a name="bullet3"></a>3. Configure a server to generate an access token to use in the app
 
-[Download starter project for the server.](https://github.com/twilio/voice-quickstart-server-python)
+Download one of the starter projects for the server.
+
+* [voice-quickstart-server-python](https://github.com/twilio/voice-quickstart-server-python)
+* [voice-quickstart-server-node](https://github.com/twilio/voice-quickstart-server-node)
+* [voice-quickstart-server-java](https://github.com/twilio/voice-quickstart-server-java)
+
 Follow the instructions in the server's README to get the application server up and running locally and accessible via the public Internet. For now just add the Twilio Account SID that you can obtain from the console, and  the `API_KEY` and `API_SECRET` you obtained in the previous step. 
 
     ACCOUNT_SID = 'AC***'
     API_KEY = 'SK***'
     API_KEY_SECRET = '***'
 
-
 ### <a name="bullet4"></a>4. Create a TwiML application
 
 Next, we need to create a TwiML application. A TwiML application identifies a public URL for retrieving TwiML call control instructions. When your Android app makes a call to the Twilio cloud, Twilio will make a webhook request to this URL, your application server will respond with generated TwiML, and Twilio will execute the instructions you’ve provided.
 
-To create a TwiML application, go to the TwiML app page. Create a new TwiML application, and use the public URL of your application server’s `/outgoing` endpoint as the Voice Request URL.
+To create a TwiML application, go to the TwiML app page. Create a new TwiML application, and use the public URL of your application server’s `/makeCall` endpoint as the Voice Request URL.
 
 <img width="700px" src="images/quickstart/create_twml_app.png"/>
-
 
 As you can see we’ve used our ngrok public address in the Request URL field above.
 
 Save your TwiML Application configuration, and grab the TwiML Application SID (a long identifier beginning with the characters "AP").
-
 
 ### <a name="bullet5"></a>5. Configure your application server
 
@@ -85,8 +89,11 @@ Run the quickstart app on an Android device
 
 <img height="500px" src="images/quickstart/voice_activity.png">"
 
+Press the call button to open the call dialog.
 
-Press the call button to connect to Twilio
+<img height="500px" src="images/quickstart/voice_make_call_dialog.png">
+
+Leave the dialog text field empty and press the call button to start a call. You will hear the congratulatory message. Support for dialing another client or number is described in steps 10 and 11.
 
 <img height="500px" src="images/quickstart/voice_make_call.png">
 
@@ -124,9 +131,40 @@ Put the `PUSH_CREDENTIAL_SID` configuration info into your application server by
     PUSH_CREDENTIAL_SID = 'CR***'
     APP_SID = 'AP***'
 
-Once you’ve done that, restart the server so it uses the new configuration info. Now it's time to test. Hit your application server's `placeCall` endpoint. This will trigger a Twilio REST API request that will make an inbound call to your mobile app. Once your app accepts the call, you should hear a congratulatory message.
+Once you’ve done that, restart the server so it uses the new configuration info. Now it's time to test. Use your browser to initiate an incoming call by navigating to the "localhost:5000/placeCall" . This will trigger a Twilio REST API request that will make an inbound call to your mobile app. You will receive an incoming call notification.
 
 <img height="500px" src="images/quickstart/incoming_notification.png">"
+
+If your applicaion is in the foreground, you will see an alert dialog.
+
+<img height="500px" src="images/quickstart/incoming_call.png">"
+
+Once your app accepts the call, you should hear a congratulatory message.
+
+### <a name="bullet10"></a>10. Make client to client call
+
+To make client to client calls, you need the application running on two devices. To run the application on an additional device, make sure you use a different identity in your access token when registering the new device. Press the call button to open the call dialog.
+
+<img height="500px" src="images/quickstart/voice_make_call_dialog.png">
+
+Enter the client identity of the newly registered device to initiate a client to client call from the first device.
+
+![caller alice](images/quickstart/make_call_to_client.png "caller alice") ![callee bob](images/quickstart/incoming_call_from_alice.png "callee bob")
+
+### <a name="bullet11"></a>11. Make client to PSTN call
+
+A verified phone number is one that you can use as your Caller ID when making outbound calls with Twilio. This number has not been ported into Twilio and you do not pay Twilio for this phone number.
+
+To make client to number calls, first get a valid Twilio number to your account via https://www.twilio.com/console/phone-numbers/verified. Update `server.py` and replace `CALLER_NUMBER` with the verified number. Restart the server so it uses the new value.
+
+Press the call button to open the call dialog.
+
+<img height="500px" src="images/quickstart/voice_make_call_dialog.png">
+
+Enter a PSTN number and press the call button to place a call.
+
+<img height="500px" src="images/quickstart/make_call_to_number.png">
+
 
 ## Emulator Support
 
