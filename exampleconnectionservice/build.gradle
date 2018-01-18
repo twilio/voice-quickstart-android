@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.twilio.voice.exampleconnectionservice"
-        minSdkVersion 16
+        minSdkVersion 23
         targetSdkVersion 27
         versionCode 1
         versionName "1.0"
@@ -31,4 +31,5 @@ dependencies {
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'com.android.support:design:27.+'
     testCompile 'junit:junit:4.12'
+    compile 'com.twilio:voice-android:2.0.3'
 }

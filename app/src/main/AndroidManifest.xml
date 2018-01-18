@@ -17,16 +17,14 @@
         </activity>
 
         <!-- [START fcm_listener] -->
-        <service
-            android:name=".fcm.VoiceFirebaseMessagingService">
+        <service android:name=".fcm.VoiceFirebaseMessagingService">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
         <!-- [END fcm_listener] -->
         <!-- [START instanceId_listener] -->
-            <service
-                android:name=".fcm.VoiceFirebaseInstanceIDService" >
+        <service android:name=".fcm.VoiceFirebaseInstanceIDService">
             <intent-filter>
                 <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
             </intent-filter>
