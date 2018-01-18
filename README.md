@@ -41,7 +41,12 @@ Save the generated `API_KEY` and `API_KEY_SECRET` in your notepad. You will need
 
 ### <a name="bullet3"></a>3. Configure a server to generate an access token to use in the app
 
-[Download starter project for the server.](https://github.com/twilio/voice-quickstart-server-python)
+Download one of the starter projects for the server.
+
+* [voice-quickstart-server-python](https://github.com/twilio/voice-quickstart-server-python)
+* [voice-quickstart-server-node](https://github.com/twilio/voice-quickstart-server-node)
+* [voice-quickstart-server-java](https://github.com/twilio/voice-quickstart-server-java)
+
 Follow the instructions in the server's README to get the application server up and running locally and accessible via the public Internet. For now just add the Twilio Account SID that you can obtain from the console, and  the `API_KEY` and `API_SECRET` you obtained in the previous step. 
 
     ACCOUNT_SID = 'AC***'
@@ -52,7 +57,7 @@ Follow the instructions in the server's README to get the application server up 
 
 Next, we need to create a TwiML application. A TwiML application identifies a public URL for retrieving TwiML call control instructions. When your Android app makes a call to the Twilio cloud, Twilio will make a webhook request to this URL, your application server will respond with generated TwiML, and Twilio will execute the instructions you’ve provided.
 
-To create a TwiML application, go to the TwiML app page. Create a new TwiML application, and use the public URL of your application server’s `/outgoing` endpoint as the Voice Request URL.
+To create a TwiML application, go to the TwiML app page. Create a new TwiML application, and use the public URL of your application server’s `/makeCall` endpoint as the Voice Request URL.
 
 <img width="700px" src="images/quickstart/create_twml_app.png"/>
 
@@ -138,9 +143,6 @@ Once your app accepts the call, you should hear a congratulatory message.
 
 ### <a name="bullet10"></a>10. Make client to client call
 
-Update your TwiML application and use the public URL of your application server’s `/makeCall` endpoint as the the Voice Request URL. 
-<img height="500px" src="images/quickstart/makecall.png">
-
 To make client to client calls, you need the application running on two devices. To run the application on an additional device, make sure you use a different identity in your access token when registering the new device. Press the call button to open the call dialog.
 
 <img height="500px" src="images/quickstart/voice_make_call_dialog.png">
@@ -153,7 +155,7 @@ Enter the client identity of the newly registered device to initiate a client to
 
 A verified phone number is one that you can use as your Caller ID when making outbound calls with Twilio. This number has not been ported into Twilio and you do not pay Twilio for this phone number.
 
-To make client to number calls, first get a valid Twilio number to your account via https://www.twilio.com/console/phone-numbers/verified. Update `server.py` and replace `CALLER_NUMBER` with the verified number. Restart the server so it uses the new value. Voice Request URL of your TwiML application should point to the public URL of your application server’s `/makeCall` endpoint.
+To make client to number calls, first get a valid Twilio number to your account via https://www.twilio.com/console/phone-numbers/verified. Update `server.py` and replace `CALLER_NUMBER` with the verified number. Restart the server so it uses the new value.
 
 Press the call button to open the call dialog.
 
