@@ -137,6 +137,7 @@ public class VoiceConnectionService extends ConnectionService {
                 super.onPostDialContinue(true);
             }
         };
+        mConnection.setConnectionCapabilities(Connection.CAPABILITY_MUTE);
         mConnection.setAddress(request.getAddress(), TelecomManager.PRESENTATION_ALLOWED);
         mConnection.setExtras(request.getExtras());
         return mConnection;

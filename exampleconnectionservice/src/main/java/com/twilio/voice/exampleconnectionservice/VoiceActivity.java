@@ -48,7 +48,7 @@ public class VoiceActivity extends AppCompatActivity {
     /*
     * You must provide a Twilio Access Token to connect to the Voice service
     */
-    private static final String TWILIO_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJpc3MiOiJTS2QwMjkwNWY0OTNiMzNiNTBmZDNlMzJmYmRmNDMyMTIxIiwiZ3JhbnRzIjp7InZvaWNlIjp7Im91dGdvaW5nIjp7ImFwcGxpY2F0aW9uX3NpZCI6IkFQMTk4ZmE1ZjE1NTQxMWNiOTY2NDkwMWU2YTczYWVmNTgifSwicHVzaF9jcmVkZW50aWFsX3NpZCI6IkNSMWE3NWMyYzY4YTA3ZGMzZGFiMmMxZDEzOTYzNDlmYzUifSwiaWRlbnRpdHkiOiJrdW1rdW0ifSwic3ViIjoiQUM5NmNjYzkwNDc1M2IzMzY0ZjI0MjExZThkOTc0NmE5MyIsImV4cCI6MTUxNjM5NTk4MywibmJmIjoxNTE2MzA5NTgzfQ.nmojecobX1ulPzdqNmSTnkZaeY25MdVIylSFmBgtahM";
+    private static final String TWILIO_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJpc3MiOiJTS2QwMjkwNWY0OTNiMzNiNTBmZDNlMzJmYmRmNDMyMTIxIiwiZ3JhbnRzIjp7InZvaWNlIjp7Im91dGdvaW5nIjp7ImFwcGxpY2F0aW9uX3NpZCI6IkFQMTk4ZmE1ZjE1NTQxMWNiOTY2NDkwMWU2YTczYWVmNTgifSwicHVzaF9jcmVkZW50aWFsX3NpZCI6IkNSMWE3NWMyYzY4YTA3ZGMzZGFiMmMxZDEzOTYzNDlmYzUifSwiaWRlbnRpdHkiOiJrdW1rdW0ifSwic3ViIjoiQUM5NmNjYzkwNDc1M2IzMzY0ZjI0MjExZThkOTc0NmE5MyIsImV4cCI6MTUxNzAwMTkzMywibmJmIjoxNTE2OTE1NTMzfQ.Y29B28v6_qTvZbnUrjuwt-5BLrtXgl3nBvp70UVqiz0";
 
     public static final String OUTGOING_CALL_ADDRESS = "OUTGOING_CALL_ADDRESS";
 
@@ -99,14 +99,18 @@ public class VoiceActivity extends AppCompatActivity {
         if (!hasPermissions(this, PERMISSIONS)) {
             ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
         } else {
-            setupPhoneAccount();
-            /*
-             * Setup the broadcast receiver to be notified of FCM Token updates
-             * or incoming call invite in this Activity.
-             */
-            voiceBroadcastReceiver = new VoiceBroadcastReceiver();
-            registerReceiver();
+            init();
         }
+    }
+
+    private void init() {
+        setupPhoneAccount();
+        /*
+         * Setup the broadcast receiver to be notified of FCM Token updates
+         * or incoming call invite in this Activity.
+         */
+        voiceBroadcastReceiver = new VoiceBroadcastReceiver();
+        registerReceiver();
     }
 
     @Override
@@ -133,7 +137,7 @@ public class VoiceActivity extends AppCompatActivity {
 
     // Setup
     void setupPhoneAccount() {
-        String appName = this.getString(R.string.app_name);
+        String appName = this.getString(R.string.connection_service_name);
         handle = new PhoneAccountHandle(new ComponentName(this.getApplicationContext(), VoiceConnectionService.class), appName);
         telecomManager = (TelecomManager) this.getApplicationContext().getSystemService(this.getApplicationContext().TELECOM_SERVICE);
         phoneAccount = new PhoneAccount.Builder(handle, appName)
@@ -172,6 +176,10 @@ public class VoiceActivity extends AppCompatActivity {
             } else {
 
             }
+        }
+
+        if (hasPermissions(this, PERMISSIONS)) {
+            init();
         }
     }
 
