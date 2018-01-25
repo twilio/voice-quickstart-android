@@ -54,7 +54,6 @@ public class VoiceActivity extends AppCompatActivity {
 
     public static final String ACTION_OUTGOING_CALL = "ACTION_OUTGOING_CALL";
     public static final String ACTION_DISCONNECT_CALL = "ACTION_DISCONNECT_CALL";
-    public static final String ACTION_REJECT_CALL = "ACTION_REJECT_CALL";
     public static final String ACTION_DTMF_SEND = "ACTION_DTMF_SEND";
 
     private static final int MIC_PERMISSION_REQUEST_CODE = 1;
