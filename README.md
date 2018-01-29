@@ -225,10 +225,10 @@ As mentioned above, an access token will eventually expire. If an access token h
 
 There are number of techniques you can use to ensure that access token expiry is managed accordingly:
 
-1. Fetch a new access token from your access token server before making an outbound call.
-2. Retain the access token until getting a `EXCEPTION_INVALID_ACCESS_TOKEN_EXPIRY`/`20104` error
-3. Retain the access token along with the timestamp of when it was requested so you can verify ahead of time whether the token has already expired based on the `time-to-live` being used by your server.
-4. Prefetch the access token whenever the `Application`, `Service`, `Activity`, or `Fragment` associated with an outgoing call is created.
+- Always fetch a new access token from your access token server before making an outbound call.
+- Retain the access token until getting a `EXCEPTION_INVALID_ACCESS_TOKEN_EXPIRY`/`20104` error before fetching a new access token
+- Retain the access token along with the timestamp of when it was requested so you can verify ahead of time whether the token has already expired based on the `time-to-live` being used by your server.
+- Prefetch the access token whenever the `Application`, `Service`, `Activity`, or `Fragment` associated with an outgoing call is created.
 
 ## More Documentation
 
