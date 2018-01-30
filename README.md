@@ -83,7 +83,7 @@ Open up a browser and visit the URL for your application server's Access Token e
 
 Paste the public URL of your application server’s `https://{YOUR_SERVER_URL}/accessToken` endpoint into `TWILIO_ACCESS_TOKEN_SERVER_URL` in VoiceActivity.java. Make sure to include `/accessToken` in the URL path.
 
-<img width="600px" src="images/quickstart/paste_token.png"/>
+<img width="600px" src="images/quickstart/paste_token_server_url.png"/>
 
 Run the quickstart app on an Android device
 
