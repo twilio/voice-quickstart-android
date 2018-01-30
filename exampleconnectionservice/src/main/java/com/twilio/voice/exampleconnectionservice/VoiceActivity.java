@@ -26,6 +26,7 @@ import android.telecom.DisconnectCause;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -54,7 +55,7 @@ public class VoiceActivity extends AppCompatActivity {
      *
      * For example: https://myurl.io/accessToken
      */
-    private static final String TWILIO_ACCESS_TOKEN_SERVER_URL = "https://33c155fa.ngrok.io/accessToken";//"TWILIO_ACCESS_TOKEN_SERVER_URL";
+    private static final String TWILIO_ACCESS_TOKEN_SERVER_URL = "http://chunder-interactive.appspot.com/accessToken?realm=prod&push_platform=fcm&identity=kumkum";//"TWILIO_ACCESS_TOKEN_SERVER_URL";
 
     public static final String OUTGOING_CALL_ADDRESS = "OUTGOING_CALL_ADDRESS";
 
@@ -347,7 +348,13 @@ public class VoiceActivity extends AppCompatActivity {
     * Get an access token from your Twilio access token server
     */
     private void retrieveAccessToken() {
-        Ion.with(this).load(TWILIO_ACCESS_TOKEN_SERVER_URL).asString().setCallback(new FutureCallback<String>() {
+
+        // concatenate username and password with colon for authentication
+        String credentials = "client:chunder";
+        // create Base64 encodet string
+        final String basic =
+                "Basic " + Base64.encodeToString(credentials.getBytes(), Base64.NO_WRAP);
+        Ion.with(this).load(TWILIO_ACCESS_TOKEN_SERVER_URL).addHeader("Authorization", basic).asString().setCallback(new FutureCallback<String>() {
             @Override
             public void onCompleted(Exception e, String accessToken) {
                 if (e == null) {
