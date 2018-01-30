@@ -5,6 +5,7 @@ Get started with Voice on Android:
 - [Quickstart](#quickstart) - Run the quickstart app
 - [Emulator Support](#emulator-support) - Android emulator support
 - [Reducing APK Size](#reducing-apk-size) - Use ABI splits to reduce APK size
+- [Access Tokens](#access-tokens) - Using access tokens
 - [More Documentation](#more-documentation) - More documentation related to the Voice Android SDK
 - [Twilio Helper Libraries](#twilio-helper-libraries) - TwiML quickstarts.
 - [Issues & Support](#issues-and-support) - Filing issues and general support
@@ -12,7 +13,6 @@ Get started with Voice on Android:
 ## Quickstart
 
 To get started with the Quickstart application follow these steps. Steps 1-6 will allow you to make a call. The remaining steps 7-8 will enable push notifications using FCM.
-
 
 1. [Open this project in Android Studio](#bullet1)
 2. [Create a Voice API key](#bullet2)
@@ -43,9 +43,10 @@ Save the generated `API_KEY` and `API_KEY_SECRET` in your notepad. You will need
 
 Download one of the starter projects for the server.
 
-* [voice-quickstart-server-python](https://github.com/twilio/voice-quickstart-server-python)
-* [voice-quickstart-server-node](https://github.com/twilio/voice-quickstart-server-node)
 * [voice-quickstart-server-java](https://github.com/twilio/voice-quickstart-server-java)
+* [voice-quickstart-server-node](https://github.com/twilio/voice-quickstart-server-node)
+* [voice-quickstart-server-php](https://github.com/twilio/voice-quickstart-server-php)
+* [voice-quickstart-server-python](https://github.com/twilio/voice-quickstart-server-python)
 
 Follow the instructions in the server's README to get the application server up and running locally and accessible via the public Internet. For now just add the Twilio Account SID that you can obtain from the console, and  the `API_KEY` and `API_SECRET` you obtained in the previous step. 
 
@@ -76,14 +77,13 @@ Put the remaining `APP_SID` configuration info into your application server by o
 
 Once you’ve done that, restart the server so it uses the new configuration info. Now it's time to test.
 
-Open up a browser and visit the URL for your application server's Access Token endpoint: `https://{YOUR-SERVER}/accessToken`. If everything is configured correctly, you should see a long string of letters and numbers, which is a Twilio Access Token. Your Android app will use a token like this to connect to Twilio.
+Open up a browser and visit the URL for your application server's Access Token endpoint: `https://{YOUR_SERVER_URL}/accessToken`. If everything is configured correctly, you should see a long string of letters and numbers, which is a Twilio Access Token. Your Android app will use a token like this to connect to Twilio.
 
 ### <a name="bullet6"></a>6. Run the app
 
-Paste the Access Token into the VoiceActivity.java. 
+Paste the public URL of your application server’s `https://{YOUR_SERVER_URL}/accessToken` endpoint into `TWILIO_ACCESS_TOKEN_SERVER_URL` in VoiceActivity.java. Make sure to include `/accessToken` in the URL path.
 
-<img width="700px" src="images/quickstart/paste_token.png"/>
-
+<img width="600px" src="images/quickstart/paste_token_server_url.png"/>
 
 Run the quickstart app on an Android device
 
@@ -131,7 +131,7 @@ Put the `PUSH_CREDENTIAL_SID` configuration info into your application server by
     PUSH_CREDENTIAL_SID = 'CR***'
     APP_SID = 'AP***'
 
-Once you’ve done that, restart the server so it uses the new configuration info. Now it's time to test. Use your browser to initiate an incoming call by navigating to the "localhost:5000/placeCall" . This will trigger a Twilio REST API request that will make an inbound call to your mobile app. You will receive an incoming call notification.
+Once you’ve done that, restart the server so it uses the new configuration info. Now it's time to test. Use your browser to initiate an incoming call by navigating to the public URL of your application server’s `https://{YOUR_SERVER_URL}/placeCall` endpoint. This will trigger a Twilio REST API request that will make an inbound call to your mobile app. You will receive an incoming call notification.
 
 <img height="500px" src="images/quickstart/incoming_notification.png">"
 
@@ -149,7 +149,8 @@ To make client to client calls, you need the application running on two devices.
 
 Enter the client identity of the newly registered device to initiate a client to client call from the first device.
 
-![caller alice](images/quickstart/make_call_to_client.png "caller alice") ![callee bob](images/quickstart/incoming_call_from_alice.png "callee bob")
+<img height="500px" src="images/quickstart/make_call_to_client.png">
+<img height="500px" src="images/quickstart/incoming_call_from_alice.png">
 
 ### <a name="bullet11"></a>11. Make client to PSTN call
 
@@ -205,8 +206,29 @@ The following snippet shows an example `build.gradle` with APK splits enabled.
         }
     }
 
-
 The adoption of APK splits requires developers to submit multiple APKs to the Play Store. Refer to [Google’s documentation](https://developer.android.com/google/play/publishing/multiple-apks.html)  for how to support this in your application.
+
+## Access Tokens
+
+The access token generated by your server component is a [jwt](jwt.io) that contains a `grant` for Programmable Voice, an `identity` that you specify, and a `time-to-live` that sets the lifetime of the generated access token. The default `time-to-live` is 1 hour and is configurable up to 24 hours using the Twilio helper libraries.
+
+### Uses
+
+In the Android SDK the access token is used for the following:
+
+1. To make an outgoing call via `Voice.call(Context context, String accessToken, String twiMLParams, Call.Listener listener)`
+2. To register or unregister for incoming notifications via GCM or FCM via `Voice.register(Context context, String accessToken, Voice.RegistrationChannel registrationChannel, String registrationToken, RegistrationListener listener)` and `Voice.unregister(Context context, String accessToken, Voice.RegistrationChannel registrationChannel, String registrationToken, RegistrationListener listener)`. Once registered, incoming notifications are handled via a `CallInvite` where you can choose to accept or reject the invite. When accepting the call an access token is not required. Internally the `CallInvite` has its own accessToken that ensures it can connect to our infrastructure.
+
+### Managing Expiry
+
+As mentioned above, an access token will eventually expire. If an access token has expired, our infrastructure will return error `EXCEPTION_INVALID_ACCESS_TOKEN_EXPIRY`/`20104` via a `CallException` or a `RegistrationException`.
+
+There are number of techniques you can use to ensure that access token expiry is managed accordingly:
+
+- Always fetch a new access token from your access token server before making an outbound call.
+- Retain the access token until getting a `EXCEPTION_INVALID_ACCESS_TOKEN_EXPIRY`/`20104` error before fetching a new access token.
+- Retain the access token along with the timestamp of when it was requested so you can verify ahead of time whether the token has already expired based on the `time-to-live` being used by your server.
+- Prefetch the access token whenever the `Application`, `Service`, `Activity`, or `Fragment` associated with an outgoing call is created.
 
 ## More Documentation
 
