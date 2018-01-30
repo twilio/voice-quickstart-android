@@ -32,6 +32,8 @@ import android.view.View;
 import android.widget.Chronometer;
 import android.widget.EditText;
 import com.google.firebase.iid.FirebaseInstanceId;
+import com.koushikdutta.async.future.FutureCallback;
+import com.koushikdutta.ion.Ion;
 import com.twilio.voice.Call;
 import com.twilio.voice.CallException;
 import com.twilio.voice.CallInvite;
@@ -46,13 +48,16 @@ public class VoiceActivity extends AppCompatActivity {
     private static final String TAG = "VoiceActivity";
 
     /*
-    * You must provide a Twilio Access Token to connect to the Voice service
-    */
-    private static final String TWILIO_ACCESS_TOKEN = "TWILIO_ACCESS_TOKEN";
+     * You must provide the URL to the publicly accessible Twilio access token server route
+     *
+     * For example: https://myurl.io/accessToken
+     */
+    private static final String TWILIO_ACCESS_TOKEN_SERVER_URL = "TWILIO_ACCESS_TOKEN_SERVER_URL";
 
     private static final int MIC_PERMISSION_REQUEST_CODE = 1;
     private static final int SNACKBAR_DURATION = 4000;
 
+    private String accessToken;
     private AudioManager audioManager;
     private int savedAudioMode = AudioManager.MODE_INVALID;
 
@@ -134,7 +139,7 @@ public class VoiceActivity extends AppCompatActivity {
         if (!checkPermissionForMicrophone()) {
             requestPermissionForMicrophone();
         } else {
-            registerForCallInvites();
+            retrieveAccessToken();
         }
     }
 
@@ -254,7 +259,7 @@ public class VoiceActivity extends AppCompatActivity {
                     }
                 }
             } else if (intent.getAction().equals(ACTION_FCM_TOKEN)) {
-                registerForCallInvites();
+                retrieveAccessToken();
             }
         }
     }
@@ -311,7 +316,7 @@ public class VoiceActivity extends AppCompatActivity {
                 // Place a call
                 EditText contact = (EditText) ((AlertDialog) dialog).findViewById(R.id.contact);
                 twiMLParams.put("to", contact.getText().toString());
-                activeCall = Voice.call(VoiceActivity.this, TWILIO_ACCESS_TOKEN, twiMLParams, callListener);
+                activeCall = Voice.call(VoiceActivity.this, accessToken, twiMLParams, callListener);
                 setCallUI();
                 alertDialog.dismiss();
             }
@@ -361,7 +366,7 @@ public class VoiceActivity extends AppCompatActivity {
         final String fcmToken = FirebaseInstanceId.getInstance().getToken();
         if (fcmToken != null) {
             Log.i(TAG, "Registering with FCM");
-            Voice.register(this, TWILIO_ACCESS_TOKEN, Voice.RegistrationChannel.FCM, fcmToken, registrationListener);
+            Voice.register(this, accessToken, Voice.RegistrationChannel.FCM, fcmToken, registrationListener);
         }
     }
 
@@ -491,7 +496,7 @@ public class VoiceActivity extends AppCompatActivity {
                         "Microphone permissions needed. Please allow in your application settings.",
                         SNACKBAR_DURATION).show();
             } else {
-                registerForCallInvites();
+                retrieveAccessToken();
             }
         }
     }
@@ -538,5 +543,25 @@ public class VoiceActivity extends AppCompatActivity {
 
         return alertDialogBuilder.create();
 
+    }
+
+    /*
+     * Get an access token from your Twilio access token server
+     */
+    private void retrieveAccessToken() {
+        Ion.with(this).load(TWILIO_ACCESS_TOKEN_SERVER_URL).asString().setCallback(new FutureCallback<String>() {
+            @Override
+            public void onCompleted(Exception e, String accessToken) {
+                if (e == null) {
+                    Log.d(TAG, "Access token: " + accessToken);
+                    VoiceActivity.this.accessToken = accessToken;
+                    registerForCallInvites();
+                } else {
+                    Snackbar.make(coordinatorLayout,
+                            "Error retrieving access token. Unable to make calls",
+                            Snackbar.LENGTH_LONG).show();
+                }
+            }
+        });
     }
 }

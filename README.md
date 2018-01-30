@@ -43,9 +43,10 @@ Save the generated `API_KEY` and `API_KEY_SECRET` in your notepad. You will need
 
 Download one of the starter projects for the server.
 
-* [voice-quickstart-server-python](https://github.com/twilio/voice-quickstart-server-python)
-* [voice-quickstart-server-node](https://github.com/twilio/voice-quickstart-server-node)
 * [voice-quickstart-server-java](https://github.com/twilio/voice-quickstart-server-java)
+* [voice-quickstart-server-node](https://github.com/twilio/voice-quickstart-server-node)
+* [voice-quickstart-server-php](https://github.com/twilio/voice-quickstart-server-php)
+* [voice-quickstart-server-python](https://github.com/twilio/voice-quickstart-server-python)
 
 Follow the instructions in the server's README to get the application server up and running locally and accessible via the public Internet. For now just add the Twilio Account SID that you can obtain from the console, and  the `API_KEY` and `API_SECRET` you obtained in the previous step. 
 
@@ -76,14 +77,13 @@ Put the remaining `APP_SID` configuration info into your application server by o
 
 Once you’ve done that, restart the server so it uses the new configuration info. Now it's time to test.
 
-Open up a browser and visit the URL for your application server's Access Token endpoint: `https://{YOUR-SERVER}/accessToken`. If everything is configured correctly, you should see a long string of letters and numbers, which is a Twilio Access Token. Your Android app will use a token like this to connect to Twilio.
+Open up a browser and visit the URL for your application server's Access Token endpoint: `https://{YOUR_SERVER_URL}/accessToken`. If everything is configured correctly, you should see a long string of letters and numbers, which is a Twilio Access Token. Your Android app will use a token like this to connect to Twilio.
 
 ### <a name="bullet6"></a>6. Run the app
 
-Paste the Access Token into the VoiceActivity.java. 
+Paste the public URL of your application server’s `https://{YOUR_SERVER_URL}/accessToken` endpoint into `TWILIO_ACCESS_TOKEN_SERVER_URL` in VoiceActivity.java. Make sure to include `/accessToken` in the URL path.
 
-<img width="700px" src="images/quickstart/paste_token.png"/>
-
+<img width="600px" src="images/quickstart/paste_token_server_url.png"/>
 
 Run the quickstart app on an Android device
 
@@ -131,7 +131,7 @@ Put the `PUSH_CREDENTIAL_SID` configuration info into your application server by
     PUSH_CREDENTIAL_SID = 'CR***'
     APP_SID = 'AP***'
 
-Once you’ve done that, restart the server so it uses the new configuration info. Now it's time to test. Use your browser to initiate an incoming call by navigating to the "localhost:5000/placeCall" . This will trigger a Twilio REST API request that will make an inbound call to your mobile app. You will receive an incoming call notification.
+Once you’ve done that, restart the server so it uses the new configuration info. Now it's time to test. Use your browser to initiate an incoming call by navigating to the public URL of your application server’s `https://{YOUR_SERVER_URL}/placeCall` endpoint. This will trigger a Twilio REST API request that will make an inbound call to your mobile app. You will receive an incoming call notification.
 
 <img height="500px" src="images/quickstart/incoming_notification.png">"
 
