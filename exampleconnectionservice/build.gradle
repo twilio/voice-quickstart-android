@@ -30,6 +30,7 @@ dependencies {
     compile 'com.android.support:appcompat-v7:27.+'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'com.android.support:design:27.+'
+    compile 'com.koushikdutta.ion:ion:2.1.8'
     testCompile 'junit:junit:4.12'
     compile 'com.twilio:voice-android:2.0.3'
 }

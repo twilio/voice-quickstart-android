@@ -33,8 +33,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
 
+import com.koushikdutta.async.future.FutureCallback;
+import com.koushikdutta.ion.Ion;
 import com.twilio.voice.Call;
 import com.twilio.voice.CallException;
+import com.twilio.voice.LogLevel;
+import com.twilio.voice.LogModule;
 import com.twilio.voice.Voice;
 
 import java.util.HashMap;
@@ -46,9 +50,11 @@ public class VoiceActivity extends AppCompatActivity {
     private static final String TAG = "VoiceActivity";
 
     /*
-    * You must provide a Twilio Access Token to connect to the Voice service
-    */
-    private static final String TWILIO_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJpc3MiOiJTS2QwMjkwNWY0OTNiMzNiNTBmZDNlMzJmYmRmNDMyMTIxIiwiZ3JhbnRzIjp7InZvaWNlIjp7Im91dGdvaW5nIjp7ImFwcGxpY2F0aW9uX3NpZCI6IkFQMTk4ZmE1ZjE1NTQxMWNiOTY2NDkwMWU2YTczYWVmNTgifSwicHVzaF9jcmVkZW50aWFsX3NpZCI6IkNSMWE3NWMyYzY4YTA3ZGMzZGFiMmMxZDEzOTYzNDlmYzUifSwiaWRlbnRpdHkiOiJrdW1rdW0ifSwic3ViIjoiQUM5NmNjYzkwNDc1M2IzMzY0ZjI0MjExZThkOTc0NmE5MyIsImV4cCI6MTUxNzAwMTkzMywibmJmIjoxNTE2OTE1NTMzfQ.Y29B28v6_qTvZbnUrjuwt-5BLrtXgl3nBvp70UVqiz0";
+     * You must provide the URL to the publicly accessible Twilio access token server route
+     *
+     * For example: https://myurl.io/accessToken
+     */
+    private static final String TWILIO_ACCESS_TOKEN_SERVER_URL = "https://33c155fa.ngrok.io/accessToken";//"TWILIO_ACCESS_TOKEN_SERVER_URL";
 
     public static final String OUTGOING_CALL_ADDRESS = "OUTGOING_CALL_ADDRESS";
 
@@ -61,6 +67,7 @@ public class VoiceActivity extends AppCompatActivity {
     private static final int SNACKBAR_DURATION = 4000;
     private CoordinatorLayout coordinatorLayout;
 
+    private String accessToken;
     private boolean isReceiverRegistered = false;
     private VoiceBroadcastReceiver voiceBroadcastReceiver;
 
@@ -92,22 +99,21 @@ public class VoiceActivity extends AppCompatActivity {
             }
         });
 
+        Voice.setLogLevel(LogLevel.ALL);
+        Voice.setModuleLogLevel(LogModule.PJSIP, LogLevel.ALL);
+
         /*
          * Ensure the microphone and CALL_PHONE permissions are enabled
          */
         if (!hasPermissions(this, PERMISSIONS)) {
             ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
         } else {
-            init();
+            retrieveAccessToken();
         }
     }
 
     private void init() {
         setupPhoneAccount();
-        /*
-         * Setup the broadcast receiver to be notified of FCM Token updates
-         * or incoming call invite in this Activity.
-         */
         voiceBroadcastReceiver = new VoiceBroadcastReceiver();
         registerReceiver();
     }
@@ -134,7 +140,9 @@ public class VoiceActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    // Setup
+    /*
+    * Setup a phone Account
+    */
     void setupPhoneAccount() {
         String appName = this.getString(R.string.connection_service_name);
         handle = new PhoneAccountHandle(new ComponentName(this.getApplicationContext(), VoiceConnectionService.class), appName);
@@ -164,25 +172,24 @@ public class VoiceActivity extends AppCompatActivity {
                 Snackbar.make(coordinatorLayout,
                         "Microphone permissions needed. Please allow in your application settings.",
                         SNACKBAR_DURATION).show();
-            } else {
-
             }
         } else if (requestCode == CALL_PHONE_CODE && permissions.length > 0) {
             if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                 Snackbar.make(coordinatorLayout,
                         "CALL_PHONE permissions needed. Please allow in your application settings.",
                         SNACKBAR_DURATION).show();
-            } else {
-
             }
         }
 
         if (hasPermissions(this, PERMISSIONS)) {
-            init();
+            retrieveAccessToken();
         }
     }
 
-    //
+    /*
+     * Setup the broadcast receiver to be notified of FCM Token updates
+     * or incoming call invite in this Activity.
+     */
     private class VoiceBroadcastReceiver extends BroadcastReceiver {
 
         @Override
@@ -259,7 +266,7 @@ public class VoiceActivity extends AppCompatActivity {
                 String contact = intent.getStringExtra(VoiceActivity.OUTGOING_CALL_ADDRESS);
                 String[] contactparts = contact.split(":");
                 twiMLParams.put("to", contactparts[1]);
-                activeCall = Voice.call(VoiceActivity.this, TWILIO_ACCESS_TOKEN, twiMLParams, callListener());
+                activeCall = Voice.call(VoiceActivity.this, accessToken, twiMLParams, callListener());
             }
         }
     }
@@ -334,7 +341,26 @@ public class VoiceActivity extends AppCompatActivity {
         alertDialogBuilder.setView(dialogView);
 
         return alertDialogBuilder.create();
+    }
 
+    /*
+    * Get an access token from your Twilio access token server
+    */
+    private void retrieveAccessToken() {
+        Ion.with(this).load(TWILIO_ACCESS_TOKEN_SERVER_URL).asString().setCallback(new FutureCallback<String>() {
+            @Override
+            public void onCompleted(Exception e, String accessToken) {
+                if (e == null) {
+                    Log.d(TAG, "Access token: " + accessToken);
+                    VoiceActivity.this.accessToken = accessToken;
+                    init();
+                } else {
+                    Snackbar.make(coordinatorLayout,
+                            "Error retrieving access token. Unable to make calls",
+                            Snackbar.LENGTH_LONG).show();
+                }
+            }
+        });
     }
 
 }
