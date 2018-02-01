@@ -3,7 +3,7 @@
 Get started with Voice on Android:
 
 - [Quickstart](#quickstart) - Run the quickstart app
-- [Examples](#example) - Customize your Voice SDK experience with these examples
+- [Examples](#examples) - Customize your Voice SDK experience with these examples
 - [Emulator Support](#emulator-support) - Android emulator support
 - [Reducing APK Size](#reducing-apk-size) - Use ABI splits to reduce APK size
 - [Access Tokens](#access-tokens) - Using access tokens
