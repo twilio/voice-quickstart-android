@@ -3,6 +3,7 @@
 Get started with Voice on Android:
 
 - [Quickstart](#quickstart) - Run the quickstart app
+- [Examples](#example) - Customize your Voice SDK experience with these examples
 - [Emulator Support](#emulator-support) - Android emulator support
 - [Reducing APK Size](#reducing-apk-size) - Use ABI splits to reduce APK size
 - [Access Tokens](#access-tokens) - Using access tokens
@@ -166,6 +167,11 @@ Enter a PSTN number and press the call button to place a call.
 
 <img height="500px" src="images/quickstart/make_call_to_number.png">
 
+## Examples
+
+In addition to the quickstart, we have added a common use case that show you how to create and customize your application:
+
+- [Custom Connection Service](exampleconnectionservice) - Demonstrates how a custom `ConnectionService ` can be implemented and used with Android Voice SDK. 
 
 ## Emulator Support
 

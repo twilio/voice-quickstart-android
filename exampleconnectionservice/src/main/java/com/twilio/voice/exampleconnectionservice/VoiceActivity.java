@@ -21,7 +21,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.telecom.ConnectionService;
 import android.telecom.DisconnectCause;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
@@ -44,9 +43,6 @@ import com.twilio.voice.Voice;
 
 import java.util.HashMap;
 
-import static java.util.ResourceBundle.getBundle;
-
-
 public class VoiceActivity extends AppCompatActivity {
     private static final String TAG = "VoiceActivity";
 
@@ -55,13 +51,15 @@ public class VoiceActivity extends AppCompatActivity {
      *
      * For example: https://myurl.io/accessToken
      */
-    private static final String TWILIO_ACCESS_TOKEN_SERVER_URL = "https://d159b06e.ngrok.io/accessToken?identity=kumkum";//"TWILIO_ACCESS_TOKEN_SERVER_URL";
+    private static final String TWILIO_ACCESS_TOKEN_SERVER_URL = "TWILIO_ACCESS_TOKEN_SERVER_URL";
 
     public static final String OUTGOING_CALL_ADDRESS = "OUTGOING_CALL_ADDRESS";
 
     public static final String ACTION_OUTGOING_CALL = "ACTION_OUTGOING_CALL";
     public static final String ACTION_DISCONNECT_CALL = "ACTION_DISCONNECT_CALL";
     public static final String ACTION_DTMF_SEND = "ACTION_DTMF_SEND";
+    public static final String DTMF = "DTMF";
+    public static final String CALLEE = "to";
 
     private static final int MIC_PERMISSION_REQUEST_CODE = 1;
     private static final int CALL_PHONE_CODE = 2;
@@ -213,7 +211,7 @@ public class VoiceActivity extends AppCompatActivity {
                  * send DTMF
                  */
                 if (activeCall != null) {
-                    String digits = intent.getStringExtra("DTMF");
+                    String digits = intent.getStringExtra(DTMF);
                     activeCall.sendDigits(digits);
                 }
             }
@@ -279,9 +277,9 @@ public class VoiceActivity extends AppCompatActivity {
 
     private void makeCall(String to) {
         Log.d(TAG, "makeCall");
-        Uri uri = Uri.fromParts("tel", to, null);
+        Uri uri = Uri.fromParts(PhoneAccount.SCHEME_TEL, to, null);
         Bundle callInfoBundle = new Bundle();
-        callInfoBundle.putString("to", to);
+        callInfoBundle.putString(CALLEE, to);
         Bundle callInfo = new Bundle();
         callInfo.putParcelable(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, callInfoBundle);
         callInfo.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, handle);
@@ -353,13 +351,7 @@ public class VoiceActivity extends AppCompatActivity {
     * Get an access token from your Twilio access token server
     */
     private void retrieveAccessToken() {
-
-        // concatenate username and password with colon for authentication
-        String credentials = "client:chunder";
-        // create Base64 encodet string
-        final String basic =
-                "Basic " + Base64.encodeToString(credentials.getBytes(), Base64.NO_WRAP);
-        Ion.with(this).load(TWILIO_ACCESS_TOKEN_SERVER_URL).addHeader("Authorization", basic).asString().setCallback(new FutureCallback<String>() {
+        Ion.with(this).load(TWILIO_ACCESS_TOKEN_SERVER_URL).asString().setCallback(new FutureCallback<String>() {
             @Override
             public void onCompleted(Exception e, String accessToken) {
                 if (e == null) {

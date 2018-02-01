@@ -3,7 +3,6 @@ package com.twilio.voice.exampleconnectionservice;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.telecom.CallAudioState;
 import android.telecom.Connection;
@@ -18,18 +17,20 @@ import android.widget.Toast;
 import static com.twilio.voice.exampleconnectionservice.VoiceActivity.ACTION_DISCONNECT_CALL;
 import static com.twilio.voice.exampleconnectionservice.VoiceActivity.ACTION_DTMF_SEND;
 import static com.twilio.voice.exampleconnectionservice.VoiceActivity.ACTION_OUTGOING_CALL;
+import static com.twilio.voice.exampleconnectionservice.VoiceActivity.CALLEE;
+import static com.twilio.voice.exampleconnectionservice.VoiceActivity.DTMF;
+import static com.twilio.voice.exampleconnectionservice.VoiceActivity.OUTGOING_CALL_ADDRESS;
 
 public class VoiceConnectionService extends ConnectionService {
 
-    private static String TAG = "VoiceConnectionService";
-    private static Connection mConnection;
+    private static Connection connection;
 
     public static Connection getConnection() {
-        return mConnection;
+        return connection;
     }
 
     public static void deinitConnection() {
-        mConnection = null;
+        connection = null;
     }
 
     @Override
@@ -52,17 +53,18 @@ public class VoiceConnectionService extends ConnectionService {
     }
 
     private Connection createConnection(ConnectionRequest request) {
-        mConnection = new Connection() {
+        connection = new Connection() {
+
             @Override
             public void onStateChanged(int state) {
                 if (state == Connection.STATE_DIALING) {
                     final Handler handler = new Handler();
-                    handler.postDelayed(new Runnable() {
+                    handler.post(new Runnable() {
                         @Override
                         public void run() {
                             sendCallRequestToActivity(ACTION_OUTGOING_CALL);
                         }
-                    }, 100); // TODO decide on the delay
+                    });
                 }
             }
 
@@ -75,30 +77,30 @@ public class VoiceConnectionService extends ConnectionService {
             public void onPlayDtmfTone(char c) {
                 Toast.makeText(getApplicationContext(), "onPlayDtmfTone called", Toast.LENGTH_SHORT).show();
                 Bundle extras = new Bundle();
-                extras.putString("DTMF", Character.toString(c));
-                mConnection.setExtras(extras);
+                extras.putString(DTMF, Character.toString(c));
+                connection.setExtras(extras);
                 final Handler handler = new Handler();
-                handler.postDelayed(new Runnable() {
+                handler.post(new Runnable() {
                     @Override
                     public void run() {
                         sendCallRequestToActivity(ACTION_DTMF_SEND);
                     }
-                }, 100); // TODO decide on the delay
+                });
             }
 
             @Override
             public void onDisconnect() {
                 super.onDisconnect();
-                mConnection.setDisconnected(new DisconnectCause(DisconnectCause.LOCAL));
-                mConnection.destroy();
-                mConnection = null;
+                connection.setDisconnected(new DisconnectCause(DisconnectCause.LOCAL));
+                connection.destroy();
+                connection = null;
                 final Handler handler = new Handler();
-                handler.postDelayed(new Runnable() {
+                handler.post(new Runnable() {
                     @Override
                     public void run() {
                         sendCallRequestToActivity(ACTION_DISCONNECT_CALL);
                     }
-                }, 100); // TODO decide on the delay
+                });
             }
 
             @Override
@@ -109,27 +111,20 @@ public class VoiceConnectionService extends ConnectionService {
             @Override
             public void onAbort() {
                 super.onAbort();
-                mConnection.setDisconnected(new DisconnectCause(DisconnectCause.CANCELED));
-                mConnection.destroy();
-            }
-
-            @Override
-            public void onHold() {
-                super.onHold();
+                connection.setDisconnected(new DisconnectCause(DisconnectCause.CANCELED));
+                connection.destroy();
             }
 
             @Override
             public void onAnswer() {
                 super.onAnswer();
-                mConnection.setActive();
             }
 
             @Override
             public void onReject() {
                 super.onReject();
-                mConnection.setDisconnected(new DisconnectCause(DisconnectCause.CANCELED));
-                mConnection.destroy();
-
+                connection.setDisconnected(new DisconnectCause(DisconnectCause.CANCELED));
+                connection.destroy();
             }
 
             @Override
@@ -137,15 +132,15 @@ public class VoiceConnectionService extends ConnectionService {
                 super.onPostDialContinue(true);
             }
         };
-        mConnection.setConnectionCapabilities(Connection.CAPABILITY_MUTE);
-        if (request.getExtras().getString("to") == null) {
-            mConnection.setAddress(request.getAddress(), TelecomManager.PRESENTATION_ALLOWED);
+        connection.setConnectionCapabilities(Connection.CAPABILITY_MUTE);
+        if (request.getExtras().getString(CALLEE) == null) {
+            connection.setAddress(request.getAddress(), TelecomManager.PRESENTATION_ALLOWED);
         } else {
-            mConnection.setAddress(Uri.parse(request.getExtras().getString("to")), TelecomManager.PRESENTATION_ALLOWED);
+            connection.setAddress(Uri.parse(request.getExtras().getString(CALLEE)), TelecomManager.PRESENTATION_ALLOWED);
         }
-
-        mConnection.setExtras(request.getExtras());
-        return mConnection;
+        connection.setDialing();
+        connection.setExtras(request.getExtras());
+        return connection;
     }
 
     /*
@@ -156,8 +151,8 @@ public class VoiceConnectionService extends ConnectionService {
         Bundle extras = new Bundle();
         switch (action) {
             case ACTION_OUTGOING_CALL:
-                Uri address = mConnection.getAddress();
-                extras.putString(VoiceActivity.OUTGOING_CALL_ADDRESS, address.toString());
+                Uri address = connection.getAddress();
+                extras.putString(OUTGOING_CALL_ADDRESS, address.toString());
                 intent.putExtras(extras);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
@@ -165,12 +160,15 @@ public class VoiceConnectionService extends ConnectionService {
             case ACTION_DISCONNECT_CALL:
                 extras.putInt("Reason", DisconnectCause.LOCAL);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                intent.putExtras(extras);
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
                 break;
             case ACTION_DTMF_SEND:
-                extras.putString("DTMF", mConnection.getExtras().getString("DTMF"));
+                String d = connection.getExtras().getString(DTMF);
+                extras.putString(DTMF, connection.getExtras().getString(DTMF));
+                intent.putExtras(extras);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                //LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+                LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
                 break;
             default:
                 break;
