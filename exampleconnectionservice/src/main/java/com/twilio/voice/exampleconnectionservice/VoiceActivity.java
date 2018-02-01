@@ -55,7 +55,7 @@ public class VoiceActivity extends AppCompatActivity {
      *
      * For example: https://myurl.io/accessToken
      */
-    private static final String TWILIO_ACCESS_TOKEN_SERVER_URL = "http://chunder-interactive.appspot.com/accessToken?realm=prod&push_platform=fcm&identity=kumkum";//"TWILIO_ACCESS_TOKEN_SERVER_URL";
+    private static final String TWILIO_ACCESS_TOKEN_SERVER_URL = "https://d159b06e.ngrok.io/accessToken?identity=kumkum";//"TWILIO_ACCESS_TOKEN_SERVER_URL";
 
     public static final String OUTGOING_CALL_ADDRESS = "OUTGOING_CALL_ADDRESS";
 
@@ -266,7 +266,12 @@ public class VoiceActivity extends AppCompatActivity {
             if (intent.getAction().equals(ACTION_OUTGOING_CALL)) {
                 String contact = intent.getStringExtra(VoiceActivity.OUTGOING_CALL_ADDRESS);
                 String[] contactparts = contact.split(":");
-                twiMLParams.put("to", contactparts[1]);
+                if(contactparts.length > 1) {
+                    twiMLParams.put("to", contactparts[1]);
+                } else {
+                    twiMLParams.put("to", contactparts[0]);
+                }
+
                 activeCall = Voice.call(VoiceActivity.this, accessToken, twiMLParams, callListener());
             }
         }

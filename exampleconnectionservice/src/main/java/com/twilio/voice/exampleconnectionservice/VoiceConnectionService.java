@@ -55,7 +55,7 @@ public class VoiceConnectionService extends ConnectionService {
         mConnection = new Connection() {
             @Override
             public void onStateChanged(int state) {
-                if(state == Connection.STATE_DIALING) {
+                if (state == Connection.STATE_DIALING) {
                     final Handler handler = new Handler();
                     handler.postDelayed(new Runnable() {
                         @Override
@@ -67,12 +67,12 @@ public class VoiceConnectionService extends ConnectionService {
             }
 
             @Override
-            public void onCallAudioStateChanged (CallAudioState state) {
+            public void onCallAudioStateChanged(CallAudioState state) {
                 Toast.makeText(getApplicationContext(), "onCallAudioStateChanged called", Toast.LENGTH_SHORT).show();
             }
 
             @Override
-            public void onPlayDtmfTone (char c) {
+            public void onPlayDtmfTone(char c) {
                 Toast.makeText(getApplicationContext(), "onPlayDtmfTone called", Toast.LENGTH_SHORT).show();
                 Bundle extras = new Bundle();
                 extras.putString("DTMF", Character.toString(c));
@@ -138,7 +138,12 @@ public class VoiceConnectionService extends ConnectionService {
             }
         };
         mConnection.setConnectionCapabilities(Connection.CAPABILITY_MUTE);
-        mConnection.setAddress(request.getAddress(), TelecomManager.PRESENTATION_ALLOWED);
+        if (request.getExtras().getString("to") == null) {
+            mConnection.setAddress(request.getAddress(), TelecomManager.PRESENTATION_ALLOWED);
+        } else {
+            mConnection.setAddress(Uri.parse(request.getExtras().getString("to")), TelecomManager.PRESENTATION_ALLOWED);
+        }
+
         mConnection.setExtras(request.getExtras());
         return mConnection;
     }
@@ -149,7 +154,7 @@ public class VoiceConnectionService extends ConnectionService {
     private void sendCallRequestToActivity(String action) {
         Intent intent = new Intent(action);
         Bundle extras = new Bundle();
-        switch(action) {
+        switch (action) {
             case ACTION_OUTGOING_CALL:
                 Uri address = mConnection.getAddress();
                 extras.putString(VoiceActivity.OUTGOING_CALL_ADDRESS, address.toString());
