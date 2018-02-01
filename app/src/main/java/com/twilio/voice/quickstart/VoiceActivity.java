@@ -46,7 +46,7 @@ import java.util.HashMap;
 public class VoiceActivity extends AppCompatActivity {
 
     private static final String TAG = "VoiceActivity";
-
+    private static String identity = "alice";
     /*
      * You must provide the URL to the publicly accessible Twilio access token server route
      *
