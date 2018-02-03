@@ -143,9 +143,9 @@ Once your app accepts the call, you should hear a congratulatory message.
 
 ### <a name="bullet10"></a>10. Make client to client call
 
-To make client to client calls, you need the application running on two devices. To run the application on an additional device, make sure you use a different identity in your access token when registering the new device. For example, change the `identity` field to `bob` and pass this as a query parameter to your `TWILIO_ACCESS_TOKEN_SERVER_URL`. 
+To make client to client calls, you need the application running on two devices. To run the application on an additional device, make sure you use a different identity in your access token when registering the new device. For example, change the `identity` field to `bob` and run the application. 
 
-<img height="300px" src="images/quickstart/access_token_identity_bob.png">
+<img height="500px" src="images/quickstart/access_token_identity_bob.png">
 
 Press the call button to open the call dialog.
 
