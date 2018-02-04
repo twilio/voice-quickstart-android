@@ -143,7 +143,11 @@ Once your app accepts the call, you should hear a congratulatory message.
 
 ### <a name="bullet10"></a>10. Make client to client call
 
-To make client to client calls, you need the application running on two devices. To run the application on an additional device, make sure you use a different identity in your access token when registering the new device. Press the call button to open the call dialog.
+To make client to client calls, you need the application running on two devices. To run the application on an additional device, make sure you use a different identity in your access token when registering the new device. For example, change the `identity` field to `bob` and run the application. 
+
+<img height="500px" src="images/quickstart/access_token_identity_bob.png">
+
+Press the call button to open the call dialog.
 
 <img height="500px" src="images/quickstart/voice_make_call_dialog.png">
 
