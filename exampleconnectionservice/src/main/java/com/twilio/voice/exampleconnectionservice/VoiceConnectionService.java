@@ -35,8 +35,6 @@ public class VoiceConnectionService extends ConnectionService {
 
     @Override
     public Connection onCreateIncomingConnection(PhoneAccountHandle connectionManagerPhoneAccount, ConnectionRequest request) {
-
-        Toast.makeText(getApplicationContext(), "onCreateIncomingConnection called", Toast.LENGTH_SHORT).show();
         Connection incomingCallCannection = createConnection(request);
         incomingCallCannection.setRinging();
         return incomingCallCannection;
@@ -44,8 +42,6 @@ public class VoiceConnectionService extends ConnectionService {
 
     @Override
     public Connection onCreateOutgoingConnection(PhoneAccountHandle connectionManagerPhoneAccount, ConnectionRequest request) {
-        Toast.makeText(getApplicationContext(), "onCreateOutgoingConnection called", Toast.LENGTH_SHORT).show();
-
         Connection outgoingCallConnection = createConnection(request);
         outgoingCallConnection.setDialing();
 
