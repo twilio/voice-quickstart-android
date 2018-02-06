@@ -14,13 +14,13 @@ You can initiate a call from the `native Phone Application` or from the `example
 
 Run the application. This will register the `Twilio Voice` as one of the custom calling accounts. Enable `Twilio Voice`. 
 
-<img height="500px" src="images/disabled_calling_account_at_first.png">
-<img height="500px" src="images/enable_calling_account.png">
+<img height="400px" src="images/disabled_calling_account_at_first.png">
+<img height="400px" src="images/enable_calling_account.png">
 
 Make a call using the native phone dialer. It will prompt you to select the calling account. Choose `Twilio Voice`.
 
-<img height="500px" src="images/calling_account_choice.png">
-<img height="500px" src="images/make_call_number_native_dialer.png">
+<img height="400px" src="images/calling_account_choice.png">
+<img height="400px" src="images/make_call_number_native_dialer.png">
 
 #### Make Calls using `exampleconnectionservice`
 
@@ -29,8 +29,8 @@ To make a call to a client, you need the https://github.com/twilio/voice-quickst
 
 Open the `exampleconnectionservice` app. Press the call button to open the call dialog. Enter the client identity of the newly registered device to initiate a client to client call.
 
-<img height="500px" src="images/dial_client_bob.png">
-<img height="500px" src="images/make_call_number_native_dialer.png">
+<img height="400px" src="images/dial_client_bob.png">
+<img height="400px" src="images/make_call_number_native_dialer.png">
 
 `bob` receives the call.
 
@@ -40,7 +40,7 @@ Open the `exampleconnectionservice` app. Press the call button to open the call 
 
 Open the `exampleconnectionservice` app. Press the call button to open the call dialog. Enter a PSTN number and press the call button to place a call.
 
-<img height="500px" src="images/enter_phoneString.png">
-<img height="500px" src="images/make_call_number_native_dialer.png">
+<img height="400px" src="images/enter_phoneString.png">
+<img height="400px" src="images/make_call_number_native_dialer.png">
 
 
