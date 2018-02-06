@@ -1,1 +1,1 @@
-include ':app', ':exampleconnectionservice'
+include ':app', ':exampleConnectionService'

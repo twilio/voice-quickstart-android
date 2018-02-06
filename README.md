@@ -169,9 +169,9 @@ Enter a PSTN number and press the call button to place a call.
 
 ## Examples
 
-In addition to the quickstart, we have added a common use case that show you how to create and customize your application:
+In addition to the quickstart, we've added an example of a common use case to show you how to use Android Connection Service:
 
-- [Custom Connection Service](exampleconnectionservice) - Demonstrates how a custom `ConnectionService ` can be implemented and used with Android Voice SDK. 
+- [Voice Connection Service](exampleconnectionservice) - Demonstrates how to use [Android Connection Service](https://developer.android.com/reference/android/telecom/ConnectionService.html) with the Android Voice SDK
 
 ## Emulator Support
 

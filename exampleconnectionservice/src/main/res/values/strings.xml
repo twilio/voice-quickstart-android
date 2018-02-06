@@ -1,7 +1,0 @@
-<resources>
-    <string name="app_name">exampleConnectionService</string>
-    <string name="action_settings">Settings</string>
-    <string name="connection_service_name">Twilio Voice</string>
-    <string name="callee">client identity or phone number</string>
-    <string name="callHint">Dial a client name or phone number. Leaving the field empty results in an automated response.</string>
-</resources>
