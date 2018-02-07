@@ -31,6 +31,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Chronometer;
 import android.widget.EditText;
+
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.koushikdutta.async.future.FutureCallback;
 import com.koushikdutta.ion.Ion;
@@ -46,7 +47,7 @@ import java.util.HashMap;
 public class VoiceActivity extends AppCompatActivity {
 
     private static final String TAG = "VoiceActivity";
-
+    private static String identity = "alice";
     /*
      * You must provide the URL to the publicly accessible Twilio access token server route
      *
@@ -329,7 +330,7 @@ public class VoiceActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 soundPoolManager.stopRinging();
-                if(activeCallInvite != null) {
+                if (activeCallInvite != null) {
                     activeCallInvite.reject(VoiceActivity.this);
                 }
                 alertDialog.dismiss();
@@ -549,7 +550,7 @@ public class VoiceActivity extends AppCompatActivity {
      * Get an access token from your Twilio access token server
      */
     private void retrieveAccessToken() {
-        Ion.with(this).load(TWILIO_ACCESS_TOKEN_SERVER_URL).asString().setCallback(new FutureCallback<String>() {
+        Ion.with(this).load(TWILIO_ACCESS_TOKEN_SERVER_URL + "?identity=" + identity).asString().setCallback(new FutureCallback<String>() {
             @Override
             public void onCompleted(Exception e, String accessToken) {
                 if (e == null) {
