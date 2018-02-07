@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="com.twilio.voice.connectionservice.com.twilio.voice.quickstart.VoiceActivity"
+    tools:context="com.twilio.voice.examples.connectionservice.VoiceConnectionServiceActivity"
     tools:showIn="@layout/activity_voice">
 
     <TextView

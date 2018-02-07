@@ -13,15 +13,13 @@ import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.os.Handler;
 import android.util.Log;
-import android.widget.Toast;
 
-import static android.content.ContentValues.TAG;
-import static com.twilio.voice.examples.connectionservice.VoiceActivity.ACTION_DISCONNECT_CALL;
-import static com.twilio.voice.examples.connectionservice.VoiceActivity.ACTION_DTMF_SEND;
-import static com.twilio.voice.examples.connectionservice.VoiceActivity.ACTION_OUTGOING_CALL;
-import static com.twilio.voice.examples.connectionservice.VoiceActivity.DTMF;
-import static com.twilio.voice.examples.connectionservice.VoiceActivity.CALLEE;
-import static com.twilio.voice.examples.connectionservice.VoiceActivity.OUTGOING_CALL_ADDRESS;
+import static com.twilio.voice.examples.connectionservice.VoiceConnectionServiceActivity.ACTION_DISCONNECT_CALL;
+import static com.twilio.voice.examples.connectionservice.VoiceConnectionServiceActivity.ACTION_DTMF_SEND;
+import static com.twilio.voice.examples.connectionservice.VoiceConnectionServiceActivity.ACTION_OUTGOING_CALL;
+import static com.twilio.voice.examples.connectionservice.VoiceConnectionServiceActivity.DTMF;
+import static com.twilio.voice.examples.connectionservice.VoiceConnectionServiceActivity.CALLEE;
+import static com.twilio.voice.examples.connectionservice.VoiceConnectionServiceActivity.OUTGOING_CALL_ADDRESS;
 
 public class VoiceConnectionService extends ConnectionService {
     private static final String TAG = "VoiceConnectionService";
@@ -142,7 +140,7 @@ public class VoiceConnectionService extends ConnectionService {
     }
 
     /*
-     * Send call request to the VoiceActivity
+     * Send call request to the VoiceConnectionServiceActivity
      */
     private void sendCallRequestToActivity(String action) {
         Intent intent = new Intent(action);

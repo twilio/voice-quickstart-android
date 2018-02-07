@@ -37,12 +37,11 @@ import com.twilio.voice.CallException;
 import com.twilio.voice.LogLevel;
 import com.twilio.voice.LogModule;
 import com.twilio.voice.Voice;
-import com.twilio.voice.examples.connectionservice.R;
 
 import java.util.HashMap;
 
-public class VoiceActivity extends AppCompatActivity {
-    private static final String TAG = "VoiceActivity";
+public class VoiceConnectionServiceActivity extends AppCompatActivity {
+    private static final String TAG = "VoiceConServiceActivity";
 
     /*
      * You must provide the URL to the publicly accessible Twilio access token server route
@@ -87,17 +86,30 @@ public class VoiceActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        FloatingActionButton callActionFab = (FloatingActionButton) findViewById(R.id.call_action_fab);
+        callActionFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                alertDialog = createCallDialog(callClickListener(), cancelCallClickListener(), VoiceActivity.this);
+                alertDialog = createCallDialog(callClickListener(), cancelCallClickListener(), VoiceConnectionServiceActivity.this);
                 alertDialog.show();
             }
         });
+        callActionFab.show();
 
         Voice.setLogLevel(LogLevel.ALL);
         Voice.setModuleLogLevel(LogModule.PJSIP, LogLevel.ALL);
+
+        /*
+         * Setup a phone Account
+         */
+        setupPhoneAccount();
+
+        /*
+         * Setup the broadcast receiver to be notified of FCM Token updates
+         * or incoming call invite in this Activity.
+         */
+        voiceBroadcastReceiver = new VoiceBroadcastReceiver();
+        registerReceiver();
 
         /*
          * Ensure the microphone and CALL_PHONE permissions are enabled
@@ -109,15 +121,6 @@ public class VoiceActivity extends AppCompatActivity {
         }
     }
 
-    private void init() {
-        setupPhoneAccount();
-        voiceBroadcastReceiver = new VoiceBroadcastReceiver();
-        registerReceiver();
-    }
-
-    /*
-    * Setup a phone Account
-    */
     void setupPhoneAccount() {
         String appName = this.getString(R.string.connection_service_name);
         handle = new PhoneAccountHandle(new ComponentName(this.getApplicationContext(), VoiceConnectionService.class), appName);
@@ -128,7 +131,6 @@ public class VoiceActivity extends AppCompatActivity {
         telecomManager.registerPhoneAccount(phoneAccount);
     }
 
-    // Request required permissions
     public static boolean hasPermissions(Context context, String... permissions) {
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context != null && permissions != null) {
             for (String permission : permissions) {
@@ -161,12 +163,7 @@ public class VoiceActivity extends AppCompatActivity {
         }
     }
 
-    /*
-     * Setup the broadcast receiver to be notified of FCM Token updates
-     * or incoming call invite in this Activity.
-     */
     private class VoiceBroadcastReceiver extends BroadcastReceiver {
-
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -229,15 +226,15 @@ public class VoiceActivity extends AppCompatActivity {
     private void handleCallRequest(Intent intent) {
         if (intent != null && intent.getAction() != null) {
             if (intent.getAction().equals(ACTION_OUTGOING_CALL)) {
-                String contact = intent.getStringExtra(VoiceActivity.OUTGOING_CALL_ADDRESS);
+                String contact = intent.getStringExtra(VoiceConnectionServiceActivity.OUTGOING_CALL_ADDRESS);
                 String[] contactparts = contact.split(":");
-                if(contactparts.length > 1) {
+                if (contactparts.length > 1) {
                     twiMLParams.put("to", contactparts[1]);
                 } else {
                     twiMLParams.put("to", contactparts[0]);
                 }
 
-                activeCall = Voice.call(VoiceActivity.this, accessToken, twiMLParams, callListener());
+                activeCall = Voice.call(VoiceConnectionServiceActivity.this, accessToken, twiMLParams, callListener());
             }
         }
     }
@@ -323,8 +320,7 @@ public class VoiceActivity extends AppCompatActivity {
             public void onCompleted(Exception e, String accessToken) {
                 if (e == null) {
                     Log.d(TAG, "Access token: " + accessToken);
-                    VoiceActivity.this.accessToken = accessToken;
-                    init();
+                    VoiceConnectionServiceActivity.this.accessToken = accessToken;
                 } else {
                     Snackbar.make(coordinatorLayout,
                             "Error retrieving access token. Unable to make calls",
