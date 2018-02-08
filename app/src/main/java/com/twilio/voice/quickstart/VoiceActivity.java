@@ -29,6 +29,8 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Chronometer;
 import android.widget.EditText;
 
@@ -92,6 +94,13 @@ public class VoiceActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_voice);
+
+        Window window = getWindow();
+        window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+                | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+                | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+
         coordinatorLayout = findViewById(R.id.coordinator_layout);
         callActionFab = findViewById(R.id.call_action_fab);
         hangupActionFab = findViewById(R.id.hangup_action_fab);
@@ -252,7 +261,6 @@ public class VoiceActivity extends AppCompatActivity {
                             answerCallClickListener(),
                             cancelCallClickListener());
                     alertDialog.show();
-                    notificationManager.cancel(intent.getIntExtra(INCOMING_CALL_NOTIFICATION_ID, 0));
                 } else {
                     if (alertDialog != null && alertDialog.isShowing()) {
                         soundPoolManager.stopRinging();
