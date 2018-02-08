@@ -86,6 +86,7 @@ public class VoiceActivity extends AppCompatActivity {
     private AlertDialog alertDialog;
     private CallInvite activeCallInvite;
     private Call activeCall;
+    private int activeCallNotificationId;
 
     RegistrationListener registrationListener = registrationListener();
     Call.Listener callListener = callListener();
@@ -262,6 +263,7 @@ public class VoiceActivity extends AppCompatActivity {
                             answerCallClickListener(),
                             cancelCallClickListener());
                     alertDialog.show();
+                    activeCallNotificationId = intent.getIntExtra(INCOMING_CALL_NOTIFICATION_ID, 0);
                 } else {
                     if (alertDialog != null && alertDialog.isShowing()) {
                         soundPoolManager.stopRinging();
@@ -341,6 +343,7 @@ public class VoiceActivity extends AppCompatActivity {
                 soundPoolManager.stopRinging();
                 if (activeCallInvite != null) {
                     activeCallInvite.reject(VoiceActivity.this);
+                    notificationManager.cancel(activeCallNotificationId);
                 }
                 alertDialog.dismiss();
             }
@@ -415,6 +418,7 @@ public class VoiceActivity extends AppCompatActivity {
      */
     private void answer() {
         activeCallInvite.accept(this, callListener);
+        notificationManager.cancel(activeCallNotificationId);
     }
 
     /*
