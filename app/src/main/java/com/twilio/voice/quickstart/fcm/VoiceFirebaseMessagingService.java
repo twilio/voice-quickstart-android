@@ -12,7 +12,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.service.notification.StatusBarNotification;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
@@ -151,13 +150,15 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
     }
 
     /*
-     * Send the CallInvite to the VoiceActivity
+     * Send the CallInvite to the VoiceActivity. Start the activity if it is not running already.
      */
     private void sendCallInviteToActivity(CallInvite callInvite, int notificationId) {
-        Intent intent = new Intent(VoiceActivity.ACTION_INCOMING_CALL);
+        Intent intent = new Intent(this, VoiceActivity.class);
+        intent.setAction(VoiceActivity.ACTION_INCOMING_CALL);
         intent.putExtra(VoiceActivity.INCOMING_CALL_NOTIFICATION_ID, notificationId);
         intent.putExtra(VoiceActivity.INCOMING_CALL_INVITE, callInvite);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        this.startActivity(intent);
     }
 
     /**

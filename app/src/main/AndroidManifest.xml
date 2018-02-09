@@ -11,7 +11,6 @@
         <activity android:name=".VoiceActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -32,6 +31,5 @@
             </intent-filter>
         </service>
         <!-- [END instanceId_listener] -->
-
     </application>
 </manifest>
