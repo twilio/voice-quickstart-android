@@ -54,6 +54,10 @@ public class VoiceActivity extends AppCompatActivity {
      * You must provide the URL to the publicly accessible Twilio access token server route
      *
      * For example: https://myurl.io/accessToken
+     *
+     * If your token server is written in PHP, TWILIO_ACCESS_TOKEN_SERVER_URL needs .php extension at the end.
+     *
+     * For example : https://myurl.io/accessToken.php
      */
     private static final String TWILIO_ACCESS_TOKEN_SERVER_URL = "TWILIO_ACCESS_TOKEN_SERVER_URL";
 
