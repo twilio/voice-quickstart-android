@@ -58,7 +58,7 @@ Follow the instructions in the server's README to get the application server up 
 
 Next, we need to create a TwiML application. A TwiML application identifies a public URL for retrieving TwiML call control instructions. When your Android app makes a call to the Twilio cloud, Twilio will make a webhook request to this URL, your application server will respond with generated TwiML, and Twilio will execute the instructions you’ve provided.
 
-To create a TwiML application, go to the TwiML app page. Create a new TwiML application, and use the public URL of your application server’s `/makeCall` endpoint as the Voice Request URL.
+To create a TwiML application, go to the TwiML app page. Create a new TwiML application, and use the public URL of your application server’s `/makeCall` endpoint as the Voice Request URL (If your app server is written in PHP, then you need `.php` extension at the end).
 
 <img width="700px" src="images/quickstart/create_twml_app.png"/>
 
@@ -77,7 +77,7 @@ Put the remaining `APP_SID` configuration info into your application server by o
 
 Once you’ve done that, restart the server so it uses the new configuration info. Now it's time to test.
 
-Open up a browser and visit the URL for your application server's Access Token endpoint: `https://{YOUR_SERVER_URL}/accessToken`. If everything is configured correctly, you should see a long string of letters and numbers, which is a Twilio Access Token. Your Android app will use a token like this to connect to Twilio.
+Open up a browser and visit the URL for your application server's Access Token endpoint: `https://{YOUR_SERVER_URL}/accessToken` (If your app server is written in PHP, then you need `.php` extension at the end). If everything is configured correctly, you should see a long string of letters and numbers, which is a Twilio Access Token. Your Android app will use a token like this to connect to Twilio.
 
 ### <a name="bullet6"></a>6. Run the app
 
@@ -131,7 +131,7 @@ Put the `PUSH_CREDENTIAL_SID` configuration info into your application server by
     PUSH_CREDENTIAL_SID = 'CR***'
     APP_SID = 'AP***'
 
-Once you’ve done that, restart the server so it uses the new configuration info. Now it's time to test. Use your browser to initiate an incoming call by navigating to the public URL of your application server’s `https://{YOUR_SERVER_URL}/placeCall` endpoint. This will trigger a Twilio REST API request that will make an inbound call to your mobile app. 
+Once you’ve done that, restart the server so it uses the new configuration info. Now it's time to test. Use your browser to initiate an incoming call by navigating to the public URL of your application server’s `https://{YOUR_SERVER_URL}/placeCall` endpoint (If your app server is written in PHP, then you need `.php` extension at the end). This will trigger a Twilio REST API request that will make an inbound call to your mobile app.
 Your application will be brought to the foreground and you will see an alert dialog. The app will be brought to foreground even when your screen is locked.
 
 <img height="500px" src="images/quickstart/incoming_call.png">"
