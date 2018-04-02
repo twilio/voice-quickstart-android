@@ -68,7 +68,7 @@ Save your TwiML Application configuration, and grab the TwiML Application SID (a
 
 ### <a name="bullet5"></a>5. Configure your application server
 
-Put the remaining `APP_SID` configuration info into your application server by opening `server.py` and setting the following constants with the information you gathered above.
+Put the remaining `APP_SID` configuration info into your application server by setting the following constants with the information you gathered above.
 
     ACCOUNT_SID = 'AC***'
     API_KEY = 'SK***'
@@ -123,7 +123,7 @@ Paste in the `Server API Key` and press Save.
 
 ### <a name="bullet9"></a>9. Receiving an Incoming Notification
 
-Put the `PUSH_CREDENTIAL_SID` configuration info into your application server by opening `server.py` and setting the following constants with the information you gathered above.
+Put the `PUSH_CREDENTIAL_SID` configuration info into your application server by setting the following constants with the information you gathered above.
 
     ACCOUNT_SID = 'AC***'
     API_KEY = 'SK***'
@@ -161,7 +161,7 @@ Enter the client identity of the newly registered device to initiate a client to
 
 A verified phone number is one that you can use as your Caller ID when making outbound calls with Twilio. This number has not been ported into Twilio and you do not pay Twilio for this phone number.
 
-To make client to number calls, first get a valid Twilio number to your account via https://www.twilio.com/console/phone-numbers/verified. Update `server.py` and replace `CALLER_NUMBER` with the verified number. Restart the server so it uses the new value.
+To make client to number calls, first get a valid Twilio number to your account via https://www.twilio.com/console/phone-numbers/verified. Update your server code and replace `CALLER_NUMBER` with the verified number. Restart the server so that it uses the new value.
 
 Press the call button to open the call dialog.
 
