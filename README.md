@@ -1,8 +1,8 @@
+# Twilio Voice Quickstart for Android
+
 > **Deprecation Notice - Versions prior to 2.0.4**
 >
 > Please note that **older versions of the Programmable Voice Android library prior to 2.0.4 are deprecated and will stop working on September 13, 2018**. Please make sure you’re using the latest version of the library in your apps, and make sure your customers update their apps by that date. For more information please review the [knowledge base](https://support.twilio.com/hc/en-us/articles/360002897814-Legacy-Twilio-Programmable-Voice-SDKs-impacted-by-SSL-certificate-deprecation?_ga=2.97682527.1567854391.1525593881-1397161889.1493262935).
-
-# Twilio Voice Quickstart for Android
 
 Get started with Voice on Android:
 
