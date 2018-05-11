@@ -2,7 +2,7 @@
 
 > **Deprecation Notice - Versions prior to 2.0.4**
 >
-> Please note that **older versions of the Programmable Voice Android library prior to 2.0.4 are deprecated and will stop working on September 13, 2018**. Please make sure you’re using the latest version of the library in your apps, and make sure your customers update their apps by that date. For more information please review the [knowledge base](https://support.twilio.com/hc/en-us/articles/360002897814-Legacy-Twilio-Programmable-Voice-SDKs-impacted-by-SSL-certificate-deprecation).
+> Please note that **older versions of the Programmable Voice Android library prior to 2.0.4 are deprecated and will stop working on September 13, 2018**. Please make sure you’re using the latest version of the library in your apps, and make sure your customers update their apps by that date. For more information please review the following knowledge base [article](https://support.twilio.com/hc/en-us/articles/360002897814-Legacy-Twilio-Programmable-Voice-SDKs-impacted-by-SSL-certificate-deprecation).
 
 Get started with Voice on Android:
 
