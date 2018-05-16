@@ -261,7 +261,7 @@ To learn more about how to use TwiML and the Programmable Voice Calls API, check
 
 Please file any issues you find here on Github.
 For general inquiries related to the Voice SDK you can file a support ticket.
-Please redact any
+Confirm that you are not sharing any
 [Personally Identifiable Information(PII)](https://www.twilio.com/docs/glossary/what-is-personally-identifiable-information-pii)
 or sensitive account information(API keys, credentials, etc.) when reporting an issue.
 
