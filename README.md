@@ -263,7 +263,7 @@ Please file any issues you find here on Github.
 For general inquiries related to the Voice SDK you can file a support ticket.
 Please redact any
 [Personally Identifiable Information(PII)](https://www.twilio.com/docs/glossary/what-is-personally-identifiable-information-pii)
-or secrets(API keys, credentials, etc.) when reporting an issue.
+or sensitive account information(API keys, credentials, etc.) when reporting an issue.
 
 ## License
 MIT
