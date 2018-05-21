@@ -4,6 +4,10 @@
 >  * [GitHub Issues](https://github.com/twilio/voice-quickstart-android/issues)
 >  * [Changelog](https://www.twilio.com/docs/api/voice-sdk/android/changelog)
 
+> Please ensure that you are not sharing any
+[Personally Identifiable Information(PII)](https://www.twilio.com/docs/glossary/what-is-personally-identifiable-information-pii)
+or sensitive account information (API keys, credentials, etc.) when reporting an issue.
+
 ### Description
 
 [Description of the issue]
