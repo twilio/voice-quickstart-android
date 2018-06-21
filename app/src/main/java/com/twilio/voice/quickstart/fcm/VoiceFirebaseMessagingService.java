@@ -165,9 +165,9 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
     /**
      * Build a notification.
      *
-     * @param text the text of the notification
+     * @param text          the text of the notification
      * @param pendingIntent the body, pending intent for the notification
-     * @param extras extras passed with the notification
+     * @param extras        extras passed with the notification
      * @return the builder
      */
     @TargetApi(Build.VERSION_CODES.O)
