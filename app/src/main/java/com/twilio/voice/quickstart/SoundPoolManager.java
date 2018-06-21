@@ -11,6 +11,7 @@ public class SoundPoolManager {
 
     private boolean playing = false;
     private boolean loaded = false;
+    private boolean playingCalled = false;
     private float actualVolume;
     private float maxVolume;
     private float volume;
@@ -42,6 +43,10 @@ public class SoundPoolManager {
             @Override
             public void onLoadComplete(SoundPool soundPool, int sampleId, int status) {
                 loaded = true;
+                if (playingCalled) {
+                    playRinging();
+                    playingCalled = false;
+                }
             }
 
         });
@@ -60,6 +65,8 @@ public class SoundPoolManager {
         if (loaded && !playing) {
             ringingStreamId = soundPool.play(ringingSoundId, volume, volume, 1, -1, 1f);
             playing = true;
+        } else {
+            playingCalled = true;
         }
     }
 
