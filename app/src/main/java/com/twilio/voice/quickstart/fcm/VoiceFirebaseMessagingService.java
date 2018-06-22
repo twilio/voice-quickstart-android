@@ -158,15 +158,16 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
         intent.putExtra(VoiceActivity.INCOMING_CALL_NOTIFICATION_ID, notificationId);
         intent.putExtra(VoiceActivity.INCOMING_CALL_INVITE, callInvite);
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         this.startActivity(intent);
     }
 
     /**
      * Build a notification.
      *
-     * @param text the text of the notification
+     * @param text          the text of the notification
      * @param pendingIntent the body, pending intent for the notification
-     * @param extras extras passed with the notification
+     * @param extras        extras passed with the notification
      * @return the builder
      */
     @TargetApi(Build.VERSION_CODES.O)
