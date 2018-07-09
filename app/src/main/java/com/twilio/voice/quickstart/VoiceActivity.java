@@ -11,6 +11,7 @@ import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -66,6 +67,7 @@ public class VoiceActivity extends AppCompatActivity {
 
     private String accessToken;
     private AudioManager audioManager;
+    private MediaPlayer mediaPlayer;
     private int savedAudioMode = AudioManager.MODE_INVALID;
 
     private boolean isReceiverRegistered = false;
@@ -131,7 +133,10 @@ public class VoiceActivity extends AppCompatActivity {
         /*
          * Needed for setting/abandoning audio focus during a call
          */
+        mediaPlayer = new MediaPlayer();
+        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
         audioManager.setSpeakerphoneOn(true);
 
         /*
@@ -531,9 +536,13 @@ public class VoiceActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.speaker_menu_item:
                 if (audioManager.isSpeakerphoneOn()) {
+                    mediaPlayer.setAudioStreamType(AudioManager.STREAM_VOICE_CALL);
+                    audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
                     audioManager.setSpeakerphoneOn(false);
                     item.setIcon(R.drawable.ic_phonelink_ring_white_24dp);
                 } else {
+                    mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                    audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
                     audioManager.setSpeakerphoneOn(true);
                     item.setIcon(R.drawable.ic_volume_up_white_24dp);
                 }
