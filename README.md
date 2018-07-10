@@ -91,15 +91,15 @@ Paste the public URL of your application server’s `https://{YOUR_SERVER_URL}/a
 
 Run the quickstart app on an Android device
 
-<img height="500px" src="https://github.com/twilio/voice-quickstart-android/raw/master/images/quickstart/voice_activity.png">"
+<img width="423px" src="https://github.com/twilio/voice-quickstart-android/raw/master/images/quickstart/voice_activity.png">
 
 Press the call button to open the call dialog.
 
-<img height="500px" src="https://github.com/twilio/voice-quickstart-android/raw/master/images/quickstart/voice_make_call_dialog.png">
+<img width="423px" src="https://github.com/twilio/voice-quickstart-android/raw/master/images/quickstart/voice_make_call_dialog.png">
 
 Leave the dialog text field empty and press the call button to start a call. You will hear the congratulatory message. Support for dialing another client or number is described in steps 10 and 11.
 
-<img height="500px" src="https://github.com/twilio/voice-quickstart-android/raw/master/images/quickstart/voice_make_call.png">
+<img width="423px" src="https://github.com/twilio/voice-quickstart-android/raw/master/images/quickstart/voice_make_call.png">
 
 ### <a name="bullet7"></a>7. Generate `google-services.json`
 
