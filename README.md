@@ -32,13 +32,13 @@ To get started with the Quickstart application follow these steps. Steps 1-6 wil
 
 
 ### <a name="bullet1"></a>1. Open the project in Android Studio
-<img width="700px" src="images/quickstart/import_project.png"/>
+<img width="700px" src="https://github.com/twilio/voice-quickstart-android/images/quickstart/import_project.png"/>
 
 ### <a name="bullet2"></a>2. Create a Voice API key
 
 Go to the [API Keys page](https://www.twilio.com/console/voice/settings/api-keys) and create a new API key.
 
-<img width="700px" src="images/quickstart/add_api_key.png"/>
+<img width="700px" src="https://github.com/twilio/voice-quickstart-android/images/quickstart/add_api_key.png"/>
 
 Save the generated `API_KEY` and `API_KEY_SECRET` in your notepad. You will need them in the next step.
 
@@ -64,7 +64,7 @@ Next, we need to create a TwiML application. A TwiML application identifies a pu
 
 To create a TwiML application, go to the TwiML app page. Create a new TwiML application, and use the public URL of your application server’s `/makeCall` endpoint as the Voice Request URL (If your app server is written in PHP, then you need `.php` extension at the end).
 
-<img width="700px" src="images/quickstart/create_twml_app.png"/>
+<img width="700px" src="https://github.com/twilio/voice-quickstart-android/images/quickstart/create_twml_app.png"/>
 
 As you can see we’ve used our ngrok public address in the Request URL field above.
 
@@ -87,19 +87,19 @@ Open up a browser and visit the URL for your application server's Access Token e
 
 Paste the public URL of your application server’s `https://{YOUR_SERVER_URL}/accessToken` endpoint into `TWILIO_ACCESS_TOKEN_SERVER_URL` in VoiceActivity.java. Make sure to include `/accessToken` in the URL path.
 
-<img width="600px" src="images/quickstart/paste_token_server_url.png"/>
+<img width="600px" src="https://github.com/twilio/voice-quickstart-android/images/quickstart/paste_token_server_url.png"/>
 
 Run the quickstart app on an Android device
 
-<img height="500px" src="images/quickstart/voice_activity.png">"
+<img height="500px" src="https://github.com/twilio/voice-quickstart-android/images/quickstart/voice_activity.png">"
 
 Press the call button to open the call dialog.
 
-<img height="500px" src="images/quickstart/voice_make_call_dialog.png">
+<img height="500px" src="https://github.com/twilio/voice-quickstart-android/images/quickstart/voice_make_call_dialog.png">
 
 Leave the dialog text field empty and press the call button to start a call. You will hear the congratulatory message. Support for dialing another client or number is described in steps 10 and 11.
 
-<img height="500px" src="images/quickstart/voice_make_call.png">
+<img height="500px" src="https://github.com/twilio/voice-quickstart-android/images/quickstart/voice_make_call.png">
 
 ### <a name="bullet7"></a>7. Generate `google-services.json`
 
@@ -109,7 +109,7 @@ Follow the steps under **Use the Firebase Assistant** in the [Firebase Developer
 
 Login to Firebase console and make a note of generated `Server API Key` and `Sender ID` in your notepad. You will need them in the next step.
 
-<img width="700px" src="images/quickstart/server_key_sender_id.png">"
+<img width="700px" src="https://github.com/twilio/voice-quickstart-android/images/quickstart/server_key_sender_id.png">"
 
 Make sure the generated `google-services.json` is downloaded to the `app` directory of the quickstart project to replace the existing `app/google-services.json` stub json file. If you are using the Firebase plugin make sure to remove the stub `google-services.json` file first.
 
@@ -123,7 +123,7 @@ Go to the [Push Credentials page](https://www.twilio.com/console/voice/sdks/cred
 
 Paste in the `Server API Key` and press Save.
 
-<img width="700px" src="images/quickstart/add_fcm_push_cred.png">"
+<img width="700px" src="https://github.com/twilio/voice-quickstart-android/images/quickstart/add_fcm_push_cred.png">"
 
 ### <a name="bullet9"></a>9. Receiving an Incoming Notification
 
@@ -138,11 +138,11 @@ Put the `PUSH_CREDENTIAL_SID` configuration info into your application server by
 Once you’ve done that, restart the server so it uses the new configuration info. Now it's time to test. Use your browser to initiate an incoming call by navigating to the public URL of your application server’s `https://{YOUR_SERVER_URL}/placeCall` endpoint (If your app server is written in PHP, then you need `.php` extension at the end). This will trigger a Twilio REST API request that will make an inbound call to your mobile app.
 Your application will be brought to the foreground and you will see an alert dialog. The app will be brought to foreground even when your screen is locked.
 
-<img height="500px" src="images/quickstart/incoming_call.png">"
+<img height="500px" src="https://github.com/twilio/voice-quickstart-android/images/quickstart/incoming_call.png">"
 
 You will receive an incoming call notification as well. If you pull down the notification drawer, you will be able to view the notification.
 
-<img height="500px" src="images/quickstart/incoming_notification.png">"
+<img height="500px" src="https://github.com/twilio/voice-quickstart-android/images/quickstart/incoming_notification.png">"
 
 Once your app accepts the call, you should hear a congratulatory message.
 
@@ -150,16 +150,16 @@ Once your app accepts the call, you should hear a congratulatory message.
 
 To make client to client calls, you need the application running on two devices. To run the application on an additional device, make sure you use a different identity in your access token when registering the new device. For example, change the `identity` field to `bob` and run the application. 
 
-<img height="500px" src="images/quickstart/access_token_identity_bob.png">
+<img height="500px" src="https://github.com/twilio/voice-quickstart-android/images/quickstart/access_token_identity_bob.png">
 
 Press the call button to open the call dialog.
 
-<img height="500px" src="images/quickstart/voice_make_call_dialog.png">
+<img height="500px" src="https://github.com/twilio/voice-quickstart-android/images/quickstart/voice_make_call_dialog.png">
 
 Enter the client identity of the newly registered device to initiate a client to client call from the first device.
 
-<img height="500px" src="images/quickstart/make_call_to_client.png">
-<img height="500px" src="images/quickstart/incoming_call_from_alice.png">
+<img height="500px" src="https://github.com/twilio/voice-quickstart-android/images/quickstart/make_call_to_client.png">
+<img height="500px" src="https://github.com/twilio/voice-quickstart-android/images/quickstart/incoming_call_from_alice.png">
 
 ### <a name="bullet11"></a>11. Make client to PSTN call
 
@@ -169,11 +169,11 @@ To make client to number calls, first get a valid Twilio number to your account 
 
 Press the call button to open the call dialog.
 
-<img height="500px" src="images/quickstart/voice_make_call_dialog.png">
+<img height="500px" src="https://github.com/twilio/voice-quickstart-android/images/quickstart/voice_make_call_dialog.png">
 
 Enter a PSTN number and press the call button to place a call.
 
-<img height="500px" src="images/quickstart/make_call_to_number.png">
+<img height="500px" src="https://github.com/twilio/voice-quickstart-android/images/quickstart/make_call_to_number.png">
 
 
 ## Emulator Support
@@ -219,7 +219,7 @@ The adoption of APK splits requires developers to submit multiple APKs to the Pl
 
 ## Access Tokens
 
-The access token generated by your server component is a [jwt](jwt.io) that contains a `grant` for Programmable Voice, an `identity` that you specify, and a `time-to-live` that sets the lifetime of the generated access token. The default `time-to-live` is 1 hour and is configurable up to 24 hours using the Twilio helper libraries.
+The access token generated by your server component is a [jwt](https://jwt.io) that contains a `grant` for Programmable Voice, an `identity` that you specify, and a `time-to-live` that sets the lifetime of the generated access token. The default `time-to-live` is 1 hour and is configurable up to 24 hours using the Twilio helper libraries.
 
 ### Uses
 
