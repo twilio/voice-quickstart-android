@@ -74,7 +74,7 @@ public class VoiceActivity extends AppCompatActivity {
     private VoiceBroadcastReceiver voiceBroadcastReceiver;
 
     // Empty HashMap, never populated for the Quickstart
-    HashMap<String, String> twiMLParams = new HashMap<>();
+    HashMap<String, String> params = new HashMap<>();
 
     private CoordinatorLayout coordinatorLayout;
     private FloatingActionButton callActionFab;
@@ -333,9 +333,9 @@ public class VoiceActivity extends AppCompatActivity {
             public void onClick(DialogInterface dialog, int which) {
                 // Place a call
                 EditText contact = (EditText) ((AlertDialog) dialog).findViewById(R.id.contact);
-                twiMLParams.put("to", contact.getText().toString());
+                params.put("to", contact.getText().toString());
                 ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
-                        .params(twiMLParams)
+                        .params(params)
                         .build();
                 activeCall = Voice.connect(VoiceActivity.this, connectOptions, callListener);
                 setCallUI();
@@ -426,7 +426,7 @@ public class VoiceActivity extends AppCompatActivity {
      * Accept an incoming Call
      */
     private void answer() {
-        activeCallInvite.accept(this, new AcceptOptions.Builder().build(), callListener);
+        activeCallInvite.accept(this, callListener);
         notificationManager.cancel(activeCallNotificationId);
     }
 

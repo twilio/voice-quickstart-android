@@ -243,7 +243,7 @@ You can find more documentation on getting started as well as our latest Javadoc
 
 
 * [Getting Started](https://www.twilio.com/docs/api/voice-sdk/android/getting-started)
-* [Javadoc](https://media.twiliocdn.com/sdk/android/voice/3.0.0-preview1/docs/)
+* [Javadoc](https://media.twiliocdn.com/sdk/android/voice/releases/3.0.0-preview1/docs/)
 
 ## Twilio Helper Libraries
 
