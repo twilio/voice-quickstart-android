@@ -40,6 +40,7 @@ import com.koushikdutta.ion.Ion;
 import com.twilio.voice.Call;
 import com.twilio.voice.CallException;
 import com.twilio.voice.CallInvite;
+import com.twilio.voice.ConnectOptions;
 import com.twilio.voice.RegistrationException;
 import com.twilio.voice.RegistrationListener;
 import com.twilio.voice.Voice;
@@ -72,7 +73,7 @@ public class VoiceActivity extends AppCompatActivity {
     private VoiceBroadcastReceiver voiceBroadcastReceiver;
 
     // Empty HashMap, never populated for the Quickstart
-    HashMap<String, String> twiMLParams = new HashMap<>();
+    HashMap<String, String> params = new HashMap<>();
 
     private CoordinatorLayout coordinatorLayout;
     private FloatingActionButton callActionFab;
@@ -331,8 +332,11 @@ public class VoiceActivity extends AppCompatActivity {
             public void onClick(DialogInterface dialog, int which) {
                 // Place a call
                 EditText contact = (EditText) ((AlertDialog) dialog).findViewById(R.id.contact);
-                twiMLParams.put("to", contact.getText().toString());
-                activeCall = Voice.call(VoiceActivity.this, accessToken, twiMLParams, callListener);
+                params.put("to", contact.getText().toString());
+                ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
+                        .params(params)
+                        .build();
+                activeCall = Voice.connect(VoiceActivity.this, connectOptions, callListener);
                 setCallUI();
                 alertDialog.dismiss();
             }
