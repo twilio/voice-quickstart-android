@@ -1,8 +1,6 @@
 # Twilio Voice Quickstart for Android
 
-> **Deprecation Notice - Versions prior to 2.0.4**
->
-> Please note that **older versions of the Programmable Voice Android library prior to 2.0.4 are deprecated and will stop working on September 13, 2018**. Please make sure you’re using the latest version of the library in your apps, and make sure your customers update their apps by that date. For more information please review the following knowledge base [article](https://support.twilio.com/hc/en-us/articles/360002897814-Legacy-Twilio-Programmable-Voice-SDKs-impacted-by-SSL-certificate-deprecation).
+> This is a developer preview release of the Programmable Voice 3.X SDK for Android. This major version now uses WebRTC and is still under active development. APIs are subject to change and we recommend you look at known issues provided in the [changelog](https://www.twilio.com/docs/voice/voip-sdk/android/changelog). To use a generally available version of the Programmable Voice SDKs for Android, please see the master branch based on the 2.X APIs.
 
 Get started with Voice on Android:
 
@@ -245,7 +243,7 @@ You can find more documentation on getting started as well as our latest Javadoc
 
 
 * [Getting Started](https://www.twilio.com/docs/api/voice-sdk/android/getting-started)
-* [Javadoc](https://media.twiliocdn.com/sdk/android/voice/latest/docs/)
+* [Javadoc](https://media.twiliocdn.com/sdk/android/voice/3.0.0-preview1/docs/)
 
 ## Twilio Helper Libraries
 

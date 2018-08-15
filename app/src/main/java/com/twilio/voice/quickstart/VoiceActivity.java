@@ -37,9 +37,11 @@ import android.widget.EditText;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.koushikdutta.async.future.FutureCallback;
 import com.koushikdutta.ion.Ion;
+import com.twilio.voice.AcceptOptions;
 import com.twilio.voice.Call;
 import com.twilio.voice.CallException;
 import com.twilio.voice.CallInvite;
+import com.twilio.voice.ConnectOptions;
 import com.twilio.voice.RegistrationException;
 import com.twilio.voice.RegistrationListener;
 import com.twilio.voice.Voice;
@@ -332,7 +334,10 @@ public class VoiceActivity extends AppCompatActivity {
                 // Place a call
                 EditText contact = (EditText) ((AlertDialog) dialog).findViewById(R.id.contact);
                 twiMLParams.put("to", contact.getText().toString());
-                activeCall = Voice.call(VoiceActivity.this, accessToken, twiMLParams, callListener);
+                ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
+                        .params(twiMLParams)
+                        .build();
+                activeCall = Voice.connect(VoiceActivity.this, connectOptions, callListener);
                 setCallUI();
                 alertDialog.dismiss();
             }
@@ -421,7 +426,7 @@ public class VoiceActivity extends AppCompatActivity {
      * Accept an incoming Call
      */
     private void answer() {
-        activeCallInvite.accept(this, callListener);
+        activeCallInvite.accept(this, new AcceptOptions.Builder().build(), callListener);
         notificationManager.cancel(activeCallNotificationId);
     }
 
