@@ -184,6 +184,12 @@ public class VoiceActivity extends AppCompatActivity {
 
     private Call.Listener callListener() {
         return new Call.Listener() {
+
+            @Override
+            public void onRinging(Call call) {
+                Log.d(TAG, "Ringing");
+            }
+
             @Override
             public void onConnectFailure(Call call, CallException error) {
                 setAudioFocus(false);
