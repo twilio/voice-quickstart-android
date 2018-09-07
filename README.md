@@ -5,7 +5,7 @@
 Get started with Voice on Android:
 
 - [Quickstart](#quickstart) - Run the quickstart app
-- [Migration Guide](#migrating-guide) - Migrating from 2.X to 3.X
+- [Migration Guide](#migration-guide) - Migrating from 2.X to 3.X
 - [Emulator Support](#emulator-support) - Android emulator support
 - [Reducing APK Size](#reducing-apk-size) - Use ABI splits to reduce APK size
 - [Access Tokens](#access-tokens) - Using access tokens
