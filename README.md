@@ -5,6 +5,7 @@
 Get started with Voice on Android:
 
 - [Quickstart](#quickstart) - Run the quickstart app
+- [Migration Guide](#migration-guide) - Migrating from 2.X to 3.X
 - [Emulator Support](#emulator-support) - Android emulator support
 - [Reducing APK Size](#reducing-apk-size) - Use ABI splits to reduce APK size
 - [Access Tokens](#access-tokens) - Using access tokens
@@ -173,6 +174,126 @@ Enter a PSTN number and press the call button to place a call.
 
 <img height="500px" src="https://github.com/twilio/voice-quickstart-android/raw/master/images/quickstart/make_call_to_number.png">
 
+## Migration Guide
+
+This section describes API changes and additions to ease migration from Voice Android 2.X to Voice Android 3.X. Each section provides code snippets to assist in transitioning to the new API.
+
+#### Call State
+
+The call state `CallState` has moved to the Call class. It can be referenced as follows:
+
+```Java
+Call.State
+```
+
+#### CallInvite Changes
+
+In Voice Android 3.X, the `MessageListener` no longer raises errors if an invalid message is provided, instead a `boolean` value is returned when `boolean handleMessage(context, data, listener)` is called. The `boolean` value returns `true` when the provided data resulted in a `CallInvite` or `CancelledCallInvite` raised by the `MessageListener`. If `boolean handleMessage(context, data, listener)` returns `false` it means the data provided was not a Twilio Voice push message.
+
+The `MessageListener` now raises callbacks for a `CallInvite` or `CancelledCallInvite` as follows:
+
+```Java
+boolean valid = handleMessage(context, data, new MessageListener() {
+           @Override
+           void onCallInvite(CallInvite callInvite) {
+               // Show notification to answer or reject call
+           }
+
+           @Override
+           void onCancelledCallInvite(CancelledCallInvite callInvite) {
+               // Hide notification
+           }
+       });
+```
+
+The `CallInvite` has an `accept()` and `reject()` method. The `getState()` method has been removed from the `CallInvite` in favor of distinguishing between call invites and call invite cancellations with discrete stateless objects. While the `CancelledCallInvite` simply provides the `to`, `from`, and `callSid` fields also available in the `CallInvite`. The class method `getCallSid()` can be used to associate a `CallInvite` with a `CancelledCallInvite`.
+
+#### Specifying a media region
+
+Previously, a media region could be specified via `Voice.setRegion(String)`. Now this configuration can be provided as part of `ConnectOptions` or `AcceptOptions` as shown below:
+
+```Java
+ConnectOptions connectOptions = new ConnectOptions.Builder()
+            .region(String)
+            .build();
+
+AcceptOptions acceptOptions = new AcceptOptions.Builder()
+            .region(String)
+            .build();
+```
+
+#### ConnectOptions & AcceptOptions
+
+To support configurability upon making or accepting a call new classes have been added. To create `ConnectOptions` the `ConnectOptions.Builder` must be used. Once `ConnectOptions` is created it can be provided when connecting  a `Call` as shown below:
+
+```Java
+ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
+            .setParams(params)
+                    .build();
+Call call = Voice.connect(context, connectOptions, listener);
+```
+
+A `CallInvite` can also be accepted using `AcceptOptions` as shown below:
+
+```Java
+AcceptOptions acceptOptions = new AcceptOptions.Builder()
+            .build();
+CallInvite.accept(context, acceptOptions, listener);
+```
+
+#### Ringing
+
+Ringing is now provided as a call state. A callback corresponding to this state transition is emitted once before the `Call.Listener.onConnected(...)` callback when the callee is being alerted of a Call. The behavior of this callback is determined by the `answerOnBridge` flag provided in the `Dial` verb of your TwiML application associated with this client. If the `answerOnBridge` flag is `false`, which is the default, the `Call.Listener.onConnected(...)` callback will be emitted immediately after `Call.Listener.onRinging(...)`. If the `answerOnBridge` flag is `true`, this will cause the call to emit the onConnected callback only after the call is answered. See [answerOnBridge](https://www.twilio.com/docs/voice/twiml/dial#answeronbridge) for more details on how to use it with the Dial TwiML verb. If the TwiML response contains a Say verb, then the call will emit the `Call.Listener.onConnected(...)` callback immediately after `Call.Listener.onRinging(...)` is raised, irrespective of the value of `answerOnBridge` being set to `true` or `false`.
+
+These changes are added as follows:
+
+```Java
+public class Call {
+
+	public enum State {
+		CONNECTING,
+		RINGING, // State addition
+		CONNECTED,
+		DISCONNECTED
+	}
+
+	public interface Listener {
+	   void onConnectFailure(@NonNull Call call, @NonNull CallException callException);
+		void onRinging(@NonNull Call call); // Callback addition
+		void onConnected(@NonNull Call call);
+		void onDisconnected(@NonNull Call call, @Nullable CallException callException);
+	}
+}
+
+```
+
+#### Hold
+
+Previously, there was no way to hold a call. Hold can now be called on the `Call` object as follows:
+
+```Java
+call.hold(boolean);
+```
+
+#### Media Establishment & Connectivity
+
+The Voice Android 3.X SDK uses WebRTC. The exchange of real-time media requires the use of Interactive Connectivity Establishment(ICE) to establish a media connection between the client and the media server. In some network environments where network access is restricted it may be necessary to provide ICE servers to establish a media connection. We reccomend using the [Network Traversal Service (NTS)](https://www.twilio.com/stun-turn) to obtain ICE servers. ICE servers can be provided when making or accepting a call by passing them into `ConnectOptions` or `AcceptOptions` in the following way:
+
+```Java
+// Obtain the set of ICE servers from your preferred ICE server provider
+Set<IceServer> iceServers = new HashSet<>();
+iceServers.add(new IceServer("stun:global.stun.twilio.com:3478?transport=udp"));
+iceServers.add(new IceServer("turn:global.turn.twilio.com:3478?transport=udp"));
+...
+
+IceOptions iceOptions = new IceOptions.Builder()
+         .iceServers(iceServers)
+         .build();
+
+ConnectOptions.Builder connectOptionsBuilder = new ConnectOptions.Builder(accessToken)
+         .iceOptions(iceOptions)
+         .build();
+```
 
 ## Emulator Support
 
