@@ -295,6 +295,30 @@ ConnectOptions.Builder connectOptionsBuilder = new ConnectOptions.Builder(access
          .build();
 ```
 
+### Custom Parameters
+
+Custom Parameters is now supported in `CallInvite`. `CallInvite.getCustomParamaters()` returns a map of custom parameters sent from the caller side to callee.
+
+```Java
+// Pass custom parameters in TwiML
+<?xml version="1.0" encoding="UTF-8"?>
+	<Response>
+		<Dial answerOnBridge="false" callerId="client:alice">
+			<Client>
+				<Identity>bob</Identity>
+				<Parameter name="caller_first_name" value="alice"  />
+				<Parameter name="caller_last_name" value="smith"  />
+			</Client>
+		</Dial>
+	</Response>
+```  
+`callInvite.getCustomParameters()` returns a map of key-value pair passed in the TwiML.
+
+```
+"caller_first_name" -> "alice"
+"caller_last_name" -> "smith"
+```
+
 ## Emulator Support
 
 The SDK supports using emulators except in the following known cases:
