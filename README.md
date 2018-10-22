@@ -183,6 +183,7 @@ Voice Android 3.X has a number of new features listed below:
 2. [Custom Parameters](#feature2)
 3. [Hold](#feature3)
 4. [Ringing](#feature4)
+5. [Stats](#feature5)
 
 #### <a name="feature1"></a>WebRTC
 
@@ -244,6 +245,10 @@ public class Call {
 	}
 }
 ```
+
+#### <a name="feature5"></a>Stats
+
+Statistics related to the media in the call can now be retrieved by calling `Call.getStats(StatsListener listener)`. The `StatsListener` returns a `StatsReport` that provides statistics about the local and remote audio in the call.
 
 ## Migration Guide
 
