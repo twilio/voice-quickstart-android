@@ -187,7 +187,7 @@ Voice Android 3.X has a number of new features listed below:
 
 #### <a name="feature1"></a>WebRTC
 
-This major version of the SDK is built using Chromium WebRTC for Android. This ensures that over time developers will get the best real-time media streaming capabilities available for Android. Additionally, upgrades to new versions of Chromium WebRTC will happen without changing the public API whenever possible.
+The SDK is built using Chromium WebRTC for Android. This ensures that over time developers will get the best real-time media streaming capabilities available for Android. Additionally, upgrades to new versions of Chromium WebRTC will happen without changing the public API whenever possible.
 
 #### <a name="feature2"></a>Custom Parameters
 
