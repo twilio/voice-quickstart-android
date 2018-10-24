@@ -304,7 +304,7 @@ In Voice Android 2.X passing a `cancel` message into `void Voice.handleMessage(.
 - This callee accepted the call
 - This callee rejected the call
 
-However, in Voice Android 3.X passing a `cancel` data message into `handleMessage(...)` will always result in a callback. This ensures that a callback is raised for all calling scenarios.
+However, in Voice Android 3.X passing a `cancel` data message into `handleMessage(...)` will always result in a callback. A callback is raised whenever a valid message is provided to `Voice.handleMessage(...)`.
 
 #### <a name="migration4"></a>Specifying a media region
 
