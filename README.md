@@ -279,7 +279,7 @@ Call.State
 
 #### <a name="migration3"></a>CallInvite Changes
 
-In Voice Android 3.X, the `MessageListener` no longer raises errors if an invalid message is provided, instead a `boolean` value is returned when `boolean handleMessage(context, data, listener)` is called. The `boolean` value returns `true` when the provided data resulted in a `CallInvite` or `CancelledCallInvite` raised by the `MessageListener`. If `boolean handleMessage(context, data, listener)` returns `false` it means the data provided was not a Twilio Voice push message.
+In Voice Android 3.X, the `MessageListener` no longer raises errors if an invalid message is provided, instead a `boolean` value is returned when `boolean Voice.handleMessage(context, data, listener)` is called. The `boolean` value returns `true` when the provided data resulted in a `CallInvite` or `CancelledCallInvite` raised by the `MessageListener`. If `boolean Voice.handleMessage(context, data, listener)` returns `false` it means the data provided was not a Twilio Voice push message.
 
 The `MessageListener` now raises callbacks for a `CallInvite` or `CancelledCallInvite` as follows:
 
@@ -298,6 +298,13 @@ boolean valid = handleMessage(context, data, new MessageListener() {
 ```
 
 The `CallInvite` has an `accept()` and `reject()` method. The `getState()` method has been removed from the `CallInvite` in favor of distinguishing between call invites and call invite cancellations with discrete stateless objects. While the `CancelledCallInvite` simply provides the `to`, `from`, and `callSid` fields also available in the `CallInvite`. The class method `getCallSid()` can be used to associate a `CallInvite` with a `CancelledCallInvite`.
+
+In Voice Android 2.X passing a `cancel` message into `void Voice.handleMessage(...)` would not raise a callback in the following two cases:
+
+- This callee accepted the call
+- This callee rejected the call
+
+However, in Voice Android 3.X passing a `cancel` data message into `handleMessage(...)` will always result in a callback. This ensures that a callback is raised for all calling scenarios.
 
 #### <a name="migration4"></a>Specifying a media region
 
