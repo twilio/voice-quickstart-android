@@ -306,7 +306,7 @@ In Voice Android 2.X passing a `cancel` message into `void Voice.handleMessage(.
 
 However, in Voice Android 3.X passing a `cancel` data message into `handleMessage(...)` will always result in a callback. A callback is raised whenever a valid message is provided to `Voice.handleMessage(...)`.
 
-Note that Twilio will send a `cancel` message to every registered device with the identity that accepts or rejects a call.
+Note that Twilio will send a `cancel` message to every registered device of the identity that accepts or rejects a call, even the device that accepted or rejected the call.
 
 #### <a name="migration4"></a>Specifying a media region
 
