@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
@@ -78,6 +79,7 @@ public class VoiceActivity extends AppCompatActivity {
     private CoordinatorLayout coordinatorLayout;
     private FloatingActionButton callActionFab;
     private FloatingActionButton hangupActionFab;
+    private FloatingActionButton holdActionFab;
     private FloatingActionButton muteActionFab;
     private Chronometer chronometer;
     private SoundPoolManager soundPoolManager;
@@ -113,11 +115,13 @@ public class VoiceActivity extends AppCompatActivity {
         coordinatorLayout = findViewById(R.id.coordinator_layout);
         callActionFab = findViewById(R.id.call_action_fab);
         hangupActionFab = findViewById(R.id.hangup_action_fab);
+        holdActionFab = findViewById(R.id.hold_action_fab);
         muteActionFab = findViewById(R.id.mute_action_fab);
         chronometer = findViewById(R.id.chronometer);
 
         callActionFab.setOnClickListener(callActionFabClickListener());
         hangupActionFab.setOnClickListener(hangupActionFabClickListener());
+        holdActionFab.setOnClickListener(holdActionFabClickListener());
         muteActionFab.setOnClickListener(muteActionFabClickListener());
 
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -241,6 +245,7 @@ public class VoiceActivity extends AppCompatActivity {
     private void setCallUI() {
         callActionFab.hide();
         hangupActionFab.show();
+        holdActionFab.show();
         muteActionFab.show();
         chronometer.setVisibility(View.VISIBLE);
         chronometer.setBase(SystemClock.elapsedRealtime());
@@ -253,6 +258,9 @@ public class VoiceActivity extends AppCompatActivity {
     private void resetUI() {
         callActionFab.show();
         muteActionFab.setImageDrawable(ContextCompat.getDrawable(VoiceActivity.this, R.drawable.ic_mic_white_24dp));
+        holdActionFab.hide();
+        holdActionFab.setBackgroundTintList(ColorStateList
+                .valueOf(ContextCompat.getColor(this, R.color.colorAccent)));
         muteActionFab.hide();
         hangupActionFab.hide();
         chronometer.setVisibility(View.INVISIBLE);
@@ -435,6 +443,15 @@ public class VoiceActivity extends AppCompatActivity {
         };
     }
 
+    private View.OnClickListener holdActionFabClickListener() {
+        return new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                hold();
+            }
+        };
+    }
+
     private View.OnClickListener muteActionFabClickListener() {
         return new View.OnClickListener() {
             @Override
@@ -459,6 +476,21 @@ public class VoiceActivity extends AppCompatActivity {
         if (activeCall != null) {
             activeCall.disconnect();
             activeCall = null;
+        }
+    }
+
+    private void hold() {
+        if (activeCall != null) {
+            boolean hold = !activeCall.isOnHold();
+            activeCall.hold(hold);
+
+            // Set fab as pressed when call is on hold
+            ColorStateList holdActionBarCsl = hold ?
+                    ColorStateList.valueOf(ContextCompat.getColor(this,
+                            R.color.colorPrimaryDark)) :
+                    ColorStateList.valueOf(ContextCompat.getColor(this,
+                            R.color.colorAccent));
+            holdActionFab.setBackgroundTintList(holdActionBarCsl);
         }
     }
 
