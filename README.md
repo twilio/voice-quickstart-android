@@ -1,6 +1,6 @@
 # Twilio Voice Quickstart for Android
 
-> This is a developer preview release of the Programmable Voice 3.X SDK for Android. This major version now uses WebRTC and is still under active development. APIs are subject to change and we recommend you look at known issues provided in the [changelog](https://www.twilio.com/docs/voice/voip-sdk/android/changelog). To use a generally available version of the Programmable Voice SDKs for Android, please see the master branch based on the 2.X APIs.
+> This is a beta release of the Programmable Voice 3.X SDK for Android. This major version now uses WebRTC. APIs are unlikely to change. We recommend you look at known issues provided in the changelog. To use a generally available version of the Programmable Voice SDKs for Android, please see the master branch based on the 2.X APIs.
 
 Get started with Voice on Android:
 
