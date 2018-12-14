@@ -42,13 +42,10 @@ import com.twilio.voice.Call;
 import com.twilio.voice.CallException;
 import com.twilio.voice.CallInvite;
 import com.twilio.voice.ConnectOptions;
-import com.twilio.voice.OpusCodec;
-import com.twilio.voice.PcmuCodec;
 import com.twilio.voice.RegistrationException;
 import com.twilio.voice.RegistrationListener;
 import com.twilio.voice.Voice;
 
-import java.util.Arrays;
 import java.util.HashMap;
 
 public class VoiceActivity extends AppCompatActivity {
@@ -367,10 +364,8 @@ public class VoiceActivity extends AppCompatActivity {
                 // Place a call
                 EditText contact = (EditText) ((AlertDialog) dialog).findViewById(R.id.contact);
                 params.put("to", contact.getText().toString());
-
                 ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
                         .params(params)
-                        .preferAudioCodecs(Arrays.asList(new OpusCodec(), new PcmuCodec()))
                         .build();
                 activeCall = Voice.connect(VoiceActivity.this, connectOptions, callListener);
                 setCallUI();
