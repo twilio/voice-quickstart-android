@@ -184,6 +184,7 @@ Voice Android 3.X has a number of new features listed below:
 3. [Hold](#feature3)
 4. [Ringing](#feature4)
 5. [Stats](#feature5)
+6. [Preferred Audio Codec](#feature6)
 
 #### <a name="feature1"></a>WebRTC
 
@@ -249,6 +250,18 @@ public class Call {
 #### <a name="feature5"></a>Stats
 
 Statistics related to the media in the call can now be retrieved by calling `Call.getStats(StatsListener listener)`. The `StatsListener` returns a `StatsReport` that provides statistics about the local and remote audio in the call.
+
+#### <a name="feature6"></a>Preferred Audio Codec
+
+In Voice Android 3.X, you can provide your preferred audio codecs in the `ConnectOptions` and the `AcceptOptions`. The only audio codec supported by our mobile infrastructure is currently PCMU. Opus is not currently available on our mobile infrastructure. However it will become available in Q1 of 2019. At that point the default audio codec for all 3.X mobile clients will be Opus. To always use PCMU as the negotiated audio codec instead you can add it as the first codec in the preferAudioCodecs list.
+
+```Java
+ ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
+                        .params(params)
+                        .preferAudioCodecs(Arrays.asList(new OpusCodec(), new PcmuCodec()))
+                        .build();
+Call call = Voice.connect(VoiceActivity.this, connectOptions, callListener);
+```
 
 ## Migration Guide
 
