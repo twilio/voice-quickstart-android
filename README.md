@@ -273,6 +273,7 @@ This section describes API or behavioral changes when upgrading from Voice Andro
 4. [Specifying a Media Region](#migration4)
 5. [ConnectOptions & AcceptOptions](#migration5)
 6. [Media Establishment & Connectivity](#migration6)
+7. [ProGuard Configuration] (#migration7)
 
 #### <a name="migration1"></a>Making a Call
 
@@ -372,6 +373,22 @@ IceOptions iceOptions = new IceOptions.Builder()
 ConnectOptions.Builder connectOptionsBuilder = new ConnectOptions.Builder(accessToken)
          .iceOptions(iceOptions)
          .build();
+```
+
+#### <a name="migration7"></a>ProGuard Configuration
+
+To enable ProGuard, follow the [official instructions](https://developer.android.com/studio/build/shrink-code#enabling-gradle) first. 
+
+* Open your app module's ProGuard configuration (`proguard-rules.pro` in your app's module in Android Studio)
+* Add the following lines at the end of your existing configuration
+
+```
+-keep class com.twilio.** { *; }
+-keep class org.webrtc.** { *; }
+-dontwarn org.webrtc.**
+-keep class com.twilio.voice.** { *; }
+-keepattributes InnerClasses
+
 ```
 
 ## Emulator Support
