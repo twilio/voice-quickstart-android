@@ -10,7 +10,7 @@ Get started with Voice on Android:
 - [Emulator Support](#emulator-support) - Android emulator support
 - [Reducing APK Size](#reducing-apk-size) - Use ABI splits to reduce APK size
 - [Access Tokens](#access-tokens) - Using access tokens
-- [Manage Push Credentials](#manage-push-credentials) - Managing Push Credentials
+- [Managing Push Credentials](#managing-push-credentials) - Managing Push Credentials
 - [More Documentation](#more-documentation) - More documentation related to the Voice Android SDK
 - [Twilio Helper Libraries](#twilio-helper-libraries) - TwiML quickstarts.
 - [Issues & Support](#issues-and-support) - Filing issues and general support
