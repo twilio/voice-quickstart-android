@@ -10,6 +10,7 @@ Get started with Voice on Android:
 - [Emulator Support](#emulator-support) - Android emulator support
 - [Reducing APK Size](#reducing-apk-size) - Use ABI splits to reduce APK size
 - [Access Tokens](#access-tokens) - Using access tokens
+- [Manage Push Credentials](#manage-push-credentials) - Managing Push Credentials
 - [More Documentation](#more-documentation) - More documentation related to the Voice Android SDK
 - [Twilio Helper Libraries](#twilio-helper-libraries) - TwiML quickstarts.
 - [Issues & Support](#issues-and-support) - Filing issues and general support
@@ -453,6 +454,28 @@ There are number of techniques you can use to ensure that access token expiry is
 - Retain the access token until getting a `EXCEPTION_INVALID_ACCESS_TOKEN_EXPIRY`/`20104` error before fetching a new access token.
 - Retain the access token along with the timestamp of when it was requested so you can verify ahead of time whether the token has already expired based on the `time-to-live` being used by your server.
 - Prefetch the access token whenever the `Application`, `Service`, `Activity`, or `Fragment` associated with an outgoing call is created.
+
+## Managing Push Credentials
+
+A Push Credential is a record for a push notification channel, for Android this Push Credential is a push notification channel record for FCM or GCM. Push Credentials are managed in the console under [Mobile Push Credentials](https://www.twilio.com/console/voice/sdks/credentials).
+
+Whenever a registration is performed via `Voice.register(…)` in the Android SDK the `identity` and the `Push Credential SID` provided in the JWT based access token, along with the `FCM/GCM token` are used as a unique address to send push notifications to this application instance whenever a call is made to reach that `identity`. Using `Voice.unregister(…)` removes the association for that `identity`.
+
+### Updating a Push Credential
+
+If you need to change or update your server key token provided by Firebase (under `Project Settings` → `Cloud Messaging` → `Server key`) you can do so by selecting the Push Credential in the [console](https://www.twilio.com/console/voice/sdks/credentials) and adding your new `Server key` in the text box provided on the Push Credential page shown below:
+
+<img height="500px" src="images/quickstart/updating_push_credential.png">
+
+### Deleting a Push Credential
+
+We **do not recommend that you delete a Push Credential** unless the application that it was created for is no longer being used.
+
+When a Push Credential is deleted **any associated registrations made with this Push Credential will be deleted**. Future attempts to reach an `identity` that was registered using the Push Credential SID of this deleted push credential will fail.
+
+If you are certain you want to delete a Push Credential you can click on `Delete this Credential` on the [console](https://www.twilio.com/console/voice/sdks/credentials) page of the selected Push Credential.
+
+Please ensure that after deleting the Push Credential you remove or replace the Push Credential SID when generating new access tokens.
 
 ## More Documentation
 
