@@ -274,7 +274,7 @@ This section describes API or behavioral changes when upgrading from Voice Andro
 4. [Specifying a Media Region](#migration4)
 5. [ConnectOptions & AcceptOptions](#migration5)
 6. [Media Establishment & Connectivity](#migration6)
-7. [ProGuard Configuration] (#migration7)
+7. [ProGuard Configuration](#migration7)
 
 #### <a name="migration1"></a>Making a Call
 
