@@ -418,7 +418,7 @@ public class VoiceActivity extends AppCompatActivity {
         final String fcmToken = FirebaseInstanceId.getInstance().getToken();
         if (fcmToken != null) {
             Log.i(TAG, "Registering with FCM");
-            Voice.register(this, accessToken, Voice.RegistrationChannel.FCM, fcmToken, registrationListener);
+            Voice.register(accessToken, Voice.RegistrationChannel.FCM, fcmToken, registrationListener);
         }
     }
 
