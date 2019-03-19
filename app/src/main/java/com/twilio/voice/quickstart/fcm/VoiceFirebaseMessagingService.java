@@ -59,7 +59,7 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
             Map<String, String> data = remoteMessage.getData();
             final int notificationId = (int) System.currentTimeMillis();
 
-            boolean valid = Voice.handleMessage(this, remoteMessage.getData(), new MessageListener() {
+            boolean valid = Voice.handleMessage(remoteMessage.getData(), new MessageListener() {
                 @Override
                 public void onCallInvite(@NonNull CallInvite callInvite) {
                     final int notificationId = (int) System.currentTimeMillis();
