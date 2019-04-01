@@ -1,12 +1,12 @@
 # Twilio Voice Quickstart for Android
 
-> This is a beta release of the Programmable Voice 3.X SDK for Android. This major version now uses WebRTC. APIs are unlikely to change. We recommend you look at known issues provided in the changelog. To use a generally available version of the Programmable Voice SDKs for Android, please see the master branch based on the 2.X APIs.
+> This is a beta release of the Programmable Voice 3.x SDK for Android. This major version now uses WebRTC. APIs are unlikely to change. We recommend you look at known issues provided in the changelog. To use a generally available version of the Programmable Voice SDKs for Android, please see the master branch based on the 2.x APIs.
 
 Get started with Voice on Android:
 
 - [Quickstart](#quickstart) - Run the quickstart app
 - [New Features](Docs/new-features-3.0.md) - New features in 3.0
-- [Migration Guide](Docs/migration-guide-2.x-3.x.md) - Migrating from 2.X to 3.X
+- [Migration Guide](Docs/migration-guide-2.x-3.x.md) - Migrating from 2.x to 3.x
 - [Emulator Support](#emulator-support) - Android emulator support
 - [Reducing APK Size](#reducing-apk-size) - Use ABI splits to reduce APK size
 - [Access Tokens](#access-tokens) - Using access tokens
