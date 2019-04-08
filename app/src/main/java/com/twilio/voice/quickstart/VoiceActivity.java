@@ -527,7 +527,12 @@ public class VoiceActivity extends AppCompatActivity {
                             .build();
                     audioManager.requestAudioFocus(focusRequest);
                 } else {
-                    audioManager.requestAudioFocus(null, AudioManager.STREAM_VOICE_CALL,
+                    int focusRequestResult = audioManager.requestAudioFocus(new AudioManager.OnAudioFocusChangeListener() {
+
+                                                       @Override
+                                                       public void onAudioFocusChange(int focusChange) {
+                                                       }
+                                                   }, AudioManager.STREAM_VOICE_CALL,
                             AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
                 }
                 /*

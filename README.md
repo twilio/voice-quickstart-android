@@ -11,6 +11,7 @@ Get started with Voice on Android:
 - [Reducing APK Size](#reducing-apk-size) - Use ABI splits to reduce APK size
 - [Access Tokens](#access-tokens) - Using access tokens
 - [Managing Push Credentials](#managing-push-credentials) - Managing Push Credentials
+- [Troubleshooting Audio](#troubleshooting-audio) - Troubleshooting Audio
 - [More Documentation](#more-documentation) - More documentation related to the Voice Android SDK
 - [Twilio Helper Libraries](#twilio-helper-libraries) - TwiML quickstarts.
 - [Issues & Support](#issues-and-support) - Filing issues and general support
@@ -260,6 +261,91 @@ When a Push Credential is deleted **any associated registrations made with this 
 If you are certain you want to delete a Push Credential you can click on `Delete this Credential` on the [console](https://www.twilio.com/console/voice/sdks/credentials) page of the selected Push Credential.
 
 Please ensure that after deleting the Push Credential you remove or replace the Push Credential SID when generating new access tokens.
+
+## Troubleshooting Audio
+
+The following sections provide guidance on how to ensure optimal audio quality in your applications. 
+
+### Configuring AudioManager
+The `AudioManager` configuration guidance below is meant to provide optimal audio experience when in a `Call`. This configuration is inspired by the [WebRTC Android example](https://chromium.googlesource.com/external/webrtc/+/refs/heads/master/examples/androidapp/src/org/appspot/apprtc/AppRTCAudioManager.java) and the [Android documentation](https://developer.android.com/reference/android/media/AudioFocusRequest).
+
+```
+ private void setAudioFocus(boolean setFocus) {
+    if (audioManager != null) {
+        if (setFocus) {
+            savedAudioMode = audioManager.getMode();
+            // Request audio focus before making any device switch.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                AudioAttributes playbackAttributes = new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build();
+                AudioFocusRequest focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+                        .setAudioAttributes(playbackAttributes)
+                        .setAcceptsDelayedFocusGain(true)
+                        .setOnAudioFocusChangeListener(new AudioManager.OnAudioFocusChangeListener() {
+                            @Override
+                            public void onAudioFocusChange(int i) {
+                            }
+                        })
+                        .build();
+                audioManager.requestAudioFocus(focusRequest);
+            } else {
+                int focusRequestResult = audioManager.requestAudioFocus(new AudioManager.OnAudioFocusChangeListener() {
+
+		                                       @Override
+		                                       public void onAudioFocusChange(int focusChange) {
+		
+		                                       }
+		                                   }, AudioManager.STREAM_VOICE_CALL,
+                        AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+            }
+            /*
+             * Start by setting MODE_IN_COMMUNICATION as default audio mode. It is
+             * required to be in this mode when playout and/or recording starts for
+             * best possible VoIP performance. Some devices have difficulties with speaker mode
+             * if this is not set.
+             */
+            audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+        } else {
+            audioManager.setMode(savedAudioMode);
+            audioManager.abandonAudioFocus(null);
+        }
+    }
+}
+```
+
+### Handling Low Headset Volume
+If your application experiences low playback volume, we recommend the following snippets: 
+
+#### Android N and Below
+```
+int focusRequestResult = audioManager.requestAudioFocus(new AudioManager.OnAudioFocusChangeListener() {
+    
+                                   @Override
+                                   public void onAudioFocusChange(int focusChange) {
+                                   }
+                               }, AudioManager.STREAM_VOICE_CALL,
+        AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+```
+                     
+
+#### Android O and Up :
+```
+AudioAttributes playbackAttributes = new AudioAttributes.Builder()
+        .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+        .build();
+AudioFocusRequest focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+        .setAudioAttributes(playbackAttributes)
+        .setAcceptsDelayedFocusGain(true)
+        .setOnAudioFocusChangeListener(new AudioManager.OnAudioFocusChangeListener() {
+            @Override
+            public void onAudioFocusChange(int i) {
+            }
+        })
+        .build();
+```    
 
 ## More Documentation
 
