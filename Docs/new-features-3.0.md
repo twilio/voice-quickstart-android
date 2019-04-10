@@ -19,7 +19,7 @@ You can now send parameters from the caller to the callee when you make a call. 
 
 ##### Sending parameters to your TwiML Server Application for outgoing calls
 
-Parameters can be sent to your Server Application by specifying them in the `ConnectOptions` builder as follows:
+Parameters can be sent to your TwiML Server Application by specifying them in the `ConnectOptions` builder as follows:
 
 ```Java
 final Map<String, String> params = new HashMap<>();
@@ -33,7 +33,7 @@ ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
 call = Voice.connect(context, connectOptions, listener);
 ```
 
-These will arrive as either POST parameters or URL query parameters, depending on which HTTP method you configured for your TwiML app in the [console](https://www.twilio.com/console/voice/twiml/apps).
+These will arrive as either POST parameters or URL query parameters, depending on which HTTP method you configured for your TwiML Server Application in the [console](https://www.twilio.com/console/voice/twiml/apps).
 
 Once available on your TwiML Server Application you can use them to populate your TwiML response as described in the next section.
 
