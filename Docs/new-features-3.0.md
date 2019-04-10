@@ -15,7 +15,31 @@ The SDK is built using Chromium WebRTC for Android. This ensures that over time 
 
 #### <a name="feature2"></a>Custom Parameters
 
-Custom Parameters is now supported in `CallInvite`. `CallInvite.getCustomParamaters()` returns a map of custom parameters sent from the caller side to callee.
+You can now send parameters from the caller to the callee when you make a call. The key/value data is sent from the Voice SDK to your TwiML Server Application, and passed into TwiML to reach the callee.
+
+##### Sending parameters to your TwiML Server Application for outgoing calls
+
+Parameters can be sent to your Server Application by specifying them in the `ConnectOptions` builder as follows:
+
+```Java
+final Map<String, String> params = new HashMap<>();
+params.put("caller_first_name", "alice");
+params.put("caller_last_name", "smith");
+
+ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
+    .params(params)
+    .build();
+
+call = Voice.connect(context, connectOptions, listener);
+```
+
+These will arrive as either POST parameters or URL query parameters, depending on which HTTP method you configured for your TwiML app in the [console](https://www.twilio.com/console/voice/twiml/apps).
+
+Once available on your TwiML Server Application you can use them to populate your TwiML response as described in the next section.
+
+##### Getting parameters from your TwiML Server Application for incoming calls
+
+Parameters can be sent to a callee by initiating a TwiML [\<Dial\>](https://www.twilio.com/docs/voice/twiml/dial). Use the `<Parameter>` attribute to specify your key/value parameters as shown below:
 
 ```Java
 // Pass custom parameters in TwiML
@@ -30,12 +54,8 @@ Custom Parameters is now supported in `CallInvite`. `CallInvite.getCustomParamat
 		</Dial>
 	</Response>
 ```
-`callInvite.getCustomParameters()` returns a map of key-value pair passed in the TwiML.
 
-```
-"caller_first_name" -> "alice"
-"caller_last_name" -> "smith"
-```
+When the call invite push message arrives to the callee it will have the specified parameters. The key/value parameters can then be retrieved as a Map from the `CallInvite.getCustomParameters()` method.
 
 #### <a name="feature3"></a>Hold
 
