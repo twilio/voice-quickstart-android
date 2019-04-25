@@ -1,3 +1,7 @@
+> NOTE: These sample applications use the Programmable Voice Android SDK 2.x APIs. For examples
+using our 3.x APIs, please see the [master](https://github.com/twilio/voice-quickstart-android)
+branch.
+
 # Twilio Voice Quickstart for Android
 
 Get started with Voice on Android:
