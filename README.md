@@ -1,3 +1,7 @@
+> NOTE: This sample application uses the Programmable Voice Android 3.x APIs. For an example using 
+our 2.x APIs, please see the [2.x](https://github.com/twilio/video-quickstart-android/tree/2.x) 
+branch. If you are using SDK 2.x, we highly recommend planning your migration to 3.0 as soon as possible. Support for 2.x will cease 1/1/2020. Until then, SDK 2.x will only receive fixes for critical or security related issues.
+
 # Twilio Voice Quickstart for Android
 
 Get started with Voice on Android:
