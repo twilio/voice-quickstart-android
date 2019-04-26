@@ -1,4 +1,4 @@
-> NOTE: This sample applications uses the Programmable Voice Android SDK 2.x APIs. If you are
+> NOTE: This sample application uses the Programmable Voice Android SDK 2.x APIs. If you are
 using 2.x, we highly recommend planning your migration to 3.0. 
 Version 2.x is now deprecated and will only receive fixes for critical and security related issues.
 Support for 2.x will cease 1/1/2020. For an example using our 3.x APIs, please see the 
