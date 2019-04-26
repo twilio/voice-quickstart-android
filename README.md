@@ -1,4 +1,4 @@
-> NOTE: This sample applications uses the Programmable Voice Android 3.x APIs. For an example using 
+> NOTE: This sample application uses the Programmable Voice Android 3.x APIs. For an example using 
 our 2.x APIs, please see the [2.x](https://github.com/twilio/video-quickstart-android/tree/2.x) 
 branch.
 
