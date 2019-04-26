@@ -11,13 +11,15 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.service.notification.StatusBarNotification;
+import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 import com.twilio.voice.CallInvite;
-import com.twilio.voice.MessageException;
+import com.twilio.voice.CancelledCallInvite;
 import com.twilio.voice.MessageListener;
 import com.twilio.voice.Voice;
 import com.twilio.voice.quickstart.R;
@@ -56,96 +58,106 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
         if (remoteMessage.getData().size() > 0) {
             Map<String, String> data = remoteMessage.getData();
             final int notificationId = (int) System.currentTimeMillis();
-            Voice.handleMessage(this, data, new MessageListener() {
+
+            boolean valid = Voice.handleMessage(remoteMessage.getData(), new MessageListener() {
                 @Override
-                public void onCallInvite(CallInvite callInvite) {
+                public void onCallInvite(@NonNull CallInvite callInvite) {
+                    final int notificationId = (int) System.currentTimeMillis();
                     VoiceFirebaseMessagingService.this.notify(callInvite, notificationId);
                     VoiceFirebaseMessagingService.this.sendCallInviteToActivity(callInvite, notificationId);
                 }
 
                 @Override
-                public void onError(MessageException messageException) {
-                    Log.e(TAG, messageException.getLocalizedMessage());
+                public void onCancelledCallInvite(@NonNull CancelledCallInvite cancelledCallInvite) {
+                    VoiceFirebaseMessagingService.this.cancelNotification(cancelledCallInvite);
+                    VoiceFirebaseMessagingService.this.sendCancelledCallInviteToActivity(
+                            cancelledCallInvite);
                 }
+
             });
+
+            if (!valid) {
+                Log.e(TAG, "The message was not a valid Twilio Voice SDK payload: " +
+                        remoteMessage.getData());
+            }
+
         }
     }
 
     private void notify(CallInvite callInvite, int notificationId) {
-        String callSid = callInvite.getCallSid();
-        Notification notification = null;
+        Intent intent = new Intent(this, VoiceActivity.class);
+        intent.setAction(VoiceActivity.ACTION_INCOMING_CALL);
+        intent.putExtra(VoiceActivity.INCOMING_CALL_NOTIFICATION_ID, notificationId);
+        intent.putExtra(VoiceActivity.INCOMING_CALL_INVITE, callInvite);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pendingIntent =
+                PendingIntent.getActivity(this, notificationId, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+        /*
+         * Pass the notification id and call sid to use as an identifier to cancel the
+         * notification later
+         */
+        Bundle extras = new Bundle();
+        extras.putInt(NOTIFICATION_ID_KEY, notificationId);
+        extras.putString(CALL_SID_KEY, callInvite.getCallSid());
 
-        if (callInvite.getState() == CallInvite.State.PENDING) {
-            Intent intent = new Intent(this, VoiceActivity.class);
-            intent.setAction(VoiceActivity.ACTION_INCOMING_CALL);
-            intent.putExtra(VoiceActivity.INCOMING_CALL_NOTIFICATION_ID, notificationId);
-            intent.putExtra(VoiceActivity.INCOMING_CALL_INVITE, callInvite);
-            intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            PendingIntent pendingIntent =
-                    PendingIntent.getActivity(this, notificationId, intent, PendingIntent.FLAG_ONE_SHOT);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel callInviteChannel = new NotificationChannel(VOICE_CHANNEL,
+                    "Primary Voice Channel", NotificationManager.IMPORTANCE_DEFAULT);
+            callInviteChannel.setLightColor(Color.GREEN);
+            callInviteChannel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+            notificationManager.createNotificationChannel(callInviteChannel);
+
+            Notification notification =
+                    buildNotification(callInvite.getFrom() + " is calling.",
+                            pendingIntent,
+                            extras);
+            notificationManager.notify(notificationId, notification);
+        } else {
+            NotificationCompat.Builder notificationBuilder =
+                    new NotificationCompat.Builder(this)
+                            .setSmallIcon(R.drawable.ic_call_end_white_24dp)
+                            .setContentTitle(getString(R.string.app_name))
+                            .setContentText(callInvite.getFrom() + " is calling.")
+                            .setAutoCancel(true)
+                            .setExtras(extras)
+                            .setContentIntent(pendingIntent)
+                            .setGroup("test_app_notification")
+                            .setColor(Color.rgb(214, 10, 37));
+
+            notificationManager.notify(notificationId, notificationBuilder.build());
+        }
+    }
+
+    private void cancelNotification(CancelledCallInvite cancelledCallInvite) {
+        SoundPoolManager.getInstance((this)).stopRinging();
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
             /*
-             * Pass the notification id and call sid to use as an identifier to cancel the
-             * notification later
+             * If the incoming call was cancelled then remove the notification by matching
+             * it with the call sid from the list of notifications in the notification drawer.
              */
-            Bundle extras = new Bundle();
-            extras.putInt(NOTIFICATION_ID_KEY, notificationId);
-            extras.putString(CALL_SID_KEY, callSid);
+            StatusBarNotification[] activeNotifications =
+                    notificationManager.getActiveNotifications();
+            for (StatusBarNotification statusBarNotification : activeNotifications) {
+                Notification notification = statusBarNotification.getNotification();
+                Bundle extras = notification.extras;
+                String notificationCallSid = extras.getString(CALL_SID_KEY);
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                NotificationChannel callInviteChannel = new NotificationChannel(VOICE_CHANNEL,
-                        "Primary Voice Channel", NotificationManager.IMPORTANCE_DEFAULT);
-                callInviteChannel.setLightColor(Color.GREEN);
-                callInviteChannel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
-                notificationManager.createNotificationChannel(callInviteChannel);
-
-                notification = buildNotification(callInvite.getFrom() + " is calling.", pendingIntent, extras);
-                notificationManager.notify(notificationId, notification);
-            } else {
-                NotificationCompat.Builder notificationBuilder =
-                        new NotificationCompat.Builder(this)
-                                .setSmallIcon(R.drawable.ic_call_end_white_24dp)
-                                .setContentTitle(getString(R.string.app_name))
-                                .setContentText(callInvite.getFrom() + " is calling.")
-                                .setAutoCancel(true)
-                                .setExtras(extras)
-                                .setContentIntent(pendingIntent)
-                                .setGroup("test_app_notification")
-                                .setColor(Color.rgb(214, 10, 37));
-
-                notificationManager.notify(notificationId, notificationBuilder.build());
+                if (cancelledCallInvite.getCallSid().equals(notificationCallSid)) {
+                    notificationManager.cancel(extras.getInt(NOTIFICATION_ID_KEY));
+                }
             }
         } else {
-            SoundPoolManager.getInstance(this).stopRinging();
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-                /*
-                 * If the incoming call was cancelled then remove the notification by matching
-                 * it with the call sid from the list of notifications in the notification drawer.
-                 */
-                StatusBarNotification[] activeNotifications = notificationManager.getActiveNotifications();
-                for (StatusBarNotification statusBarNotification : activeNotifications) {
-                    notification = statusBarNotification.getNotification();
-                    Bundle extras = notification.extras;
-                    String notificationCallSid = extras.getString(CALL_SID_KEY);
-
-                    if (callSid.equals(notificationCallSid)) {
-                        notificationManager.cancel(extras.getInt(NOTIFICATION_ID_KEY));
-                    } else {
-                        sendCallInviteToActivity(callInvite, notificationId);
-                    }
-                }
-            } else {
-                /*
-                 * Prior to Android M the notification manager did not provide a list of
-                 * active notifications so we lazily clear all the notifications when
-                 * receiving a cancelled call.
-                 *
-                 * In order to properly cancel a notification using
-                 * NotificationManager.cancel(notificationId) we should store the call sid &
-                 * notification id of any incoming calls using shared preferences or some other form
-                 * of persistent storage.
-                 */
-                notificationManager.cancelAll();
-            }
+            /*
+             * Prior to Android M the notification manager did not provide a list of
+             * active notifications so we lazily clear all the notifications when
+             * receiving a CancelledCallInvite.
+             *
+             * In order to properly cancel a notification using
+             * NotificationManager.cancel(notificationId) we should store the call sid &
+             * notification id of any incoming calls using shared preferences or some other form
+             * of persistent storage.
+             */
+            notificationManager.cancelAll();
         }
     }
 
@@ -160,6 +172,15 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         this.startActivity(intent);
+    }
+
+    /*
+     * Send the CancelledCallInvite to the VoiceActivity
+     */
+    private void sendCancelledCallInviteToActivity(CancelledCallInvite cancelledCallInvite) {
+        Intent intent = new Intent(VoiceActivity.ACTION_CANCEL_CALL);
+        intent.putExtra(VoiceActivity.CANCELLED_CALL_INVITE, cancelledCallInvite);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     /**
