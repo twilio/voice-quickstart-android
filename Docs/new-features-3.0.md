@@ -96,12 +96,12 @@ Statistics related to the media in the call can now be retrieved by calling `Cal
 
 #### <a name="feature6"></a>Preferred Audio Codec
 
-In Voice Android 3.0, you can provide your preferred audio codecs in the `ConnectOptions` and the `AcceptOptions`. The only audio codec supported by our mobile infrastructure is currently PCMU. Opus is not currently available on our mobile infrastructure. However it will become available in Q1 of 2019. At that point the default audio codec for all 3.0 mobile clients will be Opus. To always use PCMU as the negotiated audio codec instead you can add it as the first codec in the preferAudioCodecs list.
+You can provide your preferred audio codecs in the `ConnectOptions` and the `AcceptOptions`. Opus is the default codec used by the mobile infrastructure. To use PCMU as the negotiated audio codec instead of Opus you can add it as the first codec in the preferAudioCodecs list.
 
 ```Java
  ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
                         .params(params)
-                        .preferAudioCodecs(Arrays.asList(new OpusCodec(), new PcmuCodec()))
+                        .preferAudioCodecs(Arrays.asList(new PcmuCodec(), new OpusCodec()))
                         .build();
 Call call = Voice.connect(VoiceActivity.this, connectOptions, callListener);
 ```
