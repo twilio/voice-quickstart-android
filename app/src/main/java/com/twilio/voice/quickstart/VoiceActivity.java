@@ -226,6 +226,16 @@ public class VoiceActivity extends AppCompatActivity {
             }
 
             @Override
+            public void onReconnecting(@NonNull Call call, @NonNull CallException callException) {
+                Log.d(TAG, "onReconnecting");
+            }
+
+            @Override
+            public void onReconnected(@NonNull Call call) {
+                Log.d(TAG, "onReconnected");
+            }
+
+            @Override
             public void onDisconnected(Call call, CallException error) {
                 setAudioFocus(false);
                 Log.d(TAG, "Disconnected");
