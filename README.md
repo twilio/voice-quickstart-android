@@ -7,8 +7,10 @@ branch. If you are using SDK 2.x, we highly recommend planning your migration to
 Get started with Voice on Android:
 
 - [Quickstart](#quickstart) - Run the quickstart app
+- [New Features](Docs/new-features-4.0.md) - New features in 4.0
+- [Migration Guide 3.x to 4.x](Docs/migration-guide-3.x-4.x.md) - Migrating from 3.x to 4.x
 - [New Features](Docs/new-features-3.0.md) - New features in 3.0
-- [Migration Guide](Docs/migration-guide-2.x-3.x.md) - Migrating from 2.x to 3.x
+- [Migration Guide 2.x to 3.x](Docs/migration-guide-2.x-3.x.md) - Migrating from 2.x to 3.x
 - [Emulator Support](#emulator-support) - Android emulator support
 - [Reducing APK Size](#reducing-apk-size) - Use ABI splits to reduce APK size
 - [Access Tokens](#access-tokens) - Using access tokens
