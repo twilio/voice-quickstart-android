@@ -9,17 +9,17 @@ private Call.Listener callListener() {
     return new Call.Listener() {
     
         @Override
-        public void onRinging(Call call) {
+        public void onRinging(NonNull Call call) {
             Log.d(TAG, "Ringing");
         }
     
         @Override
-        public void onConnectFailure(Call call, CallException error) {
+        public void onConnectFailure(NonNull Call call, @NonNull CallException error) {
             Log.d(TAG, "Connect failure");
         }
     
         @Override
-        public void onConnected(Call call) {
+        public void onConnected(NonNull  Call call) {
             Log.d(TAG, "Connected");
         }
     
@@ -42,7 +42,7 @@ private Call.Listener callListener() {
         }
     
         @Override
-        public void onDisconnected(Call call, CallException error) {
+        public void onDisconnected(@NonNull Call call, @Nullable CallException error) {
            Log.d(TAG, "Disconnected");
         }
     };
