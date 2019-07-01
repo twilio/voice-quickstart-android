@@ -23,7 +23,7 @@ public class Call {
 	}
 
 	public interface Listener {
-	   void onConnectFailure(@NonNull Call call, @NonNull CallException callException);
+		void onConnectFailure(@NonNull Call call, @NonNull CallException callException);
 		void onRinging(@NonNull Call call); 
 		void onConnected(@NonNull Call call);
 		void onReconnecting(@NonNull Call call, @NonNull CallException callException); // Callback addition
