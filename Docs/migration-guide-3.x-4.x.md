@@ -1,7 +1,8 @@
 ## 3.x to 4.x Migration Guide
 
-This section describes API or behavioral changes when upgrading from Voice Android 3.x to Voice Android 4.x.
-4.x has a new state `RECONNECTING` in `Call.State` and two new callbacks `onReconnecting(...)`, `onReconnected(...)` in `Call.Listener()`. Any prior implementation of `Call.Listener()` will need to be updated with the new callbacks.
+4.0 SDK introduced a new call state `RECONNECTING`. You will need to update any logic you have implemented that relies on the call state. The simplest approach is to treat a `RECONNECTING` just like a `CONNECTED` and keep the current behavior.
+
+4.0 has a new state `RECONNECTING` in `Call.State` and two new callbacks `onReconnecting(...)`, `onReconnected(...)` in `Call.Listener()`. Any prior implementation of `Call.Listener()` will need to be updated with the new callbacks.
 
 ```
 private Call.Listener callListener() {
