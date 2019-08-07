@@ -1,0 +1,75 @@
+version: 2.0
+
+aliases:
+  # Workspace
+  - &workspace
+    ~/voice-quickstart-android
+
+  - &gradle-cache-key
+    key: jars-{{ checksum "build.gradle" }}-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+  - &restore-cache-gradle
+    <<: *gradle-cache-key
+    name: Restore Gradle Cache
+  - &save-cache-gradle
+    <<: *gradle-cache-key
+    name: Save Gradle Cache
+    paths:
+      - ~/.gradle/caches
+      - ~/.gradle/wrapper
+  - &install-secrets
+    name: Install secrets
+    command: |
+      echo $APP_GOOGLE_SERVICE_JSON | base64 -di > app/google-services.json
+
+  # Containers
+  - &build-defaults
+    working_directory: *workspace
+    docker:
+      - image: circleci/android:api-28-node8-alpha
+    environment:
+      - _JAVA_OPTIONS: "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
+
+jobs:
+  setup-workspace:
+    <<: *build-defaults
+    resource_class: medium+
+    steps:
+      # Setup code and workspace for downstream jobs
+      - checkout
+      - restore-cache: *restore-cache-gradle
+      
+      # Save cache
+      - save-cache: *save-cache-gradle
+
+  build-quickstart:
+    <<: *build-defaults
+    resource_class: large
+    steps:
+      # Setup
+      - checkout
+      - attach_workspace:
+          at: *workspace
+      - restore-cache: *restore-cache-gradle
+      - run: *install-secrets
+
+      # Build app
+      - run:
+          name: Build app
+          command: ./gradlew -q app:assemble
+
+      # Save cache
+      - save-cache: *save-cache-gradle
+
+
+workflows:
+  version: 2
+
+  build:
+    jobs:
+      # Setup
+      - setup-workspace
+
+      # Build
+      - build-quickstart:
+          requires:
+              - setup-workspace
