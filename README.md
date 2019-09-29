@@ -58,11 +58,11 @@ Download one of the starter projects for the server.
 * [voice-quickstart-server-php](https://github.com/twilio/voice-quickstart-server-php)
 * [voice-quickstart-server-python](https://github.com/twilio/voice-quickstart-server-python)
 
-Follow the instructions in the server's README to get the application server up and running locally and accessible via the public Internet. For now just add the Twilio Account SID that you can obtain from the console, and  the `API_KEY` and `API_SECRET` you obtained in the previous step. 
+Follow the instructions in the server's README to get the application server up and running locally and accessible via the public Internet. For now just add the Twilio Account SID that you can obtain from the console, and  the `API_KEY` and `API_SECRET` you obtained in the previous step. For example:
 
-    ACCOUNT_SID = 'AC***'
-    API_KEY = 'SK***'
-    API_KEY_SECRET = '***'
+    ACCOUNT_SID=AC12345678901234567890123456789012
+    API_KEY=SK12345678901234567890123456789012
+    API_KEY_SECRET=the_secret_generated_when_creating_the_api_key
 
 ### <a name="bullet4"></a>4. Create a TwiML application
 
@@ -78,12 +78,12 @@ Save your TwiML Application configuration, and grab the TwiML Application SID (a
 
 ### <a name="bullet5"></a>5. Configure your application server
 
-Put the remaining `APP_SID` configuration info into your application server by setting the following constants with the information you gathered above.
+Put the remaining `APP_SID` configuration info into your application server by setting the following constants with the information you gathered above. For example:
 
-    ACCOUNT_SID = 'AC***'
-    API_KEY = 'SK***'
-    API_KEY_SECRET = '***'
-    APP_SID = 'AP***'
+    ACCOUNT_SID=AC12345678901234567890123456789012
+    API_KEY=SK12345678901234567890123456789012
+    API_KEY_SECRET=the_secret_generated_when_creating_the_api_key
+    APP_SID=AP12345678901234567890123456789012
 
 Once you’ve done that, restart the server so it uses the new configuration info. Now it's time to test.
 
@@ -133,13 +133,13 @@ Paste in the `Server API Key` and press Save.
 
 ### <a name="bullet9"></a>9. Receiving an Incoming Notification
 
-Put the `PUSH_CREDENTIAL_SID` configuration info into your application server by setting the following constants with the information you gathered above.
+Put the `PUSH_CREDENTIAL_SID` configuration info into your application server by setting the following constants with the information you gathered above. For example:
 
-    ACCOUNT_SID = 'AC***'
-    API_KEY = 'SK***'
-    API_KEY_SECRET = '***'
-    PUSH_CREDENTIAL_SID = 'CR***'
-    APP_SID = 'AP***'
+    ACCOUNT_SID=AC12345678901234567890123456789012
+    API_KEY=SK12345678901234567890123456789012
+    API_KEY_SECRET=the_secret_generated_when_creating_the_api_key
+    PUSH_CREDENTIAL_SID=CR12345678901234567890123456789012
+    APP_SID=AP12345678901234567890123456789012
 
 Once you’ve done that, restart the server so it uses the new configuration info. Now it's time to test. Use your browser to initiate an incoming call by navigating to the public URL of your application server’s `https://{YOUR_SERVER_URL}/placeCall` endpoint (If your app server is written in PHP, then you need `.php` extension at the end). This will trigger a Twilio REST API request that will make an inbound call to your mobile app.
 Your application will be brought to the foreground and you will see an alert dialog. The app will be brought to foreground even when your screen is locked.
