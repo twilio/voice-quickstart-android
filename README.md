@@ -1,12 +1,11 @@
-> NOTE: This sample application uses the Programmable Voice Android 4.x APIs. For an example using 
-our 2.x APIs, please see the [2.x](https://github.com/twilio/voice-quickstart-android/tree/2.x) 
-branch. If you are using SDK 2.x, we highly recommend planning your migration to 4.0 as soon as possible. Support for 2.x will cease 1/1/2020. Until then, SDK 2.x will only receive fixes for critical or security related issues.
+> NOTE: This sample application uses the Programmable Voice Android 5.x APIs. If you are using prior versions of the SDK, we highly recommend planning your migration to 5.0 as soon as possible.
 
 # Twilio Voice Quickstart for Android
 
 Get started with Voice on Android:
 
 - [Quickstart](#quickstart) - Run the quickstart app
+- [Migration Guide 4.x to 5.x](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/migration-guide-4.x-5.x.md) - Migrating from 4.x to 5.x
 - [New Features 4.0](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/new-features-4.0.md) - New features in 4.0
 - [Migration Guide 3.x to 4.x](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/migration-guide-3.x-4.x.md) - Migrating from 3.x to 4.x
 - [New Features 3.0](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/new-features-3.0.md) - New features in 3.0
