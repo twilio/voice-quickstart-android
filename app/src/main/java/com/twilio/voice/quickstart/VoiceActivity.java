@@ -45,6 +45,7 @@ import com.twilio.voice.ConnectOptions;
 import com.twilio.voice.RegistrationException;
 import com.twilio.voice.RegistrationListener;
 import com.twilio.voice.Voice;
+import com.twilio.voice.quickstart.fcm.VoiceFirebaseMessagingService;
 
 import java.util.HashMap;
 
@@ -298,17 +299,19 @@ public class VoiceActivity extends AppCompatActivity {
     private void handleIncomingCallIntent(Intent intent) {
         if (intent != null && intent.getAction() != null) {
             if (intent.getAction().equals(ACTION_INCOMING_CALL)) {
-                activeCallInvite = intent.getParcelableExtra(INCOMING_CALL_INVITE);
-                if (activeCallInvite != null) {
-                    soundPoolManager.playRinging();
-                    alertDialog = createIncomingCallDialog(VoiceActivity.this,
-                            activeCallInvite,
-                            answerCallClickListener(),
-                            cancelCallClickListener());
-                    alertDialog.show();
-                    activeCallNotificationId = intent.getIntExtra(INCOMING_CALL_NOTIFICATION_ID, 0);
-                } else {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+                    activeCallInvite = intent.getParcelableExtra(INCOMING_CALL_INVITE);
+                    if (activeCallInvite != null) {
+                        soundPoolManager.playRinging();
+                        alertDialog = createIncomingCallDialog(VoiceActivity.this,
+                                activeCallInvite,
+                                answerCallClickListener(),
+                                cancelCallClickListener());
+                        alertDialog.show();
+                        activeCallNotificationId = intent.getIntExtra(INCOMING_CALL_NOTIFICATION_ID, 0);
+                    } else {
 
+                    }
                 }
             } else if (intent.getAction().equals(ACTION_CANCEL_CALL)) {
                 if (alertDialog != null && alertDialog.isShowing()) {
@@ -317,6 +320,10 @@ public class VoiceActivity extends AppCompatActivity {
                 }
             } else if (intent.getAction().equals(ACTION_FCM_TOKEN)) {
                 retrieveAccessToken();
+            } else if (intent.getAction().equals(VoiceFirebaseMessagingService.ACTION_ACCEPT)) {
+                activeCallInvite = intent.getParcelableExtra(INCOMING_CALL_INVITE);
+                activeCallNotificationId = intent.getIntExtra(INCOMING_CALL_NOTIFICATION_ID, 0);
+                answer();
             }
         }
     }
@@ -359,10 +366,7 @@ public class VoiceActivity extends AppCompatActivity {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                soundPoolManager.stopRinging();
                 answer();
-                setCallUI();
-                alertDialog.dismiss();
             }
         };
     }
@@ -394,7 +398,9 @@ public class VoiceActivity extends AppCompatActivity {
                     activeCallInvite.reject(VoiceActivity.this);
                     notificationManager.cancel(activeCallNotificationId);
                 }
-                alertDialog.dismiss();
+                if (alertDialog != null && alertDialog.isShowing()) {
+                    alertDialog.dismiss();
+                }
             }
         };
     }
@@ -475,8 +481,13 @@ public class VoiceActivity extends AppCompatActivity {
      * Accept an incoming Call
      */
     private void answer() {
+        soundPoolManager.stopRinging();
         activeCallInvite.accept(this, callListener);
         notificationManager.cancel(activeCallNotificationId);
+        setCallUI();
+        if (alertDialog != null && alertDialog.isShowing()) {
+            alertDialog.dismiss();
+        }
     }
 
     /*

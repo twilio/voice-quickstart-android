@@ -24,6 +24,7 @@ import com.twilio.voice.CallInvite;
 import com.twilio.voice.CancelledCallInvite;
 import com.twilio.voice.MessageListener;
 import com.twilio.voice.Voice;
+import com.twilio.voice.quickstart.IncomingCallNotificationService;
 import com.twilio.voice.quickstart.R;
 import com.twilio.voice.quickstart.SoundPoolManager;
 import com.twilio.voice.quickstart.VoiceActivity;
@@ -36,6 +37,8 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
     private static final String NOTIFICATION_ID_KEY = "NOTIFICATION_ID";
     private static final String CALL_SID_KEY = "CALL_SID";
     private static final String VOICE_CHANNEL = "default";
+    public static final String ACTION_ACCEPT = "ACTION_ACCEPT";
+    public static final String ACTION_REJECT = "ACTION_REJECT";
 
     private NotificationManager notificationManager;
 
@@ -65,7 +68,7 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
                 public void onCallInvite(@NonNull CallInvite callInvite) {
                     final int notificationId = (int) System.currentTimeMillis();
                     VoiceFirebaseMessagingService.this.notify(callInvite, notificationId);
-                    VoiceFirebaseMessagingService.this.sendCallInviteToActivity(callInvite, notificationId);
+                    sendCallInviteToActivity(callInvite, notificationId);
                 }
 
                 @Override
@@ -92,7 +95,7 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
         intent.putExtra(VoiceActivity.INCOMING_CALL_INVITE, callInvite);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent =
-                PendingIntent.getActivity(this, notificationId, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+                PendingIntent.getActivity(this, notificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         /*
          * Pass the notification id and call sid to use as an identifier to cancel the
          * notification later
@@ -103,7 +106,7 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel callInviteChannel = new NotificationChannel(VOICE_CHANNEL,
-                    "Primary Voice Channel", NotificationManager.IMPORTANCE_DEFAULT);
+                    "Primary Voice Channel", NotificationManager.IMPORTANCE_HIGH);
             callInviteChannel.setLightColor(Color.GREEN);
             callInviteChannel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
             notificationManager.createNotificationChannel(callInviteChannel);
@@ -111,7 +114,9 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
             Notification notification =
                     buildNotification(callInvite.getFrom() + " is calling.",
                             pendingIntent,
-                            extras);
+                            extras,
+                            callInvite,
+                            notificationId);
             notificationManager.notify(notificationId, notification);
         } else {
             NotificationCompat.Builder notificationBuilder =
@@ -187,20 +192,38 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
     /**
      * Build a notification.
      *
-     * @param text          the text of the notification
+     * @param text the text of the notification
      * @param pendingIntent the body, pending intent for the notification
-     * @param extras        extras passed with the notification
+     * @param extras extras passed with the notification
      * @return the builder
      */
     @TargetApi(Build.VERSION_CODES.O)
-    public Notification buildNotification(String text, PendingIntent pendingIntent, Bundle extras) {
-        return new Notification.Builder(getApplicationContext(), VOICE_CHANNEL)
-                .setSmallIcon(R.drawable.ic_call_end_white_24dp)
-                .setContentTitle(getString(R.string.app_name))
-                .setContentText(text)
-                .setContentIntent(pendingIntent)
-                .setExtras(extras)
-                .setAutoCancel(true)
-                .build();
+    public Notification buildNotification(String text, PendingIntent pendingIntent, Bundle extras, final CallInvite callInvite, int notificationId) {
+        Intent rejectIntent = new Intent(getApplicationContext(), IncomingCallNotificationService.class);
+        rejectIntent.setAction(ACTION_REJECT);
+        rejectIntent.putExtra(VoiceActivity.INCOMING_CALL_INVITE, callInvite);
+        rejectIntent.putExtra(VoiceActivity.INCOMING_CALL_NOTIFICATION_ID, notificationId);
+        PendingIntent piRejectIntent = PendingIntent.getService(getApplicationContext(), 0, rejectIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        Intent acceptIntent = new Intent(getApplicationContext(), IncomingCallNotificationService.class);
+        acceptIntent.setAction(ACTION_ACCEPT);
+        acceptIntent.putExtra(VoiceActivity.INCOMING_CALL_INVITE, callInvite);
+        acceptIntent.putExtra(VoiceActivity.INCOMING_CALL_NOTIFICATION_ID, notificationId);
+        PendingIntent piAcceptIntent = PendingIntent.getService(getApplicationContext(), 0, acceptIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        Notification.Builder builder =
+                new Notification.Builder(getApplicationContext(), VOICE_CHANNEL)
+                        .setSmallIcon(R.drawable.ic_call_end_white_24dp)
+                        .setContentTitle(getString(R.string.app_name))
+                        .setContentText(text)
+                        .setCategory(Notification.CATEGORY_CALL)
+                        .setFullScreenIntent(pendingIntent, true)
+                        .setExtras(extras)
+                        .setAutoCancel(true)
+                        .addAction(android.R.drawable.ic_menu_delete, getString(R.string.decline), piRejectIntent)
+                        .addAction(android.R.drawable.ic_menu_call, getString(R.string.answer), piAcceptIntent)
+                        .setFullScreenIntent(pendingIntent, true);
+
+        return builder.build();
     }
 }

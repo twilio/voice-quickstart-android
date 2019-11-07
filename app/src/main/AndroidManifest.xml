@@ -15,6 +15,15 @@
             </intent-filter>
         </activity>
 
+        <service
+            android:enabled="true"
+            android:name=".IncomingCallNotificationService">
+            <intent-filter>
+                <action android:name="ACTION_ACCEPT" />
+                <action android:name="ACTION_REJECT" />
+            </intent-filter>
+        </service>
+
         <!-- [START fcm_listener] -->
         <service
             android:name=".fcm.VoiceFirebaseMessagingService">
