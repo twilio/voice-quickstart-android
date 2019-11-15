@@ -309,8 +309,6 @@ public class VoiceActivity extends AppCompatActivity {
                                 cancelCallClickListener());
                         alertDialog.show();
                         activeCallNotificationId = intent.getIntExtra(INCOMING_CALL_NOTIFICATION_ID, 0);
-                    } else {
-
                     }
                 }
             } else if (intent.getAction().equals(ACTION_CANCEL_CALL)) {
