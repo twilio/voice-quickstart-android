@@ -6,6 +6,7 @@ import android.util.Log;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.FirebaseInstanceIdService;
+import com.twilio.voice.quickstart.Constants;
 import com.twilio.voice.quickstart.VoiceActivity;
 
 public class VoiceFirebaseInstanceIDService extends FirebaseInstanceIdService {
@@ -25,7 +26,7 @@ public class VoiceFirebaseInstanceIDService extends FirebaseInstanceIdService {
         Log.d(TAG, "Refreshed token: " + refreshedToken);
 
         // Notify Activity of FCM token
-        Intent intent = new Intent(VoiceActivity.ACTION_FCM_TOKEN);
+        Intent intent = new Intent(Constants.ACTION_FCM_TOKEN);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
     // [END refresh_token]

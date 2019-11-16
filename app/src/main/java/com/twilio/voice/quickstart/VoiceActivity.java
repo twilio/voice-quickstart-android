@@ -45,7 +45,6 @@ import com.twilio.voice.ConnectOptions;
 import com.twilio.voice.RegistrationException;
 import com.twilio.voice.RegistrationListener;
 import com.twilio.voice.Voice;
-import com.twilio.voice.quickstart.fcm.VoiceFirebaseMessagingService;
 
 import java.util.HashMap;
 
@@ -84,13 +83,6 @@ public class VoiceActivity extends AppCompatActivity {
     private FloatingActionButton muteActionFab;
     private Chronometer chronometer;
     private SoundPoolManager soundPoolManager;
-
-    public static final String INCOMING_CALL_INVITE = "INCOMING_CALL_INVITE";
-    public static final String CANCELLED_CALL_INVITE = "CANCELLED_CALL_INVITE";
-    public static final String INCOMING_CALL_NOTIFICATION_ID = "INCOMING_CALL_NOTIFICATION_ID";
-    public static final String ACTION_INCOMING_CALL = "ACTION_INCOMING_CALL";
-    public static final String ACTION_CANCEL_CALL = "ACTION_CANCEL_CALL";
-    public static final String ACTION_FCM_TOKEN = "ACTION_FCM_TOKEN";
 
     private NotificationManager notificationManager;
     private AlertDialog alertDialog;
@@ -298,29 +290,29 @@ public class VoiceActivity extends AppCompatActivity {
 
     private void handleIncomingCallIntent(Intent intent) {
         if (intent != null && intent.getAction() != null) {
-            if (intent.getAction().equals(ACTION_INCOMING_CALL)) {
+            if (intent.getAction().equals(Constants.ACTION_INCOMING_CALL)) {
+                activeCallInvite = intent.getParcelableExtra(Constants.INCOMING_CALL_INVITE);
+                activeCallNotificationId = intent.getIntExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, 0);
+                soundPoolManager.getInstance(this).playRinging();
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-                    activeCallInvite = intent.getParcelableExtra(INCOMING_CALL_INVITE);
                     if (activeCallInvite != null) {
-                        soundPoolManager.playRinging();
                         alertDialog = createIncomingCallDialog(VoiceActivity.this,
                                 activeCallInvite,
                                 answerCallClickListener(),
                                 cancelCallClickListener());
                         alertDialog.show();
-                        activeCallNotificationId = intent.getIntExtra(INCOMING_CALL_NOTIFICATION_ID, 0);
                     }
                 }
-            } else if (intent.getAction().equals(ACTION_CANCEL_CALL)) {
+            } else if (intent.getAction().equals(Constants.ACTION_CANCEL_CALL)) {
                 if (alertDialog != null && alertDialog.isShowing()) {
                     soundPoolManager.stopRinging();
                     alertDialog.cancel();
                 }
-            } else if (intent.getAction().equals(ACTION_FCM_TOKEN)) {
+            } else if (intent.getAction().equals(Constants.ACTION_FCM_TOKEN)) {
                 retrieveAccessToken();
-            } else if (intent.getAction().equals(VoiceFirebaseMessagingService.ACTION_ACCEPT)) {
-                activeCallInvite = intent.getParcelableExtra(INCOMING_CALL_INVITE);
-                activeCallNotificationId = intent.getIntExtra(INCOMING_CALL_NOTIFICATION_ID, 0);
+            } else if (intent.getAction().equals(Constants.ACTION_ACCEPT)) {
+                activeCallInvite = intent.getParcelableExtra(Constants.INCOMING_CALL_INVITE);
+                activeCallNotificationId = intent.getIntExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, 0);
                 answer();
             }
         }
@@ -329,9 +321,9 @@ public class VoiceActivity extends AppCompatActivity {
     private void registerReceiver() {
         if (!isReceiverRegistered) {
             IntentFilter intentFilter = new IntentFilter();
-            intentFilter.addAction(ACTION_INCOMING_CALL);
-            intentFilter.addAction(ACTION_CANCEL_CALL);
-            intentFilter.addAction(ACTION_FCM_TOKEN);
+            intentFilter.addAction(Constants.ACTION_INCOMING_CALL);
+            intentFilter.addAction(Constants.ACTION_CANCEL_CALL);
+            intentFilter.addAction(Constants.ACTION_FCM_TOKEN);
             LocalBroadcastManager.getInstance(this).registerReceiver(
                     voiceBroadcastReceiver, intentFilter);
             isReceiverRegistered = true;
@@ -350,7 +342,7 @@ public class VoiceActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if (action.equals(ACTION_INCOMING_CALL) || action.equals(ACTION_CANCEL_CALL)) {
+            if (action.equals(Constants.ACTION_INCOMING_CALL) || action.equals(Constants.ACTION_CANCEL_CALL)) {
                 /*
                  * Handle the incoming or cancelled call invite
                  */
@@ -364,7 +356,11 @@ public class VoiceActivity extends AppCompatActivity {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                answer();
+                Intent acceptIntent = new Intent(getApplicationContext(), IncomingCallNotificationService.class);
+                acceptIntent.setAction(Constants.ACTION_ACCEPT);
+                acceptIntent.putExtra(Constants.INCOMING_CALL_INVITE, activeCallInvite);
+                acceptIntent.putExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, activeCallNotificationId);
+                startService(acceptIntent);
             }
         };
     }
