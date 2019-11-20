@@ -1,6 +1,7 @@
 package com.twilio.voice.quickstart;
 
 import android.annotation.TargetApi;
+import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -14,6 +15,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 
 import com.twilio.voice.CallInvite;
 
@@ -52,7 +54,7 @@ public class IncomingCallNotificationService extends Service {
 
     private Notification createNotification(CallInvite callInvite, int notificationId) {
         Intent intent = new Intent(this, VoiceActivity.class);
-        intent.setAction(Constants.ACTION_INCOMING_CALL);
+        intent.setAction(Constants.ACTION_INCOMING_CALL_NOTIFICATION);
         intent.putExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, notificationId);
         intent.putExtra(Constants.INCOMING_CALL_INVITE, callInvite);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -151,7 +153,10 @@ public class IncomingCallNotificationService extends Service {
     }
 
     private void handleIncomingCall(CallInvite callInvite, int notificationId) {
-        startForeground(notificationId, createNotification(callInvite, notificationId));
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
+                !((KeyguardManager) this.getSystemService(Context.KEYGUARD_SERVICE)).inKeyguardRestrictedInputMode()) {
+            startForeground(notificationId, createNotification(callInvite, notificationId));
+        }
         sendCallInviteToActivity(callInvite, notificationId);
     }
 

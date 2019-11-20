@@ -1,6 +1,7 @@
 package com.twilio.voice.quickstart;
 
 import android.Manifest;
+import android.app.KeyguardManager;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -290,30 +291,48 @@ public class VoiceActivity extends AppCompatActivity {
 
     private void handleIncomingCallIntent(Intent intent) {
         if (intent != null && intent.getAction() != null) {
-            if (intent.getAction().equals(Constants.ACTION_INCOMING_CALL)) {
-                activeCallInvite = intent.getParcelableExtra(Constants.INCOMING_CALL_INVITE);
-                activeCallNotificationId = intent.getIntExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, 0);
-                soundPoolManager.getInstance(this).playRinging();
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-                    if (activeCallInvite != null) {
-                        alertDialog = createIncomingCallDialog(VoiceActivity.this,
-                                activeCallInvite,
-                                answerCallClickListener(),
-                                cancelCallClickListener());
-                        alertDialog.show();
-                    }
-                }
-            } else if (intent.getAction().equals(Constants.ACTION_CANCEL_CALL)) {
-                if (alertDialog != null && alertDialog.isShowing()) {
-                    soundPoolManager.stopRinging();
-                    alertDialog.cancel();
-                }
-            } else if (intent.getAction().equals(Constants.ACTION_FCM_TOKEN)) {
-                retrieveAccessToken();
-            } else if (intent.getAction().equals(Constants.ACTION_ACCEPT)) {
-                activeCallInvite = intent.getParcelableExtra(Constants.INCOMING_CALL_INVITE);
-                activeCallNotificationId = intent.getIntExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, 0);
-                answer();
+            String action = intent.getAction();
+            activeCallInvite = intent.getParcelableExtra(Constants.INCOMING_CALL_INVITE);
+            activeCallNotificationId = intent.getIntExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, 0);
+
+            switch (action) {
+                case Constants.ACTION_INCOMING_CALL:
+                    handleIncomingCall();
+                    break;
+                case Constants.ACTION_INCOMING_CALL_NOTIFICATION:
+                    showIncomingCallDialog();
+                    break;
+                case Constants.ACTION_CANCEL_CALL:
+                    handleCancel();
+                    break;
+                case Constants.ACTION_FCM_TOKEN:
+                    retrieveAccessToken();
+                    break;
+                case Constants.ACTION_ACCEPT:
+                    answer();
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    private void handleIncomingCall() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            showIncomingCallDialog();
+        } else {
+            if (isScreenLocked()) {
+                showIncomingCallDialog();
+            }
+        }
+    }
+
+    private void handleCancel() {
+        if (alertDialog != null && alertDialog.isShowing()) {
+            soundPoolManager.stopRinging();
+            alertDialog.cancel();
+            if (isScreenLocked()) {
+                finish();
             }
         }
     }
@@ -356,10 +375,12 @@ public class VoiceActivity extends AppCompatActivity {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                Log.d(TAG, "Clicked accept");
                 Intent acceptIntent = new Intent(getApplicationContext(), IncomingCallNotificationService.class);
                 acceptIntent.setAction(Constants.ACTION_ACCEPT);
                 acceptIntent.putExtra(Constants.INCOMING_CALL_INVITE, activeCallInvite);
                 acceptIntent.putExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, activeCallNotificationId);
+                Log.d(TAG, "Clicked accept startService");
                 startService(acceptIntent);
             }
         };
@@ -387,13 +408,16 @@ public class VoiceActivity extends AppCompatActivity {
 
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                soundPoolManager.stopRinging();
+                soundPoolManager.getInstance(VoiceActivity.this).stopRinging();
                 if (activeCallInvite != null) {
                     activeCallInvite.reject(VoiceActivity.this);
                     notificationManager.cancel(activeCallNotificationId);
                 }
                 if (alertDialog != null && alertDialog.isShowing()) {
                     alertDialog.dismiss();
+                }
+                if (isScreenLocked()) {
+                    finish();
                 }
             }
         };
@@ -449,6 +473,7 @@ public class VoiceActivity extends AppCompatActivity {
                 soundPoolManager.playDisconnect();
                 resetUI();
                 disconnect();
+
             }
         };
     }
@@ -475,7 +500,7 @@ public class VoiceActivity extends AppCompatActivity {
      * Accept an incoming Call
      */
     private void answer() {
-        soundPoolManager.stopRinging();
+        soundPoolManager.getInstance(this).stopRinging();
         activeCallInvite.accept(this, callListener);
         notificationManager.cancel(activeCallNotificationId);
         setCallUI();
@@ -491,6 +516,9 @@ public class VoiceActivity extends AppCompatActivity {
         if (activeCall != null) {
             activeCall.disconnect();
             activeCall = null;
+            if (isScreenLocked()) {
+                finish();
+            }
         }
     }
 
@@ -621,7 +649,7 @@ public class VoiceActivity extends AppCompatActivity {
         return true;
     }
 
-    public static AlertDialog createCallDialog(final DialogInterface.OnClickListener callClickListener,
+    private static AlertDialog createCallDialog(final DialogInterface.OnClickListener callClickListener,
                                                final DialogInterface.OnClickListener cancelClickListener,
                                                final Context context) {
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
@@ -640,6 +668,21 @@ public class VoiceActivity extends AppCompatActivity {
 
         return alertDialogBuilder.create();
 
+    }
+
+    private void showIncomingCallDialog() {
+        soundPoolManager.getInstance(this).playRinging();
+        if (activeCallInvite != null) {
+            alertDialog = createIncomingCallDialog(VoiceActivity.this,
+                    activeCallInvite,
+                    answerCallClickListener(),
+                    cancelCallClickListener());
+            alertDialog.show();
+        }
+    }
+
+    private boolean isScreenLocked() {
+        return ((KeyguardManager) this.getSystemService(Context.KEYGUARD_SERVICE)).inKeyguardRestrictedInputMode();
     }
 
     /*

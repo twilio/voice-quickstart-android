@@ -47,13 +47,7 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
                 @Override
                 public void onCallInvite(@NonNull CallInvite callInvite) {
                     final int notificationId = (int) System.currentTimeMillis();
-                    Handler handler = new Handler(Looper.getMainLooper());
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            handleInvite(callInvite, notificationId);
-                        }
-                    });
+                    handleInvite(callInvite, notificationId);
                 }
 
                 @Override
