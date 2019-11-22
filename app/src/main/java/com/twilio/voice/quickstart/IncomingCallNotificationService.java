@@ -1,7 +1,6 @@
 package com.twilio.voice.quickstart;
 
 import android.annotation.TargetApi;
-import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -13,13 +12,16 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+
+import androidx.core.app.NotificationCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.twilio.voice.CallInvite;
 
 public class IncomingCallNotificationService extends Service {
+
+    private static final String TAG = IncomingCallNotificationService.class.getSimpleName();
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -52,7 +54,7 @@ public class IncomingCallNotificationService extends Service {
         return null;
     }
 
-    private Notification createNotification(CallInvite callInvite, int notificationId) {
+    private Notification createNotification(CallInvite callInvite, int notificationId, int channelImportance) {
         Intent intent = new Intent(this, VoiceActivity.class);
         intent.setAction(Constants.ACTION_INCOMING_CALL_NOTIFICATION);
         intent.putExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, notificationId);
@@ -68,18 +70,13 @@ public class IncomingCallNotificationService extends Service {
         extras.putString(Constants.CALL_SID_KEY, callInvite.getCallSid());
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel callInviteChannel = new NotificationChannel(Constants.VOICE_CHANNEL,
-                    "Primary Voice Channel", NotificationManager.IMPORTANCE_HIGH);
-            callInviteChannel.setLightColor(Color.GREEN);
-            callInviteChannel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
-            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            notificationManager.createNotificationChannel(callInviteChannel);
 
             return buildNotification(callInvite.getFrom() + " is calling.",
                     pendingIntent,
                     extras,
                     callInvite,
-                    notificationId);
+                    notificationId,
+                    createChannel(channelImportance));
         } else {
             return new NotificationCompat.Builder(this)
                     .setSmallIcon(R.drawable.ic_call_end_white_24dp)
@@ -102,7 +99,10 @@ public class IncomingCallNotificationService extends Service {
      * @return the builder
      */
     @TargetApi(Build.VERSION_CODES.O)
-    public Notification buildNotification(String text, PendingIntent pendingIntent, Bundle extras, final CallInvite callInvite, int notificationId) {
+    private Notification buildNotification(String text, PendingIntent pendingIntent, Bundle extras,
+                                          final CallInvite callInvite,
+                                          int notificationId,
+                                          String channelId) {
         Intent rejectIntent = new Intent(getApplicationContext(), IncomingCallNotificationService.class);
         rejectIntent.setAction(Constants.ACTION_REJECT);
         rejectIntent.putExtra(Constants.INCOMING_CALL_INVITE, callInvite);
@@ -116,7 +116,7 @@ public class IncomingCallNotificationService extends Service {
         PendingIntent piAcceptIntent = PendingIntent.getService(getApplicationContext(), 0, acceptIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         Notification.Builder builder =
-                new Notification.Builder(getApplicationContext(), Constants.VOICE_CHANNEL)
+                new Notification.Builder(getApplicationContext(), channelId)
                         .setSmallIcon(R.drawable.ic_call_end_white_24dp)
                         .setContentTitle(getString(R.string.app_name))
                         .setContentText(text)
@@ -129,6 +129,25 @@ public class IncomingCallNotificationService extends Service {
                         .setFullScreenIntent(pendingIntent, true);
 
         return builder.build();
+    }
+
+    @TargetApi(Build.VERSION_CODES.O)
+    private String createChannel(int channelImportance) {
+        NotificationChannel callInviteChannel = new NotificationChannel(Constants.VOICE_CHANNEL_HIGH_IMPORTANCE,
+                "Primary Voice Channel", NotificationManager.IMPORTANCE_HIGH);;
+        String channelId = Constants.VOICE_CHANNEL_HIGH_IMPORTANCE;
+
+        if (channelImportance == NotificationManager.IMPORTANCE_LOW) {
+            callInviteChannel = new NotificationChannel(Constants.VOICE_CHANNEL_LOW_IMPORTANCE,
+                    "Primary Voice Channel", NotificationManager.IMPORTANCE_LOW);;
+            channelId = Constants.VOICE_CHANNEL_LOW_IMPORTANCE;
+        }
+        callInviteChannel.setLightColor(Color.GREEN);
+        callInviteChannel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.createNotificationChannel(callInviteChannel);
+
+        return channelId;
     }
 
     private void accept(CallInvite callInvite, int notificationId) {
@@ -153,9 +172,8 @@ public class IncomingCallNotificationService extends Service {
     }
 
     private void handleIncomingCall(CallInvite callInvite, int notificationId) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
-                !((KeyguardManager) this.getSystemService(Context.KEYGUARD_SERVICE)).inKeyguardRestrictedInputMode()) {
-            startForeground(notificationId, createNotification(callInvite, notificationId));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            setCallInProgressNotification(callInvite, notificationId);
         }
         sendCallInviteToActivity(callInvite, notificationId);
     }
@@ -164,10 +182,23 @@ public class IncomingCallNotificationService extends Service {
         stopForeground(true);
     }
 
+    private void setCallInProgressNotification(CallInvite callInvite, int notificationId) {
+        if (ApplicationContext.getInstance(this).isAppVisible()) {
+            Log.i(TAG, "setCallInProgressNotification - app is visible.");
+            startForeground(notificationId, createNotification(callInvite, notificationId, NotificationManager.IMPORTANCE_LOW));
+        } else {
+            Log.i(TAG, "setCallInProgressNotification - app is NOT visible.");
+            startForeground(notificationId, createNotification(callInvite, notificationId, NotificationManager.IMPORTANCE_HIGH));
+        }
+    }
+
     /*
      * Send the CallInvite to the VoiceActivity. Start the activity if it is not running already.
      */
     private void sendCallInviteToActivity(CallInvite callInvite, int notificationId) {
+        if (Build.VERSION.SDK_INT >= 29 && !ApplicationContext.getInstance(getApplicationContext()).isAppVisible()) {
+            return;
+        }
         Intent intent = new Intent(this, VoiceActivity.class);
         intent.setAction(Constants.ACTION_INCOMING_CALL);
         intent.putExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, notificationId);

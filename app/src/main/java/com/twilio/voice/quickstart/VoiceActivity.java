@@ -1,7 +1,7 @@
 package com.twilio.voice.quickstart;
 
 import android.Manifest;
-import android.app.KeyguardManager;
+import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -16,15 +16,6 @@ import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
-import android.support.annotation.NonNull;
-import android.support.design.widget.CoordinatorLayout;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.LocalBroadcastManager;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -36,6 +27,15 @@ import android.view.WindowManager;
 import android.widget.Chronometer;
 import android.widget.EditText;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.koushikdutta.async.future.FutureCallback;
 import com.koushikdutta.ion.Ion;
@@ -65,7 +65,6 @@ public class VoiceActivity extends AppCompatActivity {
     private static final String TWILIO_ACCESS_TOKEN_SERVER_URL = "TWILIO_ACCESS_TOKEN_SERVER_URL";
 
     private static final int MIC_PERMISSION_REQUEST_CODE = 1;
-    private static final int SNACKBAR_DURATION = 4000;
 
     private String accessToken;
     private AudioManager audioManager;
@@ -177,7 +176,7 @@ public class VoiceActivity extends AppCompatActivity {
             public void onError(RegistrationException error, String accessToken, String fcmToken) {
                 String message = String.format("Registration Error: %d, %s", error.getErrorCode(), error.getMessage());
                 Log.e(TAG, message);
-                Snackbar.make(coordinatorLayout, message, SNACKBAR_DURATION).show();
+                Snackbar.make(coordinatorLayout, message, Snackbar.LENGTH_LONG).show();
             }
         };
     }
@@ -208,7 +207,7 @@ public class VoiceActivity extends AppCompatActivity {
                 Log.d(TAG, "Connect failure");
                 String message = String.format("Call Error: %d, %s", error.getErrorCode(), error.getMessage());
                 Log.e(TAG, message);
-                Snackbar.make(coordinatorLayout, message, SNACKBAR_DURATION).show();
+                Snackbar.make(coordinatorLayout, message, Snackbar.LENGTH_LONG).show();
                 resetUI();
             }
 
@@ -236,7 +235,7 @@ public class VoiceActivity extends AppCompatActivity {
                 if (error != null) {
                     String message = String.format("Call Error: %d, %s", error.getErrorCode(), error.getMessage());
                     Log.e(TAG, message);
-                    Snackbar.make(coordinatorLayout, message, SNACKBAR_DURATION).show();
+                    Snackbar.make(coordinatorLayout, message, Snackbar.LENGTH_LONG).show();
                 }
                 resetUI();
             }
@@ -321,7 +320,7 @@ public class VoiceActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             showIncomingCallDialog();
         } else {
-            if (isScreenLocked()) {
+            if (ApplicationContext.getInstance(this).isAppVisible()) {
                 showIncomingCallDialog();
             }
         }
@@ -331,9 +330,6 @@ public class VoiceActivity extends AppCompatActivity {
         if (alertDialog != null && alertDialog.isShowing()) {
             soundPoolManager.stopRinging();
             alertDialog.cancel();
-            if (isScreenLocked()) {
-                finish();
-            }
         }
     }
 
@@ -415,9 +411,6 @@ public class VoiceActivity extends AppCompatActivity {
                 }
                 if (alertDialog != null && alertDialog.isShowing()) {
                     alertDialog.dismiss();
-                }
-                if (isScreenLocked()) {
-                    finish();
                 }
             }
         };
@@ -516,9 +509,6 @@ public class VoiceActivity extends AppCompatActivity {
         if (activeCall != null) {
             activeCall.disconnect();
             activeCall = null;
-            if (isScreenLocked()) {
-                finish();
-            }
         }
     }
 
@@ -601,7 +591,7 @@ public class VoiceActivity extends AppCompatActivity {
         if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
             Snackbar.make(coordinatorLayout,
                     "Microphone permissions needed. Please allow in your application settings.",
-                    SNACKBAR_DURATION).show();
+                    Snackbar.LENGTH_LONG).show();
         } else {
             ActivityCompat.requestPermissions(
                     this,
@@ -619,7 +609,7 @@ public class VoiceActivity extends AppCompatActivity {
             if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                 Snackbar.make(coordinatorLayout,
                         "Microphone permissions needed. Please allow in your application settings.",
-                        SNACKBAR_DURATION).show();
+                        Snackbar.LENGTH_LONG).show();
             } else {
                 retrieveAccessToken();
             }
@@ -679,10 +669,6 @@ public class VoiceActivity extends AppCompatActivity {
                     cancelCallClickListener());
             alertDialog.show();
         }
-    }
-
-    private boolean isScreenLocked() {
-        return ((KeyguardManager) this.getSystemService(Context.KEYGUARD_SERVICE)).inKeyguardRestrictedInputMode();
     }
 
     /*

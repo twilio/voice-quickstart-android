@@ -3,8 +3,10 @@ package com.twilio.voice.quickstart.fcm;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import androidx.annotation.Nullable;
 import android.util.Log;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
