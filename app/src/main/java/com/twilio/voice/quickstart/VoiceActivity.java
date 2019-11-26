@@ -32,6 +32,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -320,7 +322,7 @@ public class VoiceActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             showIncomingCallDialog();
         } else {
-            if (ApplicationContext.getInstance(this).isAppVisible()) {
+            if (isAppVisible()) {
                 showIncomingCallDialog();
             }
         }
@@ -669,6 +671,14 @@ public class VoiceActivity extends AppCompatActivity {
                     cancelCallClickListener());
             alertDialog.show();
         }
+    }
+
+    private boolean isAppVisible() {
+        return ProcessLifecycleOwner
+                .get()
+                .getLifecycle()
+                .getCurrentState()
+                .isAtLeast(Lifecycle.State.STARTED);
     }
 
     /*

@@ -15,6 +15,8 @@ import android.os.IBinder;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.twilio.voice.CallInvite;
@@ -183,7 +185,7 @@ public class IncomingCallNotificationService extends Service {
     }
 
     private void setCallInProgressNotification(CallInvite callInvite, int notificationId) {
-        if (ApplicationContext.getInstance(this).isAppVisible()) {
+        if (isAppVisible()) {
             Log.i(TAG, "setCallInProgressNotification - app is visible.");
             startForeground(notificationId, createNotification(callInvite, notificationId, NotificationManager.IMPORTANCE_LOW));
         } else {
@@ -196,7 +198,7 @@ public class IncomingCallNotificationService extends Service {
      * Send the CallInvite to the VoiceActivity. Start the activity if it is not running already.
      */
     private void sendCallInviteToActivity(CallInvite callInvite, int notificationId) {
-        if (Build.VERSION.SDK_INT >= 29 && !ApplicationContext.getInstance(getApplicationContext()).isAppVisible()) {
+        if (Build.VERSION.SDK_INT >= 29 && !isAppVisible()) {
             return;
         }
         Intent intent = new Intent(this, VoiceActivity.class);
@@ -206,5 +208,13 @@ public class IncomingCallNotificationService extends Service {
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         this.startActivity(intent);
+    }
+
+    private boolean isAppVisible() {
+        return ProcessLifecycleOwner
+                .get()
+                .getLifecycle()
+                .getCurrentState()
+                .isAtLeast(Lifecycle.State.STARTED);
     }
 }
