@@ -408,8 +408,10 @@ public class VoiceActivity extends AppCompatActivity {
             public void onClick(DialogInterface dialogInterface, int i) {
                 soundPoolManager.getInstance(VoiceActivity.this).stopRinging();
                 if (activeCallInvite != null) {
-                    activeCallInvite.reject(VoiceActivity.this);
-                    notificationManager.cancel(activeCallNotificationId);
+                    Intent intent = new Intent(VoiceActivity.this, IncomingCallNotificationService.class);
+                    intent.setAction(Constants.ACTION_REJECT);
+                    intent.putExtra(Constants.INCOMING_CALL_INVITE, activeCallInvite);
+                    startService(intent);
                 }
                 if (alertDialog != null && alertDialog.isShowing()) {
                     alertDialog.dismiss();
