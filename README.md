@@ -266,10 +266,10 @@ If you are certain you want to delete a Push Credential you can click on `Delete
 Please ensure that after deleting the Push Credential you remove or replace the Push Credential SID when generating new access tokens.
 
 ## Troubleshooting Audio
-
-The following sections provide guidance on how to ensure optimal audio quality in your applications. 
+The following sections provide guidance on how to ensure optimal audio quality in your applications.
 
 ### Configuring AudioManager
+
 The `AudioManager` configuration guidance below is meant to provide optimal audio experience when in a `Call`. This configuration is inspired by the [WebRTC Android example](https://chromium.googlesource.com/external/webrtc/+/refs/heads/master/examples/androidapp/src/org/appspot/apprtc/AppRTCAudioManager.java) and the [Android documentation](https://developer.android.com/reference/android/media/AudioFocusRequest).
 
 ```
@@ -298,7 +298,6 @@ The `AudioManager` configuration guidance below is meant to provide optimal audi
 
 		                                       @Override
 		                                       public void onAudioFocusChange(int focusChange) {
-		
 		                                       }
 		                                   }, AudioManager.STREAM_VOICE_CALL,
                         AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
@@ -317,6 +316,48 @@ The `AudioManager` configuration guidance below is meant to provide optimal audi
     }
 }
 ```
+
+### Configuring Hardware Audio Effects
+Our library performs acoustic echo cancellation (AEC), noise suppression (NS), and auto gain
+control (AGC) using device hardware by default. Using device hardware is more efficient, but some
+devices do not implement these audio effects well. If you are experiencing echo, background noise,
+or unexpected volume levels on certain devices reference the following snippet for enabling
+software implementations of AEC, NS, and AGC.
+
+    /*
+     * Execute any time before invoking `Voice.connect(...)` or `CallInvite.accept(...)`.
+     */
+
+    // Use software AEC
+    tvo.webrtc.voiceengine.WebRtcAudioUtils.setWebRtcBasedAcousticEchoCanceler(true);
+
+    // Use sofware NS
+    tvo.webrtc.voiceengine.WebRtcAudioUtils.setWebRtcBasedNoiseSuppressor(true);
+
+    // Use software AGC
+    tvo.webrtc.voiceengine.WebRtcAudioUtils.setWebRtcBasedAutomaticGainControl(true);
+
+### Configuring OpenSL ES
+
+Starting with Voice SDK 4.3.0, our library will not use [OpenSL ES](https://developer.android.com/ndk/guides/audio/opensl/index.html)
+for audio playback. Prior versions starting with Voice SDK 3.0.0 did use OpenSL ES by default. Using OpenSL ES is more efficient, but can cause
+problems with other audio effects. For example, we found on the Nexus 6P that OpenSL ES affected
+the device's hardware echo canceller so we blacklisted the Nexus 6P from using OpenSL ES. If you
+are experiencing audio problems with a device that cannot be resolved using software audio effects,
+reference the following snippet for enabling OpenSL ES:
+
+    /*
+     * Execute any time before invoking `Voice.connect(...)` or `CallInvite.accept(...)`.
+     */
+
+    // Enable OpenSL ES
+    tvo.webrtc.voiceengine.WebRtcAudioManager.setBlacklistDeviceForOpenSLESUsage(false);
+
+    // Check if OpenSL ES is disabled
+    tvo.webrtc.voiceengine.WebRtcAudioUtils.deviceIsBlacklistedForOpenSLESUsage();
+
+### Managing Device Specific Configurations
+The Video Android SDK does not maintain a list of devices for which hardware effects or OpenSL ES are disabled. We recommend maintaining a list in your own application and disabling these effects as needed. The [Signal App provides a great example](https://github.com/signalapp/Signal-Android/blob/master/src/org/thoughtcrime/securesms/ApplicationContext.java#L250) of how to maintain a list and disable the effects as needed.
 
 ### Handling Low Headset Volume
 If your application experiences low playback volume, we recommend the following snippets: 
