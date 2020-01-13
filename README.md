@@ -339,8 +339,8 @@ software implementations of AEC, NS, and AGC.
 
 ### Configuring OpenSL ES
 
-Starting with Voice SDK 4.3.0, our library will not use [OpenSL ES](https://developer.android.com/ndk/guides/audio/opensl/index.html)
-for audio playback. Prior versions starting with Voice SDK 3.0.0 did use OpenSL ES by default. Using OpenSL ES is more efficient, but can cause
+Starting with Voice SDK 4.3.0, our library does not use [OpenSL ES](https://developer.android.com/ndk/guides/audio/opensl/index.html)
+for audio playback by default. Prior versions starting with Voice SDK 3.0.0 did use OpenSL ES by default. Using OpenSL ES is more efficient, but can cause
 problems with other audio effects. For example, we found on the Nexus 6P that OpenSL ES affected
 the device's hardware echo canceller so we blacklisted the Nexus 6P from using OpenSL ES. If you
 are experiencing audio problems with a device that cannot be resolved using software audio effects,
