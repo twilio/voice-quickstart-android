@@ -243,6 +243,14 @@ There are number of techniques you can use to ensure that access token expiry is
 - Retain the access token along with the timestamp of when it was requested so you can verify ahead of time whether the token has already expired based on the `time-to-live` being used by your server.
 - Prefetch the access token whenever the `Application`, `Service`, `Activity`, or `Fragment` associated with an outgoing call is created.
 
+## Playing Custom Ringtone 
+
+When [answerOnBridge](https://www.twilio.com/docs/voice/twiml/dial#answeronbridge) is enabled in the `<Dial>` TwiML verb, the caller will not hear the ringback while the call is ringing and awaiting to be accepted on the callee's side. The application can use the `SoundPoolManager` to play custom audio files between the `Call.Listener.onRinging()` and the `Call.Listener.onConnected()` callbacks. To enabale this behavior, set the `playCustomRingback``buildConfigField` to `true` in [build.gradle](https://github.com/twilio/voice-quickstart-android/blob/master/app/build.gradle#L24-L28).
+
+```
+buildConfigField("boolean", "playCustomRingback", "true")
+```
+
 ## Managing Push Credentials
 
 A Push Credential is a record for a push notification channel, for Android this Push Credential is a push notification channel record for FCM or GCM. Push Credentials are managed in the console under [Mobile Push Credentials](https://www.twilio.com/console/voice/sdks/credentials).

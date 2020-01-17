@@ -201,13 +201,24 @@ public class VoiceActivity extends AppCompatActivity {
             @Override
             public void onRinging(Call call) {
                 Log.d(TAG, "Ringing");
-                soundPoolManager.getInstance(VoiceActivity.this).playRinging();
+                /*
+                 * When [answerOnBridge](https://www.twilio.com/docs/voice/twiml/dial#answeronbridge)
+                 * is enabled in the <Dial> TwiML verb, the caller will not hear the ringback while
+                 * the call is ringing and awaiting to be accepted on the callee's side. The application
+                 * can use the `SoundPoolManager` to play custom audio files between the
+                 * `Call.Listener.onRinging()` and the `Call.Listener.onConnected()` callbacks.
+                 */
+                if (BuildConfig.playCustomRingback) {
+                    soundPoolManager.getInstance(VoiceActivity.this).playRinging();
+                }
             }
 
             @Override
             public void onConnectFailure(Call call, CallException error) {
                 setAudioFocus(false);
-                soundPoolManager.getInstance(VoiceActivity.this).stopRinging();
+                if (BuildConfig.playCustomRingback) {
+                    soundPoolManager.getInstance(VoiceActivity.this).stopRinging();
+                }
                 Log.d(TAG, "Connect failure");
                 String message = String.format("Call Error: %d, %s", error.getErrorCode(), error.getMessage());
                 Log.e(TAG, message);
@@ -218,7 +229,9 @@ public class VoiceActivity extends AppCompatActivity {
             @Override
             public void onConnected(Call call) {
                 setAudioFocus(true);
-                soundPoolManager.getInstance(VoiceActivity.this).stopRinging();
+                if (BuildConfig.playCustomRingback) {
+                    soundPoolManager.getInstance(VoiceActivity.this).stopRinging();
+                }
                 Log.d(TAG, "Connected");
                 activeCall = call;
             }
@@ -236,7 +249,9 @@ public class VoiceActivity extends AppCompatActivity {
             @Override
             public void onDisconnected(Call call, CallException error) {
                 setAudioFocus(false);
-                soundPoolManager.getInstance(VoiceActivity.this).stopRinging();
+                if (BuildConfig.playCustomRingback) {
+                    soundPoolManager.getInstance(VoiceActivity.this).stopRinging();
+                }
                 Log.d(TAG, "Disconnected");
                 if (error != null) {
                     String message = String.format("Call Error: %d, %s", error.getErrorCode(), error.getMessage());
