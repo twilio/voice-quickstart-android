@@ -1,5 +1,25 @@
 apply plugin: 'com.android.application'
 
+ext.playCustomRingback = {
+    def playCustomRingback  = System.getenv("playCustomRingback");
+
+    if (playCustomRingback == null) {
+        logger.log(LogLevel.INFO, "Could not locate playCustomRingback environment variable. " +
+                "Trying local.properties")
+        Properties properties = new Properties()
+        if (project.rootProject.file('local.properties').exists()) {
+            properties.load(project.rootProject.file('local.properties').newDataInputStream())
+            playCustomRingback = properties.getProperty('playCustomRingback')
+        }
+    }
+
+    if (playCustomRingback == null) {
+        playCustomRingback = false
+    }
+
+    return playCustomRingback;
+}
+
 android {
     compileSdkVersion 28
 
@@ -21,6 +41,10 @@ android {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.debug
+            buildConfigField("boolean", "playCustomRingback", "${playCustomRingback()}")
+        }
+        debug {
+            buildConfigField("boolean", "playCustomRingback", "${playCustomRingback()}")
         }
     }
 
