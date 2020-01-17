@@ -236,6 +236,7 @@ public class VoiceActivity extends AppCompatActivity {
             @Override
             public void onDisconnected(Call call, CallException error) {
                 setAudioFocus(false);
+                soundPoolManager.getInstance(VoiceActivity.this).stopRinging();
                 Log.d(TAG, "Disconnected");
                 if (error != null) {
                     String message = String.format("Call Error: %d, %s", error.getErrorCode(), error.getMessage());
