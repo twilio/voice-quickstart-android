@@ -50,6 +50,7 @@ import com.twilio.voice.RegistrationListener;
 import com.twilio.voice.Voice;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class VoiceActivity extends AppCompatActivity {
 
@@ -201,11 +202,13 @@ public class VoiceActivity extends AppCompatActivity {
             @Override
             public void onRinging(Call call) {
                 Log.d(TAG, "Ringing");
+                soundPoolManager.getInstance(VoiceActivity.this).playRinging();
             }
 
             @Override
             public void onConnectFailure(Call call, CallException error) {
                 setAudioFocus(false);
+                soundPoolManager.getInstance(VoiceActivity.this).stopRinging();
                 Log.d(TAG, "Connect failure");
                 String message = String.format("Call Error: %d, %s", error.getErrorCode(), error.getMessage());
                 Log.e(TAG, message);
@@ -216,6 +219,7 @@ public class VoiceActivity extends AppCompatActivity {
             @Override
             public void onConnected(Call call) {
                 setAudioFocus(true);
+                soundPoolManager.getInstance(VoiceActivity.this).stopRinging();
                 Log.d(TAG, "Connected");
                 activeCall = call;
             }
