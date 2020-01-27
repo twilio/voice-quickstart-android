@@ -12,10 +12,7 @@ public class SoundPoolManager {
     private boolean playing = false;
     private boolean loaded = false;
     private boolean playingCalled = false;
-    private float actualVolume;
-    private float maxVolume;
     private float volume;
-    private AudioManager audioManager;
     private SoundPool soundPool;
     private int ringingSoundId;
     private int ringingStreamId;
@@ -24,9 +21,9 @@ public class SoundPoolManager {
 
     private SoundPoolManager(Context context) {
         // AudioManager audio settings for adjusting the volume
-        audioManager = (AudioManager) context.getSystemService(AUDIO_SERVICE);
-        actualVolume = (float) audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-        maxVolume = (float) audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        AudioManager audioManager = (AudioManager) context.getSystemService(AUDIO_SERVICE);
+        float actualVolume = (float) audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        float maxVolume = (float) audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         volume = actualVolume / maxVolume;
 
         // Load the sounds
