@@ -1,12 +1,10 @@
 package com.twilio.voice.quickstart.fcm;
 
 import android.content.Intent;
-import android.os.Handler;
-import android.os.Looper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import androidx.annotation.Nullable;
 import android.util.Log;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
@@ -18,8 +16,6 @@ import com.twilio.voice.MessageListener;
 import com.twilio.voice.Voice;
 import com.twilio.voice.quickstart.Constants;
 import com.twilio.voice.quickstart.IncomingCallNotificationService;
-
-import java.util.Map;
 
 public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
 
@@ -43,8 +39,6 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
 
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
-            Map<String, String> data = remoteMessage.getData();
-
             boolean valid = Voice.handleMessage(this, remoteMessage.getData(), new MessageListener() {
                 @Override
                 public void onCallInvite(@NonNull CallInvite callInvite) {
@@ -63,6 +57,13 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
                         remoteMessage.getData());
             }
         }
+    }
+
+    @Override
+    public void onNewToken(String token) {
+        super.onNewToken(token);
+        Intent intent = new Intent(Constants.ACTION_FCM_TOKEN);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     private void handleInvite(CallInvite callInvite, int notificationId) {

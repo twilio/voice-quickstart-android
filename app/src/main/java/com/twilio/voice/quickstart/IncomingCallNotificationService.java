@@ -29,24 +29,25 @@ public class IncomingCallNotificationService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         String action = intent.getAction();
 
-        CallInvite callInvite = intent.getParcelableExtra(Constants.INCOMING_CALL_INVITE);
-        int notificationId = intent.getIntExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, 0);
-
-        switch (action) {
-            case Constants.ACTION_INCOMING_CALL:
-                handleIncomingCall(callInvite, notificationId);
-                break;
-            case Constants.ACTION_ACCEPT:
-                accept(callInvite, notificationId);
-                break;
-            case Constants.ACTION_REJECT:
-                reject(callInvite);
-                break;
-            case Constants.ACTION_CANCEL_CALL:
-                handleCancelledCall(intent);
-                break;
-            default:
-                break;
+        if (action != null) {
+            CallInvite callInvite = intent.getParcelableExtra(Constants.INCOMING_CALL_INVITE);
+            int notificationId = intent.getIntExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, 0);
+            switch (action) {
+                case Constants.ACTION_INCOMING_CALL:
+                    handleIncomingCall(callInvite, notificationId);
+                    break;
+                case Constants.ACTION_ACCEPT:
+                    accept(callInvite, notificationId);
+                    break;
+                case Constants.ACTION_REJECT:
+                    reject(callInvite);
+                    break;
+                case Constants.ACTION_CANCEL_CALL:
+                    handleCancelledCall(intent);
+                    break;
+                default:
+                    break;
+            }
         }
         return START_NOT_STICKY;
     }
@@ -72,7 +73,6 @@ public class IncomingCallNotificationService extends Service {
         extras.putString(Constants.CALL_SID_KEY, callInvite.getCallSid());
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-
             return buildNotification(callInvite.getFrom() + " is calling.",
                     pendingIntent,
                     extras,
@@ -80,6 +80,7 @@ public class IncomingCallNotificationService extends Service {
                     notificationId,
                     createChannel(channelImportance));
         } else {
+            //noinspection deprecation
             return new NotificationCompat.Builder(this)
                     .setSmallIcon(R.drawable.ic_call_end_white_24dp)
                     .setContentTitle(getString(R.string.app_name))
@@ -136,12 +137,12 @@ public class IncomingCallNotificationService extends Service {
     @TargetApi(Build.VERSION_CODES.O)
     private String createChannel(int channelImportance) {
         NotificationChannel callInviteChannel = new NotificationChannel(Constants.VOICE_CHANNEL_HIGH_IMPORTANCE,
-                "Primary Voice Channel", NotificationManager.IMPORTANCE_HIGH);;
+                "Primary Voice Channel", NotificationManager.IMPORTANCE_HIGH);
         String channelId = Constants.VOICE_CHANNEL_HIGH_IMPORTANCE;
 
         if (channelImportance == NotificationManager.IMPORTANCE_LOW) {
             callInviteChannel = new NotificationChannel(Constants.VOICE_CHANNEL_LOW_IMPORTANCE,
-                    "Primary Voice Channel", NotificationManager.IMPORTANCE_LOW);;
+                    "Primary Voice Channel", NotificationManager.IMPORTANCE_LOW);
             channelId = Constants.VOICE_CHANNEL_LOW_IMPORTANCE;
         }
         callInviteChannel.setLightColor(Color.GREEN);
@@ -184,6 +185,7 @@ public class IncomingCallNotificationService extends Service {
         stopForeground(true);
     }
 
+    @TargetApi(Build.VERSION_CODES.O)
     private void setCallInProgressNotification(CallInvite callInvite, int notificationId) {
         if (isAppVisible()) {
             Log.i(TAG, "setCallInProgressNotification - app is visible.");
