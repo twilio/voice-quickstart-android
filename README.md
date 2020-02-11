@@ -23,8 +23,8 @@ Get started with Voice on Android:
 
 To get started with the Quickstart application follow these steps. Steps 1-6 will allow you to make a call. The remaining steps 7-8 will enable push notifications using FCM.
 
-1. [Open this project in Android Studio](#bullet1)
-2. [Generate google-services.json](#bullet2)
+1. [Generate google-services.json](#bullet2)
+2. [Open this project in Android Studio](#bullet1)
 3. [Create a Voice API key](#bullet3)
 4. [Configure a server to generate an access token to use in the app](#bullet4)
 5. [Create a TwiML application](#bullet5)
@@ -35,11 +35,7 @@ To get started with the Quickstart application follow these steps. Steps 1-6 wil
 10. [Make client to client call](#bullet10)
 11. [Make client to PSTN call](#bullet11)
 
-
-### <a name="bullet1"></a>1. Open the project in Android Studio
-<img width="700px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/import_project.png"/>
-
-### <a name="bullet2"></a>2. Generate `google-services.json`
+### <a name="bullet1"></a>1. Generate `google-services.json`
 
 The Programmable Voice Android SDK uses Firebase Cloud Messaging push notifications to let your application know when it is receiving an incoming call. If you want your users to receive incoming calls, you’ll need to enable FCM in your application.
 
@@ -47,14 +43,13 @@ Follow the steps under **Use the Firebase Assistant** in the [Firebase Developer
 
 Login to Firebase console and make a note of generated `Server API Key` and `Sender ID` in your notepad. You will need them in [step 8](#bullet8).
 
-<img width="700px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/server_key_sender_id.png">"
-
 Make sure the generated `google-services.json` is downloaded to the `app` directory of the quickstart project to replace the existing `app/google-services.json` stub json file. If you are using the Firebase plugin make sure to remove the stub `google-services.json` file first.
 
-As a final step re-run the application from Android Studio to ensure the APK now has the latest `google-services.json` file.
-
-Missing valid `google-services.json` will result in build failure with the following error message :
+Missing valid `google-services.json` will result in a build failure with the following error message :
 <img width="700px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/invalid_google_service_json_error.png">"
+
+### <a name="bullet2"></a>2. Open the project in Android Studio
+<img width="700px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/import_project.png"/>
 
 ### <a name="bullet3"></a>3. Create a Voice API key
 
