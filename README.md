@@ -336,14 +336,10 @@ software implementations of AEC, NS, and AGC.
      */
 
     // Use software AEC
-    DefaultAudioDevice defaultAudioDevice = new DefaultAudioDevice();
-    defaultAudioDevice.setUseHardwareAcousticEchoCanceler(false);
-    Voice.setAudioDevice(defaultAudioDevice);
+    tvo.webrtc.voiceengine.WebRtcAudioUtils.setWebRtcBasedAcousticEchoCanceler(true);
 
     // Use sofware NS
-    DefaultAudioDevice defaultAudioDevice = new DefaultAudioDevice();
-    defaultAudioDevice.setUseHardwareNoiseSuppressor(false);
-    Voice.setAudioDevice(defaultAudioDevice);
+    tvo.webrtc.voiceengine.WebRtcAudioUtils.setWebRtcBasedNoiseSuppressor(true);
 
     // Use software AGC
     tvo.webrtc.voiceengine.WebRtcAudioUtils.setWebRtcBasedAutomaticGainControl(true);

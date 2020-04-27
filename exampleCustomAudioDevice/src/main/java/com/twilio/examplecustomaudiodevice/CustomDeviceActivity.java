@@ -37,7 +37,6 @@ import com.google.android.material.snackbar.Snackbar;
 import com.koushikdutta.ion.Ion;
 import com.twilio.voice.Call;
 import com.twilio.voice.CallException;
-import com.twilio.voice.CallInvite;
 import com.twilio.voice.ConnectOptions;
 import com.twilio.voice.RegistrationException;
 import com.twilio.voice.RegistrationListener;
@@ -58,7 +57,7 @@ public class CustomDeviceActivity extends AppCompatActivity {
      * If your token server is written in PHP, TWILIO_ACCESS_TOKEN_SERVER_URL needs .php extension at the end.
      *
      * For example : https://myurl.io/accessToken.php
-     */private boolean isReceiverRegistered = false;
+     */
     private static final String TWILIO_ACCESS_TOKEN_SERVER_URL = "TWILIO_ACCESS_TOKEN_SERVER_URL";
 
     private static final int MIC_PERMISSION_REQUEST_CODE = 1;
@@ -82,7 +81,7 @@ public class CustomDeviceActivity extends AppCompatActivity {
     private Call activeCall;
 
     Call.Listener callListener = callListener();
-    CustomAudioDevice customAudioDevice;
+    FileAndMicAudioDevice fileAndMicAudioDevice;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,7 +100,7 @@ public class CustomDeviceActivity extends AppCompatActivity {
         hangupActionFab = findViewById(R.id.hangup_action_fab);
         holdActionFab = findViewById(R.id.hold_action_fab);
         muteActionFab = findViewById(R.id.mute_action_fab);
-        inputSwitchFab  = findViewById(R.id.input_switch_fab);
+        inputSwitchFab = findViewById(R.id.input_switch_fab);
         chronometer = findViewById(R.id.chronometer);
 
         callActionFab.setOnClickListener(callActionFabClickListener());
@@ -134,6 +133,13 @@ public class CustomDeviceActivity extends AppCompatActivity {
         } else {
             retrieveAccessToken();
         }
+
+        /*
+         * Create custom audio device FileAndMicAudioDevice and set the audio device
+         */
+        fileAndMicAudioDevice = new FileAndMicAudioDevice(getApplicationContext());
+        Voice.setAudioDevice(fileAndMicAudioDevice);
+
     }
 
     private RegistrationListener registrationListener() {
@@ -196,7 +202,7 @@ public class CustomDeviceActivity extends AppCompatActivity {
             @Override
             public void onConnected(@NonNull Call call) {
                 setAudioFocus(true);
-                applyFabState(inputSwitchFab, customAudioDevice.isMusicPlaying());
+                applyFabState(inputSwitchFab, fileAndMicAudioDevice.isMusicPlaying());
                 Log.d(TAG, "Connected " + call.getSid());
                 activeCall = call;
             }
@@ -275,8 +281,6 @@ public class CustomDeviceActivity extends AppCompatActivity {
             ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
                     .params(params)
                     .build();
-            customAudioDevice = new CustomAudioDevice(getApplicationContext());
-            Voice.setAudioDevice(customAudioDevice);
             activeCall = Voice.connect(CustomDeviceActivity.this, connectOptions, callListener);
             setCallUI();
             alertDialog.dismiss();
@@ -316,10 +320,10 @@ public class CustomDeviceActivity extends AppCompatActivity {
     }
 
     private View.OnClickListener inputSwitchActionFabClickListener() {
-        return v-> {
-            boolean enable = customAudioDevice.isMusicPlaying();
+        return v -> {
+            boolean enable = fileAndMicAudioDevice.isMusicPlaying();
             applyFabState(inputSwitchFab, !enable);
-            customAudioDevice.switchInput(!enable);
+            fileAndMicAudioDevice.switchInput(!enable);
         };
     }
 
@@ -378,7 +382,8 @@ public class CustomDeviceActivity extends AppCompatActivity {
                     audioManager.requestAudioFocus(focusRequest);
                 } else {
                     audioManager.requestAudioFocus(
-                            focusChange -> { },
+                            focusChange -> {
+                            },
                             AudioManager.STREAM_VOICE_CALL,
                             AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
                 }
@@ -452,8 +457,8 @@ public class CustomDeviceActivity extends AppCompatActivity {
     }
 
     private static AlertDialog createCallDialog(final DialogInterface.OnClickListener callClickListener,
-                                               final DialogInterface.OnClickListener cancelClickListener,
-                                               final Activity activity) {
+                                                final DialogInterface.OnClickListener cancelClickListener,
+                                                final Activity activity) {
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(activity);
 
         alertDialogBuilder.setIcon(R.drawable.ic_call_black_24dp);
