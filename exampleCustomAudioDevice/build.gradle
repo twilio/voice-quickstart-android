@@ -1,0 +1,58 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 28
+
+    compileOptions {
+        sourceCompatibility 1.8
+        targetCompatibility 1.8
+    }
+
+    defaultConfig {
+        applicationId "com.twilio.examplecustomaudiodevice"
+        minSdkVersion 16
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    // Specify that we want to split up the APK based on ABI
+    splits {
+        abi {
+            // Enable ABI split
+            enable true
+
+            // Clear list of ABIs
+            reset()
+
+            // Specify each architecture currently supported by the Video SDK
+            include "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+
+            // Specify that we do not want an additional universal SDK
+            universalApk false
+        }
+    }
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.12'
+
+    implementation 'com.twilio:voice-android:5.2.0'
+    implementation 'com.android.support:design:28.0.0'
+    implementation 'com.android.support:support-media-compat:28.0.0'
+    implementation 'com.android.support:animated-vector-drawable:28.0.0'
+    implementation 'com.android.support:support-v4:28.0.0'
+    implementation 'com.squareup.retrofit:retrofit:1.9.0'
+    implementation 'com.koushikdutta.ion:ion:2.1.8'
+    implementation 'com.google.firebase:firebase-messaging:17.6.0'
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.1.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+}
