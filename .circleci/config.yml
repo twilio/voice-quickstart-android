@@ -60,7 +60,7 @@ jobs:
       # Save cache
       - save-cache: *save-cache-gradle
 
-build-examplecustomaudiodevice:
+  build-examplecustomaudiodevice:
     <<: *build-defaults
     resource_class: large
     steps:
