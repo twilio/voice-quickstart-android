@@ -67,7 +67,9 @@ public class FileAndMicAudioDevice implements AudioDevice {
     private boolean isMusicPlaying = true;
 
     /*
-     * This Runnable reads a music file and provides the audio frames to the AudioDevice API via AudioDevice.audioDeviceWriteCaptureData(..) until there is no more data to be read, the capturer input switches to the microphone, or the call ends.
+     * This Runnable reads a music file and provides the audio frames to the AudioDevice API via
+     * AudioDevice.audioDeviceWriteCaptureData(..) until there is no more data to be read, the
+     * capturer input switches to the microphone, or the call ends.
      */
     private final Runnable fileCapturerRunnable = () -> {
         Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
@@ -88,7 +90,9 @@ public class FileAndMicAudioDevice implements AudioDevice {
     };
 
     /*
-     * This Runnable reads data from the microphone and provides the audio frames to the AudioDevice API via AudioDevice.audioDeviceWriteCaptureData(..) until the capturer input switches to microphone or the call ends.
+     * This Runnable reads data from the microphone and provides the audio frames to the AudioDevice
+     * API via AudioDevice.audioDeviceWriteCaptureData(..) until the capturer input switches to
+     * microphone or the call ends.
      */
     private final Runnable microphoneCapturerRunnable = () -> {
         Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
@@ -110,7 +114,8 @@ public class FileAndMicAudioDevice implements AudioDevice {
     };
 
     /*
-     * This Runnable reads audio data from the callee perspective via AudioDevice.audioDeviceReadRenderData(...) and plays out the audio data using AudioTrack.write().
+     * This Runnable reads audio data from the callee perspective via AudioDevice.audioDeviceReadRenderData(...)
+     * and plays out the audio data using AudioTrack.write().
      */
     private final Runnable speakerRendererRunnable = () -> {
         Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
