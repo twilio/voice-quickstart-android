@@ -280,7 +280,11 @@ public class FileAndMicAudioDevice implements AudioDevice {
         stopAudioTrack();
         // Quit the rendererThread's looper to stop processing any further messages.
         rendererThread.quit();
-        // Wait for the rendererThread to die.
+        /*
+         * When onStopRendering is called, the AudioDevice API expects that at the completion
+         * of the callback the renderer has completely stopped. As a result, quit the renderer
+         * thread and explicitly wait for the thread to complete.
+         */
         if (!tvo.webrtc.ThreadUtils.joinUninterruptibly(rendererThread, THREAD_JOIN_TIMEOUT_MS)) {
             Log.e(TAG, "Join of rendererThread timed out");
             return false;
