@@ -331,7 +331,7 @@ The `AudioManager` configuration guidance below is meant to provide optimal audi
 ```
 
 ### Configuring Hardware Audio Effects
-#### Voice Android SDK Version 5.2.x
+#### Voice Android SDK Version 5.2.x+
 Our library performs acoustic echo cancellation (AEC) and noise suppression (NS) using device hardware by default. Using device hardware is more efficient, but some devices do not implement these audio effects well. If you are experiencing echo or background noise on certain devices reference the following snippet for enabling software implementations of AEC and NS.
 
     /*
