@@ -227,9 +227,12 @@ public class FileAndMicAudioDevice implements AudioDevice {
         } else {
             stopRecording();
         }
-        // Quit the capturerThread's looper to stop processing any further messages.
+        /*
+         * When onStopCapturing is called, the AudioDevice API expects that at the completion
+         * of the callback the capturer has completely stopped. As a result, quit the capturer
+         * thread and explicitly wait for the thread to complete.
+         */
         capturerThread.quit();
-        // Wait for the capturerThread to die.
         if (!tvo.webrtc.ThreadUtils.joinUninterruptibly(capturerThread, THREAD_JOIN_TIMEOUT_MS)) {
             Log.e(TAG, "Join of capturerThread timed out");
             return false;
