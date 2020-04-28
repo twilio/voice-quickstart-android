@@ -32,7 +32,7 @@ You can switch to microphone by clicking the `♫` button.
 Note: The switch between audio file and microphone always starts the music from the begining of the file.
 
 ## Troubleshooting Audio
-The following sections provide guidance on how to ensure optimal audio quality in your applications using custom audio device.
+The following sections provide guidance on how to ensure optimal audio quality in your applications using default audio device.
 
 ### Configuring AudioManager
 
