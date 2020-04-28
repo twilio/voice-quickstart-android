@@ -2,7 +2,7 @@
 
 The project demonstrates how to use Twilio's Programmable Voice SDK with audio playback and recording functionality provided by a custom `AudioDevice`.
 
-The example demonstrates the custom audio device **exampleCustomAudioDevice**, which uses android audio subsytem to playback and record audio at 44.1KHz with built-in echo and noise cancellation. 
+The example demonstrates the custom audio device **exampleCustomAudioDevice**, which uses android audio subsystem to playback and record audio at 44.1KHz with built-in echo and noise cancellation. 
 
 1. The upstream audio subsystem receives remote participant's playout audio samples from the code audio device module and plays them in the speaker.
 2. The downstream audio subsystem is capable to switch audio source between the local participant's microphone audio and audio from a file. The Voice SDK receives and delivers the recorded audio samples to the core audio device module.
