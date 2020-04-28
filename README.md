@@ -5,7 +5,7 @@
 Get started with Voice on Android:
 
 - [Quickstart](#quickstart) - Run the quickstart app
-- [Examples](#example) - Customize your voice experience with custom audio device example 
+- [Examples](#example) - Customize your voice experience with these examples
 - [Migration Guide 4.x to 5.x](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/migration-guide-4.x-5.x.md) - Migrating from 4.x to 5.x
 - [New Features 4.0](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/new-features-4.0.md) - New features in 4.0
 - [Migration Guide 3.x to 4.x](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/migration-guide-3.x-4.x.md) - Migrating from 3.x to 4.x
@@ -331,6 +331,7 @@ The `AudioManager` configuration guidance below is meant to provide optimal audi
 ```
 
 ### Configuring Hardware Audio Effects
+
 #### Voice Android SDK Version 5.2.x+
 Our library performs acoustic echo cancellation (AEC) and noise suppression (NS) using device hardware by default. Using device hardware is more efficient, but some devices do not implement these audio effects well. If you are experiencing echo or background noise on certain devices reference the following snippet for enabling software implementations of AEC and NS.
 
@@ -347,6 +348,8 @@ Our library performs acoustic echo cancellation (AEC) and noise suppression (NS)
     DefaultAudioDevice defaultAudioDevice = new DefaultAudioDevice();
     defaultAudioDevice.setUseHardwareNoiseSuppressor(false);
     Voice.setAudioDevice(defaultAudioDevice);
+    
+    
 #### Voice Android SDK Version below 5.1.x
 Our library performs acoustic echo cancellation (AEC), noise suppression (NS), and auto gain
 control (AGC) using device hardware by default. Using device hardware is more efficient, but some
