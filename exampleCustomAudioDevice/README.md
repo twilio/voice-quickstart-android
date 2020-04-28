@@ -39,11 +39,7 @@ The following sections provide guidance on how to ensure optimal audio quality i
 Follow the [README](https://github.com/twilio/voice-quickstart-android#configuring-audiomanager) to configure audio manager.
 
 ### Configuring Hardware Audio Effects Using Custom Audio Device
-Our library performs acoustic echo cancellation (AEC), noise suppression (NS), and auto gain
-control (AGC) using device hardware by default. Using device hardware is more efficient, but some
-devices do not implement these audio effects well. If you are experiencing echo, background noise,
-or unexpected volume levels on certain devices reference the following snippet for enabling
-software implementations of AEC, and NS.
+Our library performs acoustic echo cancellation (AEC) and noise suppression (NS) using device hardware by default. Using device hardware is more efficient, but some devices do not implement these audio effects well. If you are experiencing echo or background noise on certain devices reference the following snippet for enabling software implementations of AEC and NS.
 
     /*
      * Execute any time before invoking `Voice.connect(...)` or `CallInvite.accept(...)`.
