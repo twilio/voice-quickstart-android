@@ -88,8 +88,7 @@ public class FileAndMicAudioDevice implements AudioDevice {
     };
 
     /*
-     * Runnable which keeps reading data from the microphone and calling AudioDevice.audioDeviceWriteCaptureData(..).
-     * until the capturer input switches to microphone or the call ends.
+     * This Runnable reads data from the microphone and provides the audio frames to the AudioDevice API via AudioDevice.audioDeviceWriteCaptureData(..) until the capturer input switches to microphone or the call ends.
      */
     private final Runnable microphoneCapturerRunnable = () -> {
         Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
