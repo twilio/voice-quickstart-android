@@ -67,8 +67,7 @@ public class FileAndMicAudioDevice implements AudioDevice {
     private boolean isMusicPlaying = true;
 
     /*
-     * Runnable which keeps reading data from the music file and calling AudioDevice.audioDeviceWriteCaptureData(..).
-     * until there is no more data to be read or the capturer input switches to microphone or the call ends.
+     * This Runnable reads a music file and provides the audio frames to the AudioDevice API via AudioDevice.audioDeviceWriteCaptureData(..) until there is no more data to be read, the capturer input switches to the microphone, or the call ends.
      */
     private final Runnable fileCapturerRunnable = () -> {
         Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
