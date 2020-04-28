@@ -110,8 +110,7 @@ public class FileAndMicAudioDevice implements AudioDevice {
     };
 
     /*
-     * Runnable which keeps calling AudioDevice.audioDeviceReadRenderData() to retrieve audio data from
-     * the callee side and calling AudioTrack.write() to stream audio.
+     * This Runnable reads audio data from the callee perspective via AudioDevice.audioDeviceReadRenderData(...) and plays out the audio data using AudioTrack.write().
      */
     private final Runnable speakerRendererRunnable = () -> {
         Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
