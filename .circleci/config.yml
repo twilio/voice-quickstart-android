@@ -37,7 +37,7 @@ jobs:
       # Setup code and workspace for downstream jobs
       - checkout
       - restore-cache: *restore-cache-gradle
-      
+
       # Save cache
       - save-cache: *save-cache-gradle
 
@@ -60,6 +60,23 @@ jobs:
       # Save cache
       - save-cache: *save-cache-gradle
 
+build-examplecustomaudiodevice:
+    <<: *build-defaults
+    resource_class: large
+    steps:
+      # Setup
+      - checkout
+      - attach_workspace:
+          at: *workspace
+      - restore-cache: *restore-cache-gradle
+
+      # Build app
+      - run:
+          name: Build examplecustomaudiodevice
+          command: ./gradlew -q examplecustomaudiodevice:assemble
+
+      # Save cache
+      - save-cache: *save-cache-gradle
 
 workflows:
   version: 2
@@ -71,5 +88,8 @@ workflows:
 
       # Build
       - build-quickstart:
+          requires:
+              - setup-workspace
+      - build-examplecustomaudiodevice:
           requires:
               - setup-workspace
