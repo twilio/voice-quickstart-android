@@ -36,6 +36,10 @@ or sensitive account information (API keys, credentials, etc.) when reporting an
 
 [What percentage of the time does it reproduce?]
 
+#### Twilio Call SID(s)
+
+You can find the Call SID in the SDK using Call.getSid() or CallInvite.getCallSid(). The Call SID can also be found on the Twilio Calls Console: https://www.twilio.com/console/voice/calls/logs.
+
 #### Logs
 
 ```
