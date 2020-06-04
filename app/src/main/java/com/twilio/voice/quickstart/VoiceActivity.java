@@ -51,6 +51,7 @@ import com.twilio.voice.Voice;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.List;
 import java.util.Locale;
 
@@ -276,6 +277,28 @@ public class VoiceActivity extends AppCompatActivity {
                     Snackbar.make(coordinatorLayout, message, Snackbar.LENGTH_LONG).show();
                 }
                 resetUI();
+            }
+            /*
+             * currentWarnings: existing quality warnings that have not been cleared yet
+             * previousWarnings: last set of warnings prior to receiving this callback
+             *
+             * Example:
+             *   - currentWarnings: { A, B }
+             *   - previousWarnings: { B, C }
+             *
+             * Newly raised warnings = currentWarnings - intersection = { A }
+             * Newly cleared warnings = previousWarnings - intersection = { C }
+             */
+            public void onCallQualityWarningsChanged(@NonNull Call call,
+                                              @NonNull Set<Call.CallQualityWarning> currentWarnings,
+                                              @NonNull Set<Call.CallQualityWarning> previousWarnings) {
+                currentWarnings.retainAll(previousWarnings);
+                previousWarnings.removeAll(currentWarnings);
+                String message = String.format(
+                        Locale.US,
+                        "Newly raised warnings: " + currentWarnings + " Clear warnings " + previousWarnings);
+                Log.e(TAG, message);
+                Snackbar.make(coordinatorLayout, message, Snackbar.LENGTH_LONG).show();
             }
         };
     }
