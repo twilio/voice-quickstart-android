@@ -116,6 +116,7 @@ To enable ProGuard, follow the [official instructions](https://developer.android
 
 * Open your app module's ProGuard configuration (`proguard-rules.pro` in your app's module in Android Studio)
 * Add the following lines at the end of your existing configuration
+* Use `tvo.webrtc...` instead of `org.webrtc...` when using Voice Android 3.2+
 
 ```
 -keep class com.twilio.** { *; }
