@@ -207,6 +207,7 @@ public class VoiceActivity extends AppCompatActivity {
         telecomManager.registerPhoneAccount(phoneAccount);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
@@ -396,6 +397,7 @@ public class VoiceActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private void handleIncomingCallIntent(Intent intent) {
         if (intent != null && intent.getAction() != null) {
             String action = intent.getAction();
@@ -426,8 +428,7 @@ public class VoiceActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void handleIncomingCall() {
-
-        /*
+        Log.d(TAG, "incoming");
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             showIncomingCallDialog();
         } else {
@@ -436,27 +437,14 @@ public class VoiceActivity extends AppCompatActivity {
             }
         }
 
-         */
-
-        Log.d(TAG, "incoming");
-        /*Uri uri = Uri.fromParts(PhoneAccount.SCHEME_TEL, activeCallInvite.getFrom(), null);
-        Bundle callInfoBundle = new Bundle();
-        callInfoBundle.putString(CALLER, activeCallInvite.getFrom());
-        Bundle callInfo = new Bundle();
-        callInfo.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, callInfoBundle);
-        callInfo.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, uri);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        telecomManager.addNewIncomingCall(handle, callInfo);
-
-         */
-
+        /*q
         Bundle extras = new Bundle();
         Uri uri = Uri.fromParts(PhoneAccount.SCHEME_TEL, activeCallInvite.getFrom(), null);
         extras.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, uri);
         extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, handle);
         telecomManager.addNewIncomingCall(handle, extras);
+
+         */
     }
 
     private void handleCancel() {
@@ -603,7 +591,7 @@ public class VoiceActivity extends AppCompatActivity {
         alertDialogBuilder.setTitle("Incoming Call");
         alertDialogBuilder.setPositiveButton("Accept", answerCallClickListener);
         alertDialogBuilder.setNegativeButton("Reject", cancelClickListener);
-        alertDialogBuilder.setMessage(callInvite.getFrom() + " is calling.");
+        alertDialogBuilder.setMessage(callInvite.getFrom() + " is calling with " + callInvite.getCallerInfo().isVerified() + " status");
         return alertDialogBuilder.create();
     }
 
@@ -637,6 +625,8 @@ public class VoiceActivity extends AppCompatActivity {
 
     private View.OnClickListener holdActionFabClickListener() {
         return v -> hold();
+        // Tried explicitly requesting audio focus and it did not make a difference
+        //return v -> requestAudioFocus();
     }
 
     private View.OnClickListener muteActionFabClickListener() {
@@ -668,9 +658,16 @@ public class VoiceActivity extends AppCompatActivity {
 
     private void hold() {
         if (activeCall != null) {
-            boolean hold = !activeCall.isOnHold();
-            activeCall.hold(hold);
-            applyFabState(holdActionFab, hold);
+           boolean hold = !activeCall.isOnHold();
+           activeCall.hold(hold);
+           applyFabState(holdActionFab, hold);
+
+        }
+    }
+
+    private void requestAudioFocus() {
+        if (activeCall != null) {
+            audioDeviceSelector.activate();
         }
     }
 
@@ -850,9 +847,7 @@ public class VoiceActivity extends AppCompatActivity {
      * Get an access token from your Twilio access token server
      */
     private void retrieveAccessToken() {
-        VoiceActivity.this.accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJpc3MiOiJTS2QwMjkwNWY0OTNiMzNiNTBmZDNlMzJmYmRmNDMyMTIxIiwiZ3JhbnRzIjp7InZvaWNlIjp7Im91dGdvaW5nIjp7ImFwcGxpY2F0aW9uX3NpZCI6IkFQZTc1ODg5Yzk3YjNhZjBmMzM4NjlhOGM1N2Q4ZDg0MjUifSwicHVzaF9jcmVkZW50aWFsX3NpZCI6IkNSZmM4NzE1NmY5YjJiNDBjN2M3ODY2NjA5Y2I4Zjk3MzQifSwiaWRlbnRpdHkiOiJrdW1rdW0ifSwic3ViIjoiQUM5NmNjYzkwNDc1M2IzMzY0ZjI0MjExZThkOTc0NmE5MyIsImV4cCI6MTU5NDMyOTA2NywibmJmIjoxNTk0MjQyNjY3fQ.kLbc8i7-0vCHzTJEaBKn-eQLp3wdScLd2Rh3HhOHwFU";
-        registerForCallInvites();
-        /*
+
         Ion.with(this).load(TWILIO_ACCESS_TOKEN_SERVER_URL + "?identity=" + identity)
                 .asString()
                 .setCallback((e, accessToken) -> {
@@ -866,7 +861,5 @@ public class VoiceActivity extends AppCompatActivity {
                                 Snackbar.LENGTH_LONG).show();
                     }
                 });
-
-         */
     }
 }

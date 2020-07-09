@@ -1,45 +1,33 @@
+// Follow the steps in https://developers.google.com/mobile/add to generate your own google-services.json file.
 {
   "project_info": {
-    "project_number": "340181789233",
-    "firebase_url": "https://voice-quickstart-android-9c7ba.firebaseio.com",
-    "project_id": "voice-quickstart-android-9c7ba",
-    "storage_bucket": "voice-quickstart-android-9c7ba.appspot.com"
+    "project_number": "your_project_number",
+    "project_id": "your_project_id"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:340181789233:android:8fe5528108fa08f4",
+        "mobilesdk_app_id": "your_mobilesdk_app_id",
         "android_client_info": {
           "package_name": "com.twilio.voice.quickstart"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "340181789233-831u5382geta254ccvh22j5vtntkl839.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.twilio.voice.quickstart",
-            "certificate_hash": "50f422d3d566a95367e6d5ba46cc946b75cf9d3f"
-          }
-        },
-        {
-          "client_id": "340181789233-130f2b7nivsdbm7c56jt3ira6ibbpetb.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCbhGnYAlPRf-SFUL-G-6AZEdxJJOEFSB0"
+          "current_key": "your_current_key"
         }
       ],
       "services": {
+        "analytics_service": {
+          "status": 1
+        },
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "340181789233-130f2b7nivsdbm7c56jt3ira6ibbpetb.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
         }
       }
     }
