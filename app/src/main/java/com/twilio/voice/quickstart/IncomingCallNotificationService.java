@@ -45,6 +45,8 @@ public class IncomingCallNotificationService extends Service {
                 case Constants.ACTION_CANCEL_CALL:
                     handleCancelledCall(intent);
                     break;
+                case VoiceActivity.ACTION_OUTGOING_CALL:
+                    handleOutgoingCall(intent);
                 default:
                     break;
             }
@@ -180,6 +182,11 @@ public class IncomingCallNotificationService extends Service {
         }
         sendCallInviteToActivity(callInvite, notificationId);
     }
+
+    private void handleOutgoingCall(Intent intent) {
+
+    }
+
 
     private void endForeground() {
         stopForeground(true);

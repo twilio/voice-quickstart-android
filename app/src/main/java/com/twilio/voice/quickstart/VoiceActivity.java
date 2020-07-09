@@ -1,10 +1,12 @@
 package com.twilio.voice.quickstart;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -26,7 +28,10 @@ import android.view.WindowManager;
 import android.widget.Chronometer;
 import android.widget.EditText;
 
+import android.net.Uri;
+
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.app.ActivityCompat;
@@ -48,6 +53,10 @@ import com.twilio.voice.ConnectOptions;
 import com.twilio.voice.RegistrationException;
 import com.twilio.voice.RegistrationListener;
 import com.twilio.voice.Voice;
+
+import android.telecom.PhoneAccount;
+import android.telecom.PhoneAccountHandle;
+import android.telecom.TelecomManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -72,7 +81,19 @@ public class VoiceActivity extends AppCompatActivity {
      */
     private static final String TWILIO_ACCESS_TOKEN_SERVER_URL = "TWILIO_ACCESS_TOKEN_SERVER_URL";
 
+    public static final String OUTGOING_CALL_ADDRESS = "OUTGOING_CALL_ADDRESS";
+    public static final String ACTION_OUTGOING_CALL = "ACTION_OUTGOING_CALL";
+    public static final String ACTION_DISCONNECT_CALL = "ACTION_DISCONNECT_CALL";
+    public static final String ACTION_DTMF_SEND = "ACTION_DTMF_SEND";
+    public static final String DTMF = "DTMF";
+    public static final String CALLEE = "to";
+    public static final String CALLER = "from";
+
     private static final int MIC_PERMISSION_REQUEST_CODE = 1;
+    private static final int CALL_PHONE_CODE = 2;
+    private static final int SNACKBAR_DURATION = 4000;
+    int PERMISSION_ALL = 1;
+    String[] PERMISSIONS = {Manifest.permission.RECORD_AUDIO, Manifest.permission.CALL_PHONE};
 
     private String accessToken;
 
@@ -85,6 +106,10 @@ public class VoiceActivity extends AppCompatActivity {
 
     private boolean isReceiverRegistered = false;
     private VoiceBroadcastReceiver voiceBroadcastReceiver;
+
+    private TelecomManager telecomManager;
+    private PhoneAccountHandle handle;
+    private PhoneAccount phoneAccount;
 
     // Empty HashMap, never populated for the Quickstart
     HashMap<String, String> params = new HashMap<>();
@@ -105,6 +130,7 @@ public class VoiceActivity extends AppCompatActivity {
     RegistrationListener registrationListener = registrationListener();
     Call.Listener callListener = callListener();
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -132,6 +158,11 @@ public class VoiceActivity extends AppCompatActivity {
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         /*
+         * Setup a phone Account
+         */
+        setupPhoneAccount();
+
+        /*
          * Setup the broadcast receiver to be notified of FCM Token updates
          * or incoming call invite in this Activity.
          */
@@ -156,13 +187,24 @@ public class VoiceActivity extends AppCompatActivity {
         handleIncomingCallIntent(getIntent());
 
         /*
-         * Ensure the microphone permission is enabled
+         * Ensure the microphone and CALL_PHONE permissions are enabled
          */
-        if (!checkPermissionForMicrophone()) {
-            requestPermissionForMicrophone();
+        if (!hasPermissions(this, PERMISSIONS)) {
+            ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
         } else {
             retrieveAccessToken();
         }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    void setupPhoneAccount() {
+        String appName = this.getString(R.string.connection_service_name);
+        handle = new PhoneAccountHandle(new ComponentName(this.getApplicationContext(), VoiceConnectionService.class), appName);
+        telecomManager = (TelecomManager) this.getApplicationContext().getSystemService(this.getApplicationContext().TELECOM_SERVICE);
+        phoneAccount = new PhoneAccount.Builder(handle, appName)
+                .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER)
+                .build();
+        telecomManager.registerPhoneAccount(phoneAccount);
     }
 
     @Override
@@ -340,7 +382,7 @@ public class VoiceActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        unregisterReceiver();
+        //unregisterReceiver();
     }
 
     @Override
@@ -382,7 +424,10 @@ public class VoiceActivity extends AppCompatActivity {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private void handleIncomingCall() {
+
+        /*
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             showIncomingCallDialog();
         } else {
@@ -390,6 +435,28 @@ public class VoiceActivity extends AppCompatActivity {
                 showIncomingCallDialog();
             }
         }
+
+         */
+
+        Log.d(TAG, "incoming");
+        /*Uri uri = Uri.fromParts(PhoneAccount.SCHEME_TEL, activeCallInvite.getFrom(), null);
+        Bundle callInfoBundle = new Bundle();
+        callInfoBundle.putString(CALLER, activeCallInvite.getFrom());
+        Bundle callInfo = new Bundle();
+        callInfo.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, callInfoBundle);
+        callInfo.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, uri);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        telecomManager.addNewIncomingCall(handle, callInfo);
+
+         */
+
+        Bundle extras = new Bundle();
+        Uri uri = Uri.fromParts(PhoneAccount.SCHEME_TEL, activeCallInvite.getFrom(), null);
+        extras.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, uri);
+        extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, handle);
+        telecomManager.addNewIncomingCall(handle, extras);
     }
 
     private void handleCancel() {
@@ -402,6 +469,9 @@ public class VoiceActivity extends AppCompatActivity {
     private void registerReceiver() {
         if (!isReceiverRegistered) {
             IntentFilter intentFilter = new IntentFilter();
+            intentFilter.addAction(ACTION_OUTGOING_CALL);
+            intentFilter.addAction(ACTION_DISCONNECT_CALL);
+            intentFilter.addAction(ACTION_DTMF_SEND);
             intentFilter.addAction(Constants.ACTION_INCOMING_CALL);
             intentFilter.addAction(Constants.ACTION_CANCEL_CALL);
             intentFilter.addAction(Constants.ACTION_FCM_TOKEN);
@@ -423,13 +493,57 @@ public class VoiceActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if (action != null && (action.equals(Constants.ACTION_INCOMING_CALL) || action.equals(Constants.ACTION_CANCEL_CALL))) {
-                /*
-                 * Handle the incoming or cancelled call invite
-                 */
-                handleIncomingCallIntent(intent);
+            if (action.equals(ACTION_OUTGOING_CALL)) {
+                handleCallRequest(intent);
+            } else if (action.equals(ACTION_DISCONNECT_CALL)) {
+                if (activeCall != null) {
+                    activeCall.disconnect();
+                }
+            } else if (action.equals(ACTION_DTMF_SEND)) {
+                if (activeCall != null) {
+                    String digits = intent.getStringExtra(DTMF);
+                    activeCall.sendDigits(digits);
+                }
             }
         }
+    }
+
+    private void handleCallRequest(Intent intent) {
+        if (intent != null && intent.getAction() != null) {
+                String contact = intent.getStringExtra(VoiceActivity.OUTGOING_CALL_ADDRESS);
+                String[] contactparts = contact.split(":");
+                if (contactparts.length > 1) {
+                    params.put("To", contactparts[1]);
+                    params.put("PhoneNumber", contactparts[1]);
+                } else {
+                    params.put("To", contactparts[0]);
+                    params.put("PhoneNumber", contactparts[0]);
+                }
+                params.put("Type", "client");
+                params.put("From", "client:kumkum");
+                params.put("Mode", "Voice");
+
+                ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
+                    .params(params)
+                    .build();
+                activeCall = Voice.connect(VoiceActivity.this, connectOptions, callListener);
+            }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void makeCall(String to) {
+        Log.d(TAG, "makeCall");
+        Uri uri = Uri.fromParts(PhoneAccount.SCHEME_TEL, to, null);
+        Bundle callInfoBundle = new Bundle();
+        callInfoBundle.putString(CALLEE, to);
+        Bundle callInfo = new Bundle();
+        callInfo.putParcelable(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, callInfoBundle);
+        callInfo.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, handle);
+        callInfo.putBoolean(TelecomManager.EXTRA_START_CALL_WITH_VIDEO_STATE, true);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        telecomManager.placeCall(uri, callInfo);
     }
 
     private DialogInterface.OnClickListener answerCallClickListener() {
@@ -444,16 +558,22 @@ public class VoiceActivity extends AppCompatActivity {
         };
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private DialogInterface.OnClickListener callClickListener() {
         return (dialog, which) -> {
             // Place a call
-            EditText contact = ((AlertDialog) dialog).findViewById(R.id.contact);
-            params.put("to", contact.getText().toString());
-            ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
+            //EditText contact = ((AlertDialog) dialog).findViewById(R.id.contact);
+            //params.put("to", contact.getText().toString());
+            /*ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
                     .params(params)
                     .build();
             activeCall = Voice.connect(VoiceActivity.this, connectOptions, callListener);
-            setCallUI();
+            setCallUI();*/
+            // Place a call
+            EditText contact = (EditText) ((AlertDialog) dialog).findViewById(R.id.contact);
+            params.put("to", contact.getText().toString());
+            // Initiate the dialer
+            makeCall(contact.getText().toString());
             alertDialog.dismiss();
         };
     }
@@ -498,6 +618,7 @@ public class VoiceActivity extends AppCompatActivity {
         });
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private View.OnClickListener callActionFabClickListener() {
         return v -> {
             alertDialog = createCallDialog(callClickListener(), cancelCallClickListener(), VoiceActivity.this);
@@ -571,24 +692,18 @@ public class VoiceActivity extends AppCompatActivity {
         button.setBackgroundTintList(colorStateList);
     }
 
-    private boolean checkPermissionForMicrophone() {
-        int resultMic = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO);
-        return resultMic == PackageManager.PERMISSION_GRANTED;
-    }
-
-    private void requestPermissionForMicrophone() {
-        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
-            Snackbar.make(coordinatorLayout,
-                    "Microphone permissions needed. Please allow in your application settings.",
-                    Snackbar.LENGTH_LONG).show();
-        } else {
-            ActivityCompat.requestPermissions(
-                    this,
-                    new String[]{Manifest.permission.RECORD_AUDIO},
-                    MIC_PERMISSION_REQUEST_CODE);
+    public static boolean hasPermissions(Context context, String... permissions) {
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context != null && permissions != null) {
+            for (String permission : permissions) {
+                if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+                    return false;
+                }
+            }
         }
+        return true;
     }
 
+    @SuppressLint("WrongConstant")
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         /*
@@ -598,10 +713,18 @@ public class VoiceActivity extends AppCompatActivity {
             if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                 Snackbar.make(coordinatorLayout,
                         "Microphone permissions needed. Please allow in your application settings.",
-                        Snackbar.LENGTH_LONG).show();
-            } else {
-                retrieveAccessToken();
+                        SNACKBAR_DURATION).show();
             }
+        } else if (requestCode == CALL_PHONE_CODE && permissions.length > 0) {
+            if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                Snackbar.make(coordinatorLayout,
+                        "CALL_PHONE permissions needed. Please allow in your application settings.",
+                        SNACKBAR_DURATION).show();
+            }
+        }
+
+        if (hasPermissions(this, PERMISSIONS)) {
+            retrieveAccessToken();
         }
     }
 
@@ -727,6 +850,9 @@ public class VoiceActivity extends AppCompatActivity {
      * Get an access token from your Twilio access token server
      */
     private void retrieveAccessToken() {
+        VoiceActivity.this.accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJpc3MiOiJTS2QwMjkwNWY0OTNiMzNiNTBmZDNlMzJmYmRmNDMyMTIxIiwiZ3JhbnRzIjp7InZvaWNlIjp7Im91dGdvaW5nIjp7ImFwcGxpY2F0aW9uX3NpZCI6IkFQZTc1ODg5Yzk3YjNhZjBmMzM4NjlhOGM1N2Q4ZDg0MjUifSwicHVzaF9jcmVkZW50aWFsX3NpZCI6IkNSZmM4NzE1NmY5YjJiNDBjN2M3ODY2NjA5Y2I4Zjk3MzQifSwiaWRlbnRpdHkiOiJrdW1rdW0ifSwic3ViIjoiQUM5NmNjYzkwNDc1M2IzMzY0ZjI0MjExZThkOTc0NmE5MyIsImV4cCI6MTU5NDMyOTA2NywibmJmIjoxNTk0MjQyNjY3fQ.kLbc8i7-0vCHzTJEaBKn-eQLp3wdScLd2Rh3HhOHwFU";
+        registerForCallInvites();
+        /*
         Ion.with(this).load(TWILIO_ACCESS_TOKEN_SERVER_URL + "?identity=" + identity)
                 .asString()
                 .setCallback((e, accessToken) -> {
@@ -740,5 +866,7 @@ public class VoiceActivity extends AppCompatActivity {
                                 Snackbar.LENGTH_LONG).show();
                     }
                 });
+
+         */
     }
 }
