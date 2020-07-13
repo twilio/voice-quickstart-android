@@ -51,6 +51,7 @@ import com.twilio.voice.Voice;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.List;
 import java.util.Locale;
@@ -290,10 +291,16 @@ public class VoiceActivity extends AppCompatActivity {
              * Newly cleared warnings = previousWarnings - intersection = { C }
              */
             public void onCallQualityWarningsChanged(@NonNull Call call,
-                                              @NonNull Set<Call.CallQualityWarning> currentWarnings,
-                                              @NonNull Set<Call.CallQualityWarning> previousWarnings) {
-                currentWarnings.retainAll(previousWarnings);
-                previousWarnings.removeAll(currentWarnings);
+                                                     @NonNull Set<Call.CallQualityWarning> currentWarnings,
+                                                     @NonNull Set<Call.CallQualityWarning> previousWarnings) {
+
+                if (previousWarnings.size() > 1) {
+                    Set<Call.CallQualityWarning> intersection = new HashSet<>(currentWarnings);
+                    currentWarnings.removeAll(previousWarnings);
+                    intersection.retainAll(previousWarnings);
+                    previousWarnings.removeAll(intersection);
+                }
+
                 String message = String.format(
                         Locale.US,
                         "Newly raised warnings: " + currentWarnings + " Clear warnings " + previousWarnings);
