@@ -1,9 +1,13 @@
 package com.twilio.voice.quickstart;
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -25,11 +29,14 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Chronometer;
 import android.widget.EditText;
+import android.graphics.Color;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ProcessLifecycleOwner;
@@ -106,6 +113,7 @@ public class VoiceActivity extends AppCompatActivity {
     RegistrationListener registrationListener = registrationListener();
     Call.Listener callListener = callListener();
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -164,6 +172,8 @@ public class VoiceActivity extends AppCompatActivity {
         } else {
             retrieveAccessToken();
         }
+
+        createNotification();
     }
 
     @Override
@@ -734,6 +744,7 @@ public class VoiceActivity extends AppCompatActivity {
      * Get an access token from your Twilio access token server
      */
     private void retrieveAccessToken() {
+
         Ion.with(this).load(TWILIO_ACCESS_TOKEN_SERVER_URL + "?identity=" + identity)
                 .asString()
                 .setCallback((e, accessToken) -> {
@@ -747,5 +758,37 @@ public class VoiceActivity extends AppCompatActivity {
                                 Snackbar.LENGTH_LONG).show();
                     }
                 });
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    void createNotification() {
+        NotificationChannel callInviteChannel = new NotificationChannel("default",
+                "Primary Voice QS Channel", NotificationManager.IMPORTANCE_HIGH);
+        callInviteChannel.setLightColor(Color.GREEN);
+        callInviteChannel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+        notificationManager.createNotificationChannel(callInviteChannel);
+
+        for (int i= 0 ; i < 20 ; i++){
+            Notification notification =
+                    buildNotification("Notification# " + i + " from xyz.");
+            final int notificationId = (int) System.currentTimeMillis();
+            notificationManager.notify(notificationId, notification);
+        }
+    }
+
+    /**
+     * Build a notification.
+     *
+     * @param text          the text of the notification
+     * @return the builder
+     */
+    @TargetApi(Build.VERSION_CODES.O)
+    public Notification buildNotification(String text) {
+        return new Notification.Builder(getApplicationContext(), "default")
+                .setSmallIcon(R.drawable.ic_call_end_white_24dp)
+                .setContentTitle(getString(R.string.app_name))
+                .setContentText(text)
+                .setAutoCancel(true)
+                .build();
     }
 }
