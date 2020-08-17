@@ -39,8 +39,8 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.koushikdutta.ion.Ion;
-import com.twilio.audioswitch.selection.AudioDevice;
-import com.twilio.audioswitch.selection.AudioDeviceSelector;
+import com.twilio.audioswitch.AudioDevice;
+import com.twilio.audioswitch.AudioSwitch;
 import com.twilio.voice.Call;
 import com.twilio.voice.CallException;
 import com.twilio.voice.CallInvite;
@@ -80,7 +80,7 @@ public class VoiceActivity extends AppCompatActivity {
     /*
      * Audio device management
      */
-    private AudioDeviceSelector audioDeviceSelector;
+    private AudioSwitch audioSwitch;
     private int savedVolumeControlStream;
     private MenuItem audioDeviceMenuItem;
 
@@ -142,7 +142,7 @@ public class VoiceActivity extends AppCompatActivity {
         /*
          * Setup audio device management and set the volume control stream
          */
-        audioDeviceSelector = new AudioDeviceSelector(getApplicationContext());
+        audioSwitch = new AudioSwitch(getApplicationContext());
         savedVolumeControlStream = getVolumeControlStream();
         setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
 
@@ -226,7 +226,7 @@ public class VoiceActivity extends AppCompatActivity {
 
             @Override
             public void onConnectFailure(@NonNull Call call, @NonNull CallException error) {
-                audioDeviceSelector.deactivate();
+                audioSwitch.deactivate();
                 if (BuildConfig.playCustomRingback) {
                     SoundPoolManager.getInstance(VoiceActivity.this).stopRinging();
                 }
@@ -243,7 +243,7 @@ public class VoiceActivity extends AppCompatActivity {
 
             @Override
             public void onConnected(@NonNull Call call) {
-                audioDeviceSelector.activate();
+                audioSwitch.activate();
                 if (BuildConfig.playCustomRingback) {
                     SoundPoolManager.getInstance(VoiceActivity.this).stopRinging();
                 }
@@ -263,7 +263,7 @@ public class VoiceActivity extends AppCompatActivity {
 
             @Override
             public void onDisconnected(@NonNull Call call, CallException error) {
-                audioDeviceSelector.deactivate();
+                audioSwitch.deactivate();
                 if (BuildConfig.playCustomRingback) {
                     SoundPoolManager.getInstance(VoiceActivity.this).stopRinging();
                 }
@@ -355,7 +355,7 @@ public class VoiceActivity extends AppCompatActivity {
         /*
          * Tear down audio device management and restore previous volume stream
          */
-        audioDeviceSelector.stop();
+        audioSwitch.stop();
         setVolumeControlStream(savedVolumeControlStream);
         SoundPoolManager.getInstance(this).release();
         super.onDestroy();
@@ -622,7 +622,7 @@ public class VoiceActivity extends AppCompatActivity {
          * Start the audio device selector after the menu is created and update the icon when the
          * selected audio device changes.
          */
-        audioDeviceSelector.start((audioDevices, audioDevice) -> {
+        audioSwitch.start((audioDevices, audioDevice) -> {
             updateAudioDeviceIcon(audioDevice);
             return Unit.INSTANCE;
         });
@@ -643,8 +643,8 @@ public class VoiceActivity extends AppCompatActivity {
      * Show the current available audio devices.
      */
     private void showAudioDevices() {
-        AudioDevice selectedDevice = audioDeviceSelector.getSelectedAudioDevice();
-        List<AudioDevice> availableAudioDevices = audioDeviceSelector.getAvailableAudioDevices();
+        AudioDevice selectedDevice = audioSwitch.getSelectedAudioDevice();
+        List<AudioDevice> availableAudioDevices = audioSwitch.getAvailableAudioDevices();
 
         if (selectedDevice != null) {
             int selectedDeviceIndex = availableAudioDevices.indexOf(selectedDevice);
@@ -663,7 +663,7 @@ public class VoiceActivity extends AppCompatActivity {
                                 dialog.dismiss();
                                 AudioDevice selectedAudioDevice = availableAudioDevices.get(index);
                                 updateAudioDeviceIcon(selectedAudioDevice);
-                                audioDeviceSelector.selectDevice(selectedAudioDevice);
+                                audioSwitch.selectDevice(selectedAudioDevice);
                             }).create().show();
         }
     }
