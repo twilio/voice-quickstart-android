@@ -133,7 +133,7 @@ public class FileAndMicAudioDevice implements AudioDevice {
             AudioDevice.audioDeviceReadRenderData(renderingAudioDeviceContext, readByteBuffer);
 
             int bytesWritten = 0;
-            if (WebRtcAudioUtils.runningOnLollipopOrHigher()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 bytesWritten = writeOnLollipop(audioTrack, readByteBuffer, readByteBuffer.capacity());
             } else {
                 bytesWritten = writePreLollipop(audioTrack, readByteBuffer, readByteBuffer.capacity());
