@@ -21,17 +21,17 @@ ext.playCustomRingback = {
 }
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion versions.compileSdk
 
     compileOptions {
-        sourceCompatibility 1.8
-        targetCompatibility 1.8
+        sourceCompatibility versions.java
+        targetCompatibility versions.java
     }
 
     defaultConfig {
         applicationId "com.twilio.voice.quickstart"
-        minSdkVersion 16
-        targetSdkVersion 30
+        minSdkVersion versions.minSdk
+        targetSdkVersion versions.targetSdk
         versionCode 1
         versionName "1.0"
     }
@@ -67,19 +67,17 @@ android {
 }
 
 dependencies {
-    testImplementation 'junit:junit:4.12'
-
-    implementation 'com.twilio:audioswitch:1.0.0'
-    implementation 'com.twilio:voice-android:5.5.0'
-    implementation 'com.android.support:design:30.0.0'
-    implementation 'com.android.support:support-media-compat:30.0.0'
-    implementation 'com.android.support:animated-vector-drawable:30.0.0'
-    implementation 'com.android.support:support-v4:30.0.0'
-    implementation 'com.squareup.retrofit:retrofit:1.9.0'
-    implementation 'com.koushikdutta.ion:ion:2.1.8'
-    implementation 'com.google.firebase:firebase-messaging:17.6.0'
-    implementation 'androidx.lifecycle:lifecycle-extensions:2.1.0'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    implementation "com.twilio:audioswitch:${versions.audioSwitch}"
+    implementation "com.twilio:voice-android:${versions.voiceAndroid}"
+    implementation "com.android.support:design:${versions.supportLibrary}"
+    implementation "com.android.support:support-media-compat:${versions.supportLibrary}"
+    implementation "com.android.support:animated-vector-drawable:${versions.supportLibrary}"
+    implementation "com.android.support:appcompat-v7:${versions.supportLibrary}"
+    implementation "com.squareup.retrofit2:retrofit:${versions.retrofit}"
+    implementation "com.koushikdutta.ion:ion:${versions.ion}"
+    implementation "com.google.firebase:firebase-messaging:${versions.firebase}"
+    implementation "androidx.lifecycle:lifecycle-extensions:${versions.androidxLifecycle}"
+    androidTestImplementation "androidx.test.ext:junit:${versions.junit}"
 }
 
 apply plugin: 'com.google.gms.google-services'
