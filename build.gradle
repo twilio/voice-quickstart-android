@@ -16,7 +16,7 @@ buildscript {
             'okhttp'             : '3.6.0',
             'ion'                : '2.1.8',
             'voiceAndroid'       : '5.6.0',
-            'audioSwitch'        : '1.0.1',
+            'audioSwitch'        : '1.1.0',
             'androidxLifecycle'  : '2.2.0',
             'junit'              : '1.1.1'
     ]
