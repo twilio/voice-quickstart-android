@@ -71,7 +71,7 @@ public class VoiceActivity extends AppCompatActivity {
      *
      * For example : https://myurl.io/accessToken.php
      */
-    private static final String TWILIO_ACCESS_TOKEN_SERVER_URL = "TWILIO_ACCESS_TOKEN_SERVER_URL";
+    private static final String TWILIO_ACCESS_TOKEN_SERVER_URL = "TODO Add JS Quickstart Token Vending URL here";
 
     private static final int MIC_PERMISSION_REQUEST_CODE = 1;
 
@@ -734,12 +734,14 @@ public class VoiceActivity extends AppCompatActivity {
      * Get an access token from your Twilio access token server
      */
     private void retrieveAccessToken() {
-        Ion.with(this).load(TWILIO_ACCESS_TOKEN_SERVER_URL + "?identity=" + identity)
-                .asString()
-                .setCallback((e, accessToken) -> {
+        Ion.with(this).load(TWILIO_ACCESS_TOKEN_SERVER_URL)
+                .as(TokenResponse.class)
+                .setCallback((e, tokenResponse) -> {
                     if (e == null) {
-                        Log.d(TAG, "Access token: " + accessToken);
-                        VoiceActivity.this.accessToken = accessToken;
+//                        Log.d(TAG, "Access token: " + tokenResponse);
+//                        VoiceActivity.this.tokenResponse = tokenResponse;
+                        Log.d(TAG, "Access token response: " + tokenResponse);
+                        VoiceActivity.this.accessToken = tokenResponse.token;
                         registerForCallInvites();
                     } else {
                         Snackbar.make(coordinatorLayout,
@@ -747,5 +749,23 @@ public class VoiceActivity extends AppCompatActivity {
                                 Snackbar.LENGTH_LONG).show();
                     }
                 });
+    }
+
+    class TokenResponse {
+        String identity;
+        String token;
+
+        public TokenResponse(String identity, String token) {
+            this.identity = identity;
+            this.token = token;
+        }
+
+        @Override
+        public String toString() {
+            return "TokenResponse{" +
+                    "identity='" + identity + '\'' +
+                    ", token='" + token + '\'' +
+                    '}';
+        }
     }
 }
