@@ -24,8 +24,8 @@ Get started with Voice on Android:
 
 To get started with the Quickstart application follow these steps. Steps 1-6 will allow you to make a call. The remaining steps 7-8 will enable push notifications using FCM.
 
-1. [Generate google-services.json](#bullet2)
-2. [Open this project in Android Studio](#bullet1)
+1. [Generate google-services.json](#bullet1)
+2. [Open this project in Android Studio](#bullet2)
 3. [Create a Voice API key](#bullet3)
 4. [Configure a server to generate an access token to use in the app](#bullet4)
 5. [Create a TwiML application](#bullet5)
