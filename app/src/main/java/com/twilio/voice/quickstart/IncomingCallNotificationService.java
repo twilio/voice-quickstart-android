@@ -124,7 +124,6 @@ public class IncomingCallNotificationService extends Service {
                         .setContentTitle(getString(R.string.app_name))
                         .setContentText(text)
                         .setCategory(Notification.CATEGORY_CALL)
-                        .setFullScreenIntent(pendingIntent, true)
                         .setExtras(extras)
                         .setAutoCancel(true)
                         .addAction(android.R.drawable.ic_menu_delete, getString(R.string.decline), piRejectIntent)
