@@ -4,7 +4,7 @@ buildscript {
 
     ext.versions = [
             'java'               : JavaVersion.VERSION_1_8,
-            'androidGradlePlugin': '4.0.1',
+            'androidGradlePlugin': '4.1.1',
             'googleServices'     : '4.2.0',
             'compileSdk'         : 30,
             'buildTools'         : '28.0.3',
@@ -15,7 +15,7 @@ buildscript {
             'retrofit'           : '2.0.0-beta4',
             'okhttp'             : '3.6.0',
             'ion'                : '2.1.8',
-            'voiceAndroid'       : '5.6.0',
+            'voiceAndroid'       : '5.6.1',
             'audioSwitch'        : '1.1.0',
             'androidxLifecycle'  : '2.2.0',
             'junit'              : '1.1.1'
