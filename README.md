@@ -1,28 +1,32 @@
-> NOTE: This sample application uses the Programmable Voice Android 5.x APIs. If you are using prior versions of the SDK, we highly recommend planning your migration to 5.0 as soon as possible.
-
 # Twilio Voice Quickstart for Android
 
-Get started with Voice on Android:
+> NOTE: This sample application uses the Programmable Voice Android 5.x APIs. If you are using prior versions of the SDK, we highly recommend planning your migration to 5.0 as soon as possible.
+
+## Get started with Voice on Android
 
 - [Quickstart](#quickstart) - Run the quickstart app
 - [Examples](#examples) - Customize your voice experience with these examples
+
+## Voice Android SDK Versions
 - [Migration Guide 4.x to 5.x](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/migration-guide-4.x-5.x.md) - Migrating from 4.x to 5.x
 - [New Features 4.0](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/new-features-4.0.md) - New features in 4.0
 - [Migration Guide 3.x to 4.x](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/migration-guide-3.x-4.x.md) - Migrating from 3.x to 4.x
 - [New Features 3.0](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/new-features-3.0.md) - New features in 3.0
 - [Migration Guide 2.x to 3.x](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/migration-guide-2.x-3.x.md) - Migrating from 2.x to 3.x
-- [Emulator Support](#emulator-support) - Android emulator support
-- [Reducing APK Size](#reducing-apk-size) - Use ABI splits to reduce APK size
-- [Access Tokens](#access-tokens) - Using access tokens
-- [Managing Push Credentials](#managing-push-credentials) - Managing Push Credentials
-- [Troubleshooting Audio](#troubleshooting-audio) - Troubleshooting Audio
+
+## References
+- [Access Tokens](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/access-token.md) - Using access tokens
+- [Managing Push Credentials](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/manage-push-credentials.md) - Managing Push Credentials
+- [Troubleshooting Audio](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/troubleshooting-audio.md) - Troubleshooting Audio
 - [More Documentation](#more-documentation) - More documentation related to the Voice Android SDK
+- [Emulator Support](#emulator-support) - Android emulator support
+- [Reducing APK Size](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/reducing-apk-size.md) - Use ABI splits to reduce APK size
 - [Twilio Helper Libraries](#twilio-helper-libraries) - TwiML quickstarts.
 - [Issues & Support](#issues-and-support) - Filing issues and general support
 
 ## Quickstart
 
-To get started with the Quickstart application follow these steps. Steps 1-6 will allow you to make a call. The remaining steps 7-8 will enable push notifications using FCM.
+To get started with the Quickstart application follow these steps. Steps 1-6 will allow you to make a call. The remaining steps 7-9 will enable push notifications using FCM.
 
 1. [Generate google-services.json](#bullet1)
 2. [Open this project in Android Studio](#bullet2)
@@ -184,197 +188,6 @@ Enter a PSTN number and press the call button to place a call.
 In addition to the quickstart we've also added an example that shows how to create and customize media experience in your app:
 
 - [Custom Audio Device](exampleCustomAudioDevice) - Demonstrates how to use Twilio's Programmable Voice SDK with audio playback and recording functionality provided by a custom `AudioDevice`. 
-
-## Emulator Support
-
-The SDK supports using emulators except in the following known cases:
-
-1. Emulators with API 22 or lower have bad audio emulation, the sound is generally inaudible
-2. Emulators must have Google Play services support to use FCM to receive call invites
-3. Running on x86 API 25 emulators results in application crashes
-
-In general we advise using a real device when doing development with our SDK since real-time audio is a performance oriented operation.
-
-## Reducing APK Size
-
-Our library is built using native libraries. As a result, if you use the default gradle build you will generate an APK with all four architectures(armeabi-v7a, arm64-v8a, x86, x86_64) in your APK.
-
-[APK splits](https://developer.android.com/studio/build/configure-apk-splits.html) allow developers to build multiple APKs for different screen sizes and ABIs. Enabling APK splits ensures that the minimum amount of files required to support a particular device are packaged into an APK.
-
-The following snippet shows an example `build.gradle` with APK splits enabled.
-
-    apply plugin: 'com.android.application'
-
-    android {
-        // Specify that we want to split up the APK based on ABI
-        splits {
-            abi {
-                // Enable ABI split
-                enable true
-
-                // Clear list of ABIs
-                reset()
-
-                // Specify each architecture currently supported by the Voice SDK
-                include "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
-
-                // Specify that we do not want an additional universal SDK
-                universalApk false
-            }
-        }
-    }
-
-The adoption of APK splits requires developers to submit multiple APKs to the Play Store. Refer to [Google’s documentation](https://developer.android.com/google/play/publishing/multiple-apks.html)  for how to support this in your application.
-
-## Access Tokens
-
-The access token generated by your server component is a [jwt](https://jwt.io) that contains a `grant` for Programmable Voice, an `identity` that you specify, and a `time-to-live` that sets the lifetime of the generated access token. The default `time-to-live` is 1 hour and is configurable up to 24 hours using the Twilio helper libraries.
-
-### Uses
-
-In the Android SDK the access token is used for the following:
-
-1. To make an outgoing call via `Voice.call(Context context, String accessToken, String twiMLParams, Call.Listener listener)`
-2. To register or unregister for incoming notifications via GCM or FCM via `Voice.register(String accessToken, Voice.RegistrationChannel registrationChannel, String registrationToken, RegistrationListener listener)` and `Voice.unregister(String accessToken, Voice.RegistrationChannel registrationChannel, String registrationToken, RegistrationListener listener)`. Once registered, incoming notifications are handled via a `CallInvite` where you can choose to accept or reject the invite. When accepting the call an access token is not required. Internally the `CallInvite` has its own accessToken that ensures it can connect to our infrastructure.
-
-### Managing Expiry
-
-As mentioned above, an access token will eventually expire. If an access token has expired, our infrastructure will return error `EXCEPTION_INVALID_ACCESS_TOKEN_EXPIRY`/`20104` via a `CallException` or a `RegistrationException`.
-
-There are number of techniques you can use to ensure that access token expiry is managed accordingly:
-
-- Always fetch a new access token from your access token server before making an outbound call.
-- Retain the access token until getting a `EXCEPTION_INVALID_ACCESS_TOKEN_EXPIRY`/`20104` error before fetching a new access token.
-- Retain the access token along with the timestamp of when it was requested so you can verify ahead of time whether the token has already expired based on the `time-to-live` being used by your server.
-- Prefetch the access token whenever the `Application`, `Service`, `Activity`, or `Fragment` associated with an outgoing call is created.
-
-## Playing Custom Ringtone 
-
-When [answerOnBridge](https://www.twilio.com/docs/voice/twiml/dial#answeronbridge) is enabled in the `<Dial>` TwiML verb, the caller will not hear the ringback while the call is ringing and awaiting to be accepted on the callee's side. The application can use the `SoundPoolManager` to play custom audio files between the `Call.Listener.onRinging()` and the `Call.Listener.onConnected()` callbacks. To enable this behavior, add `playCustomRingback` as an environment variable or a property in `local.properties` file and set it to `true`.
-
-```
-playCustomRingback=true
-```
-
-## Managing Push Credentials
-
-A Push Credential is a record for a push notification channel, for Android this Push Credential is a push notification channel record for FCM or GCM. Push Credentials are managed in the console under [Mobile Push Credentials](https://www.twilio.com/console/voice/sdks/credentials).
-
-Whenever a registration is performed via `Voice.register(…)` in the Android SDK the `identity` and the `Push Credential SID` provided in the JWT based access token, along with the `FCM/GCM token` are used as a unique address to send push notifications to this application instance whenever a call is made to reach that `identity`. Using `Voice.unregister(…)` removes the association for that `identity`.
-
-### Updating a Push Credential
-
-If you need to change or update your server key token provided by Firebase (under `Project Settings` → `Cloud Messaging` → `Server key`) you can do so by selecting the Push Credential in the [console](https://www.twilio.com/console/voice/sdks/credentials) and adding your new `Server key` in the text box provided on the Push Credential page shown below:
-
-<img height="500px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/updating_push_credential.png">
-
-### Deleting a Push Credential
-
-We **do not recommend that you delete a Push Credential** unless the application that it was created for is no longer being used.
-
-When a Push Credential is deleted **any associated registrations made with this Push Credential will be deleted**. Future attempts to reach an `identity` that was registered using the Push Credential SID of this deleted push credential will fail.
-
-If you are certain you want to delete a Push Credential you can click on `Delete this Credential` on the [console](https://www.twilio.com/console/voice/sdks/credentials) page of the selected Push Credential.
-
-Please ensure that after deleting the Push Credential you remove or replace the Push Credential SID when generating new access tokens.
-
-## Troubleshooting Audio
-The following sections provide guidance on how to ensure optimal audio quality in your applications.
-
-### Managing Audio Devices with AudioSwitch
-The quickstart uses [AudioSwitch](https://github.com/twilio/audioswitch) to control [audio focus](https://developer.android.com/guide/topics/media-apps/audio-focus) and manage audio devices within the application. If you have an issue or question related to audio management, please open an issue in the [AudioSwitch](https://github.com/twilio/audioswitch) project.
-
-### Configuring Hardware Audio Effects
-
-#### Voice Android SDK Version 5.2.x+
-Our library performs acoustic echo cancellation (AEC) and noise suppression (NS) using device hardware by default. Using device hardware is more efficient, but some devices do not implement these audio effects well. If you are experiencing echo or background noise on certain devices reference the following snippet for enabling software implementations of AEC and NS.
-
-    /*
-     * Execute any time before invoking `Voice.connect(...)` or `CallInvite.accept(...)`.
-     */
-
-    // Use software AEC
-    DefaultAudioDevice defaultAudioDevice = new DefaultAudioDevice();
-    defaultAudioDevice.setUseHardwareAcousticEchoCanceler(false);
-    Voice.setAudioDevice(defaultAudioDevice);
-
-    // Use sofware NS
-    DefaultAudioDevice defaultAudioDevice = new DefaultAudioDevice();
-    defaultAudioDevice.setUseHardwareNoiseSuppressor(false);
-    Voice.setAudioDevice(defaultAudioDevice);
-    
-    
-#### Voice Android SDK Version below 5.1.x
-Our library performs acoustic echo cancellation (AEC), noise suppression (NS), and auto gain
-control (AGC) using device hardware by default. Using device hardware is more efficient, but some
-devices do not implement these audio effects well. If you are experiencing echo, background noise,
-or unexpected volume levels on certain devices reference the following snippet for enabling
-software implementations of AEC, NS, and AGC.
-
-    /*
-     * Execute any time before invoking `Voice.connect(...)` or `CallInvite.accept(...)`.
-     */
-    // Use software AEC
-    tvo.webrtc.voiceengine.WebRtcAudioUtils.setWebRtcBasedAcousticEchoCanceler(true);
-
-    // Use sofware NS
-    tvo.webrtc.voiceengine.WebRtcAudioUtils.setWebRtcBasedNoiseSuppressor(true);
-
-    // Use software AGC
-    tvo.webrtc.voiceengine.WebRtcAudioUtils.setWebRtcBasedAutomaticGainControl(true);
-
-### Configuring OpenSL ES
-Starting with Voice SDK 4.3.0, our library does not use [OpenSL ES](https://developer.android.com/ndk/guides/audio/opensl/index.html)
-for audio playback by default. Prior versions starting with Voice SDK 3.0.0 did use OpenSL ES by default. Using OpenSL ES is more efficient, but can cause
-problems with other audio effects. For example, we found on the Nexus 6P that OpenSL ES affected
-the device's hardware echo canceller so we blacklisted the Nexus 6P from using OpenSL ES. If you
-are experiencing audio problems with a device that cannot be resolved using software audio effects,
-reference the following snippet for enabling OpenSL ES:
-
-    /*
-     * Execute any time before invoking `Voice.connect(...)` or `CallInvite.accept(...)`.
-     */
-
-    // Enable OpenSL ES
-    tvo.webrtc.voiceengine.WebRtcAudioManager.setBlacklistDeviceForOpenSLESUsage(false);
-
-    // Check if OpenSL ES is disabled
-    tvo.webrtc.voiceengine.WebRtcAudioUtils.deviceIsBlacklistedForOpenSLESUsage();
-
-### Managing Device Specific Configurations
-The Voice Android SDK does not maintain a list of devices for which hardware effects or OpenSL ES are disabled. We recommend maintaining a list in your own application and disabling these effects as needed. The [Signal App provides a great example](https://github.com/signalapp/Signal-Android/blob/master/src/org/thoughtcrime/securesms/ApplicationContext.java#L250) of how to maintain a list and disable the effects as needed.
-
-### Handling Low Headset Volume
-If your application experiences low playback volume, we recommend the following snippets: 
-
-#### Android N and Below
-```
-int focusRequestResult = audioManager.requestAudioFocus(new AudioManager.OnAudioFocusChangeListener() {
-    
-                                   @Override
-                                   public void onAudioFocusChange(int focusChange) {
-                                   }
-                               }, AudioManager.STREAM_VOICE_CALL,
-        AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
-```
-                     
-
-#### Android O and Up :
-```
-AudioAttributes playbackAttributes = new AudioAttributes.Builder()
-        .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
-        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-        .build();
-AudioFocusRequest focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
-        .setAudioAttributes(playbackAttributes)
-        .setAcceptsDelayedFocusGain(true)
-        .setOnAudioFocusChangeListener(new AudioManager.OnAudioFocusChangeListener() {
-            @Override
-            public void onAudioFocusChange(int i) {
-            }
-        })
-        .build();
-```    
 
 ## More Documentation
 

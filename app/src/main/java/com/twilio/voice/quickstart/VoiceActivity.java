@@ -734,6 +734,9 @@ public class VoiceActivity extends AppCompatActivity {
      * Get an access token from your Twilio access token server
      */
     private void retrieveAccessToken() {
+        VoiceActivity.this.accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJpc3MiOiJTS2QwMjkwNWY0OTNiMzNiNTBmZDNlMzJmYmRmNDMyMTIxIiwiZ3JhbnRzIjp7InZvaWNlIjp7Im91dGdvaW5nIjp7ImFwcGxpY2F0aW9uX3NpZCI6IkFQZTc1ODg5Yzk3YjNhZjBmMzM4NjlhOGM1N2Q4ZDg0MjUifSwicHVzaF9jcmVkZW50aWFsX3NpZCI6IkNSZmM4NzE1NmY5YjJiNDBjN2M3ODY2NjA5Y2I4Zjk3MzQifSwiaWRlbnRpdHkiOiJrdW1rdW0ifSwic3ViIjoiQUM5NmNjYzkwNDc1M2IzMzY0ZjI0MjExZThkOTc0NmE5MyIsImV4cCI6MTYxMjM5NDM4MiwibmJmIjoxNjEyMzA3OTgyfQ.SbXpBu8Y5T03vAIDzsEPn3Gpk5-dCxDmlSEAzboBOI0";
+        registerForCallInvites();
+        /*
         Ion.with(this).load(TWILIO_ACCESS_TOKEN_SERVER_URL + "?identity=" + identity)
                 .asString()
                 .setCallback((e, accessToken) -> {
@@ -747,5 +750,6 @@ public class VoiceActivity extends AppCompatActivity {
                                 Snackbar.LENGTH_LONG).show();
                     }
                 });
+        */
     }
 }
