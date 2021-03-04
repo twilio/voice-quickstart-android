@@ -74,6 +74,9 @@ Login to the Twilio CLI. You will be prompted for your Account SID and Auth Toke
 
     $ twilio login
 
+Once successfully logged in, an API Key, a secret get created and stored in your keychain as the twilio-cli password in `SKxxxx|secret` format. Please make a note of these valuesto use them in `Server/.env` file.	 
+<img width="423px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/twilio_cli_key_chain_access.png">
+
 This app requires the [Serverless plug-in](https://github.com/twilio-labs/plugin-serverless). Install the CLI plugin with:
 
     $ twilio plugins:install @twilio-labs/plugin-serverless
@@ -83,7 +86,7 @@ Before deploying, create a `Server/.env` by copying from `Server/.env.example`
     $ cp Server/.env.example Server/.env
 
 Update `Server/.env` with your Account SID, auth token, API Key and secret.
-
+    
     ACCOUNT_SID=ACxxxx
     AUTH_TOKEN=xxxxxx
     API_KEY_SID=SKxxxx
