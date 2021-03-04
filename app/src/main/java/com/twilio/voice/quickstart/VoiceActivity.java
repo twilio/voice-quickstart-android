@@ -442,10 +442,6 @@ public class VoiceActivity extends AppCompatActivity {
             // Place a call
             EditText contact = ((AlertDialog) dialog).findViewById(R.id.contact);
             params.put("to", contact.getText().toString());
-            /*params.put("PhoneNumber",contact.getText().toString());
-            params.put("Type", "client");
-            params.put("From", "client:kumkum");
-            params.put("Mode", "Voice");*/
             ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
                     .params(params)
                     .build();
