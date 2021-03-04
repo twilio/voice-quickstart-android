@@ -26,19 +26,19 @@
 
 ## Quickstart
 
-To get started with the Quickstart application follow these steps. Steps 1-6 will allow you to make a call. The remaining steps 7-9 will enable push notifications using FCM.
+To get started with the Quickstart application follow these steps. Steps 1-5 will enable the application to make a call. The remaining steps 7-10 will enable the application to receive incoming calls in the form of push notifications using FCM.
 
 1. [Generate google-services.json](#bullet1)
 2. [Open this project in Android Studio](#bullet2)
-3. [Create a Voice API key](#bullet3)
-4. [Configure a server to generate an access token to use in the app](#bullet4)
-5. [Create a TwiML application](#bullet5)
-6. [Configure your application server](#bullet6)
-7. [Run the app](#bullet7)
-8. [Add a Push Credential using your FCM Server API Key](#bullet8)
-9. [Receiving an Incoming Notification](#bullet9)
-10. [Make client to client call](#bullet10)
-11. [Make client to PSTN call](#bullet11)
+3. [Use Twilio CLI to deploy access token and TwiML application to Twilio Serverless](#bullet3)
+4. [Create a TwiML application for the access token](#bullet4)
+5. [Generate an access token for the quickstart](#bullet5)
+6. [Run the app](#bullet6)
+7. [Create a Push Credential using your FCM Server API Key](#bullet7)
+8. [Receive an incoming call](#bullet8)
+9. [Make client to client call](#bullet9)
+10. [Make client to PSTN call](#bullet10)
+
 
 ### <a name="bullet1"></a>1. Generate `google-services.json`
 
@@ -46,7 +46,7 @@ The Programmable Voice Android SDK uses Firebase Cloud Messaging push notificati
 
 Follow the steps under **Use the Firebase Assistant** in the [Firebase Developers Guide](https://firebase.google.com/docs/android/setup). Once you connect and sync to Firebase successfully, you will be able to download the `google-services.json` for your application. 
 
-Login to Firebase console and make a note of generated `Server API Key` and `Sender ID` in your notepad. You will need them in [step 8](#bullet8).
+Login to Firebase console and make a note of generated `Server Key`. You will need them in [step 7](#bullet7).
 
 Make sure the generated `google-services.json` is downloaded to the `app` directory of the quickstart project to replace the existing `app/google-services.json` stub json file. If you are using the Firebase plugin make sure to remove the stub `google-services.json` file first.
 
@@ -54,64 +54,94 @@ Missing valid `google-services.json` will result in a build failure with the fol
 <img width="700px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/invalid_google_service_json_error.png">"
 
 ### <a name="bullet2"></a>2. Open the project in Android Studio
+
 <img width="700px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/import_project.png"/>
 
-### <a name="bullet3"></a>3. Create a Voice API key
+### <a name="bullet3"></a>3. Use Twilio CLI to deploy access token and TwiML application to Twilio Serverless
 
-Go to the [API Keys page](https://www.twilio.com/console/voice/settings/api-keys) and create a new API key.
+You must have the following installed:
 
-<img width="700px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/add_api_key.png"/>
+* [Node.js v10+](https://nodejs.org/en/download/)
+* NPM v6+ (comes installed with newer Node versions)
 
-Save the generated `API_KEY` and `API_KEY_SECRET` in your notepad. You will need them in the next step.
+Run `npm install` to install all dependencies from NPM.
 
+Install [twilio-cli](https://www.twilio.com/docs/twilio-cli/quickstart) with:
 
-### <a name="bullet4"></a>4. Configure a server to generate an access token to use in the app
+    $ npm install -g twilio-cli
 
-Download one of the starter projects for the server.
+Login to the Twilio CLI. You will be prompted for your Account SID and Auth Token, both of which you can find on the dashboard of your [Twilio console](https://twilio.com/console).
+
+    $ twilio login
+
+This app requires the [Serverless plug-in](https://github.com/twilio-labs/plugin-serverless). Install the CLI plugin with:
+
+    $ twilio plugins:install @twilio-labs/plugin-serverless
+
+Before deploying, create a `Server/.env` by copying from `Server/.env.example`
+
+    $ cp Server/.env.example Server/.env
+
+Update `Server/.env` with your Account SID, auth token, API Key and secret
+
+    ACCOUNT_SID=ACxxxx
+    AUTH_TOKEN=xxxxxx
+    API_KEY=SKxxxx
+    API_SECRET=xxxxxx
+    APP_SID=APxxxx
+    PUSH_CREDENTIAL_SID=CRxxxx
+
+The app is deployed to Twilio Serverless with the `serverless` plug-in:
+
+    $ cd Server
+    $ twilio serverless:deploy
+
+The server component that's baked into this quickstart is in Node.js. If you’d like to roll your own or better understand the Twilio Voice server side implementations, please see the list of starter projects in the following supported languages below:
 
 * [voice-quickstart-server-java](https://github.com/twilio/voice-quickstart-server-java)
 * [voice-quickstart-server-node](https://github.com/twilio/voice-quickstart-server-node)
 * [voice-quickstart-server-php](https://github.com/twilio/voice-quickstart-server-php)
 * [voice-quickstart-server-python](https://github.com/twilio/voice-quickstart-server-python)
 
-Follow the instructions in the server's README to get the application server up and running locally and accessible via the public Internet. For now just add the Twilio Account SID that you can obtain from the console, and  the `API_KEY` and `API_SECRET` you obtained in the previous step. For example:
+Follow the instructions in the project's README to get the application server up and running locally and accessible via the public Internet.
 
-    ACCOUNT_SID=AC12345678901234567890123456789012
-    API_KEY=SK12345678901234567890123456789012
-    API_KEY_SECRET=the_secret_generated_when_creating_the_api_key
+### <a name="bullet4"></a>4. Create a TwiML application for the Access Token
 
-### <a name="bullet5"></a>5. Create a TwiML application
+Next, we need to create a TwiML application. A TwiML application identifies a public URL for retrieving [TwiML call control instructions](https://www.twilio.com/docs/api/twiml). When your iOS app makes a call to the Twilio cloud, Twilio will make a webhook request to this URL, your application server will respond with generated TwiML, and Twilio will execute the instructions you’ve provided.
 
-Next, we need to create a TwiML application. A TwiML application identifies a public URL for retrieving TwiML call control instructions. When your Android app makes a call to the Twilio cloud, Twilio will make a webhook request to this URL, your application server will respond with generated TwiML, and Twilio will execute the instructions you’ve provided.
+Use Twilio CLI to create a TwiML app with the `make-call` endpoint you have just deployed
 
-To create a TwiML application, go to the TwiML app page. Create a new TwiML application, and use the public URL of your application server’s `/makeCall` endpoint as the Voice Request URL (If your app server is written in PHP, then you need `.php` extension at the end).
+    $ twilio api:core:applications:create \
+        --friendly-name=my-twiml-app \
+        --voice-method=post \
+        --voice-url="https://my-quickstart-dev.twil.io/make-call"
 
-<img width="700px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/create_twml_app.png"/>
+You should receive an Appliciation SID that looks like this
 
-As you can see we’ve used our ngrok public address in the Request URL field above.
+    APxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-Save your TwiML Application configuration, and grab the TwiML Application SID (a long identifier beginning with the characters "AP").
+### <a name="bullet5"></a>5. Generate an access token for the quickstart
 
-### <a name="bullet6"></a>6. Configure your application server
+Install the `token` plug-in
 
-Put the remaining `APP_SID` configuration info into your application server by setting the following constants with the information you gathered above. For example:
+    $ twilio plugins:install @twilio-labs/plugin-token
 
-    ACCOUNT_SID=AC12345678901234567890123456789012
-    API_KEY=SK12345678901234567890123456789012
-    API_KEY_SECRET=the_secret_generated_when_creating_the_api_key
-    APP_SID=AP12345678901234567890123456789012
+Use the TwiML App SID you just created to generate an access token
 
-Once you’ve done that, restart the server so it uses the new configuration info. Now it's time to test.
+    $ twilio token:voice --identity=alice --voice-app-sid=APxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-Open up a browser and visit the URL for your application server's Access Token endpoint: `https://{YOUR_SERVER_URL}/accessToken` (If your app server is written in PHP, then you need `.php` extension at the end). If everything is configured correctly, you should see a long string of letters and numbers, which is a Twilio Access Token. Your Android app will use a token like this to connect to Twilio.
+Copy the access token string. Your Android app will use this token to connect to Twilio.
 
-### <a name="bullet7"></a>7. Run the app
 
-Paste the public URL of your application server’s `https://{YOUR_SERVER_URL}/accessToken` endpoint into `TWILIO_ACCESS_TOKEN_SERVER_URL` in VoiceActivity.java. Make sure to include `/accessToken` in the URL path.
+### <a name="bullet6"></a>6. Run the app
 
-<img width="600px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/paste_token_server_url.png"/>
+Now let’s go back to the `app`, update the placeholder of `accessToken` with access token string you just copied in `VoiceActivity.java`.
 
-Run the quickstart app on an Android device
+```
+ private String accessToken = "PASTE_YOUR_ACCESS_TOKEN_HERE";
+```
+
+Build and run the quickstart app on an Android device.
 
 <img width="423px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/voice_activity.png">
 
@@ -124,42 +154,42 @@ Leave the dialog text field empty and press the call button to start a call. You
 <img width="423px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/voice_make_call.png">
 
 
-### <a name="bullet8"></a>8. Add a Push Credential using your FCM `Server API Key` 
+### <a name="bullet7"></a>7. Create a Push Credential using your FCM Server Key
 
-You will need to store the FCM `Server API Key` with Twilio so that we can send push notifications to your app on your behalf. Once you store the API Key with Twilio, it will get assigned a Push Credential SID so that you can later specify which key we should use to send push notifications.
+You will need to store the FCM Server key(The **Server key** of your project from the Firebase console, found under Settings/Cloud messaging) with Twilio so that we can send push notifications to your app on your behalf. Once you store the Server key with Twilio, it will get assigned a Push Credential SID so that you can later specify which key we should use to send push notifications.
 
-Go to the [Push Credentials page](https://www.twilio.com/console/voice/sdks/credentials) and create a new Push Credential.
+Use Twilio CLI to create a Push Credential using the FCM Server Key. 
 
-Paste in the `Server API Key` saved in [step 2](#bullet2) and press Save.
+    $ twilio api:chat:v2:credentials:create \
+        --type=fcm \
+        --friendly-name="voice-push-credential-fcm" \
+        --secret=SERVER_KEY_VALUE
 
-<img width="700px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/add_fcm_push_cred.png">"
+This will return a Push Credential SID that looks like this
 
-### <a name="bullet9"></a>9. Receiving an Incoming Notification
+    CRxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-Put the `PUSH_CREDENTIAL_SID` configuration info into your application server by setting the following constants with the information you gathered above. For example:
+Now let's generate another access token and add the Push Credential to the Voice Grant.
 
-    ACCOUNT_SID=AC12345678901234567890123456789012
-    API_KEY=SK12345678901234567890123456789012
-    API_KEY_SECRET=the_secret_generated_when_creating_the_api_key
-    PUSH_CREDENTIAL_SID=CR12345678901234567890123456789012
-    APP_SID=AP12345678901234567890123456789012
+    $ twilio token:voice \
+        --identity=alice \
+        --voice-app-sid=APxxxx \
+        --push-credential-sid=CRxxxxs
 
-Once you’ve done that, restart the server so it uses the new configuration info. Now it's time to test. Use your browser to initiate an incoming call by navigating to the public URL of your application server’s `https://{YOUR_SERVER_URL}/placeCall` endpoint (If your app server is written in PHP, then you need `.php` extension at the end). This will trigger a Twilio REST API request that will make an inbound call to your mobile app.
+
+### <a name="bullet8"></a>8. Receiving an Incoming Notification
+
+You are now ready to receive incoming calls. Update your app with the access token generated from step 7 and rebuild your app. The `Voice.register()` method will register your mobile application with the FCM device token as well as the access token. Once registered, hit your application server's **/place-call** endpoint: `https://my-quickstart-dev.twil.io/place-call?to=alice`.  This will trigger a Twilio REST API request that will make an inbound call to your mobile app.
+
 Your application will be brought to the foreground and you will see an alert dialog. The app will be brought to foreground even when your screen is locked.
 
 <img height="500px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/incoming_call.png">"
 
-You will receive an incoming call notification as well. If you pull down the notification drawer, you will be able to view the notification.
-
-<img height="500px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/incoming_notification.png">"
-
 Once your app accepts the call, you should hear a congratulatory message.
 
-### <a name="bullet10"></a>10. Make client to client call
+### <a name="bullet9"></a>9. Make client to client call
 
-To make client to client calls, you need the application running on two devices. To run the application on an additional device, make sure you use a different identity in your access token when registering the new device. For example, change the `identity` field to `bob` and run the application. 
-
-<img height="500px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/access_token_identity_bob.png">
+To make client to client calls, you need the application running on two devices. To run the application on an additional device, make sure you use a different identity in your access token when registering the new device. 
 
 Press the call button to open the call dialog.
 
@@ -170,11 +200,11 @@ Enter the client identity of the newly registered device to initiate a client to
 <img height="500px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/make_call_to_client.png">
 <img height="500px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/incoming_call_from_alice.png">
 
-### <a name="bullet11"></a>11. Make client to PSTN call
+### <a name="bullet10"></a>10. Make client to PSTN call
 
 A verified phone number is one that you can use as your Caller ID when making outbound calls with Twilio. This number has not been ported into Twilio and you do not pay Twilio for this phone number.
 
-To make client to number calls, first get a valid Twilio number to your account via https://www.twilio.com/console/phone-numbers/verified. Update your server code and replace the caller number variable  (`CALLER_NUMBER` or `callerNumber` depending on which server you chose) with the verified number. Restart the server so that it uses the new value.
+To make client to number calls, first get a valid Twilio number to your account via https://www.twilio.com/console/phone-numbers/verified. Update your server code and replace the `callerNumber` with the verified number. Restart the server so that it uses the new value.
 
 Press the call button to open the call dialog.
 

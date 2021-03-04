@@ -38,7 +38,6 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.iid.FirebaseInstanceId;
-import com.koushikdutta.ion.Ion;
 import com.twilio.audioswitch.AudioDevice;
 import com.twilio.audioswitch.AudioSwitch;
 import com.twilio.voice.Call;
@@ -61,21 +60,8 @@ import kotlin.Unit;
 public class VoiceActivity extends AppCompatActivity {
 
     private static final String TAG = "VoiceActivity";
-    private static final String identity = "alice";
-    /*
-     * You must provide the URL to the publicly accessible Twilio access token server route
-     *
-     * For example: https://myurl.io/accessToken
-     *
-     * If your token server is written in PHP, TWILIO_ACCESS_TOKEN_SERVER_URL needs .php extension at the end.
-     *
-     * For example : https://myurl.io/accessToken.php
-     */
-    private static final String TWILIO_ACCESS_TOKEN_SERVER_URL = "TWILIO_ACCESS_TOKEN_SERVER_URL";
-
     private static final int MIC_PERMISSION_REQUEST_CODE = 1;
-
-    private String accessToken;
+    private String accessToken = "PASTE_YOUR_ACCESS_TOKEN_HERE";
 
     /*
      * Audio device management
@@ -162,7 +148,7 @@ public class VoiceActivity extends AppCompatActivity {
         if (!checkPermissionForMicrophone()) {
             requestPermissionForMicrophone();
         } else {
-            retrieveAccessToken();
+            registerForCallInvites();
         }
     }
 
@@ -378,7 +364,7 @@ public class VoiceActivity extends AppCompatActivity {
                     handleCancel();
                     break;
                 case Constants.ACTION_FCM_TOKEN:
-                    retrieveAccessToken();
+                    registerForCallInvites();
                     break;
                 case Constants.ACTION_ACCEPT:
                     answer();
@@ -456,6 +442,10 @@ public class VoiceActivity extends AppCompatActivity {
             // Place a call
             EditText contact = ((AlertDialog) dialog).findViewById(R.id.contact);
             params.put("to", contact.getText().toString());
+            /*params.put("PhoneNumber",contact.getText().toString());
+            params.put("Type", "client");
+            params.put("From", "client:kumkum");
+            params.put("Mode", "Voice");*/
             ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
                     .params(params)
                     .build();
@@ -607,7 +597,7 @@ public class VoiceActivity extends AppCompatActivity {
                         "Microphone permissions needed. Please allow in your application settings.",
                         Snackbar.LENGTH_LONG).show();
             } else {
-                retrieveAccessToken();
+                registerForCallInvites();
             }
         }
     }
@@ -728,28 +718,5 @@ public class VoiceActivity extends AppCompatActivity {
                 .getLifecycle()
                 .getCurrentState()
                 .isAtLeast(Lifecycle.State.STARTED);
-    }
-
-    /*
-     * Get an access token from your Twilio access token server
-     */
-    private void retrieveAccessToken() {
-        VoiceActivity.this.accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJpc3MiOiJTS2QwMjkwNWY0OTNiMzNiNTBmZDNlMzJmYmRmNDMyMTIxIiwiZ3JhbnRzIjp7InZvaWNlIjp7Im91dGdvaW5nIjp7ImFwcGxpY2F0aW9uX3NpZCI6IkFQZTc1ODg5Yzk3YjNhZjBmMzM4NjlhOGM1N2Q4ZDg0MjUifSwicHVzaF9jcmVkZW50aWFsX3NpZCI6IkNSZmM4NzE1NmY5YjJiNDBjN2M3ODY2NjA5Y2I4Zjk3MzQifSwiaWRlbnRpdHkiOiJrdW1rdW0ifSwic3ViIjoiQUM5NmNjYzkwNDc1M2IzMzY0ZjI0MjExZThkOTc0NmE5MyIsImV4cCI6MTYxMjM5NDM4MiwibmJmIjoxNjEyMzA3OTgyfQ.SbXpBu8Y5T03vAIDzsEPn3Gpk5-dCxDmlSEAzboBOI0";
-        registerForCallInvites();
-        /*
-        Ion.with(this).load(TWILIO_ACCESS_TOKEN_SERVER_URL + "?identity=" + identity)
-                .asString()
-                .setCallback((e, accessToken) -> {
-                    if (e == null) {
-                        Log.d(TAG, "Access token: " + accessToken);
-                        VoiceActivity.this.accessToken = accessToken;
-                        registerForCallInvites();
-                    } else {
-                        Snackbar.make(coordinatorLayout,
-                                "Error retrieving access token. Unable to make calls",
-                                Snackbar.LENGTH_LONG).show();
-                    }
-                });
-        */
     }
 }
