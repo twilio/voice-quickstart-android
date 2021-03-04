@@ -82,11 +82,11 @@ Before deploying, create a `Server/.env` by copying from `Server/.env.example`
 
     $ cp Server/.env.example Server/.env
 
-Update `Server/.env` with your Account SID, auth token, API Key and secret
+Update `Server/.env` with your Account SID, auth token, API Key and secret.
 
     ACCOUNT_SID=ACxxxx
     AUTH_TOKEN=xxxxxx
-    API_KEY=SKxxxx
+    API_KEY_SID=SKxxxx
     API_SECRET=xxxxxx
     APP_SID=APxxxx
     PUSH_CREDENTIAL_SID=CRxxxx

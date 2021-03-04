@@ -3,7 +3,7 @@ exports.handler = function(context, event, callback) {
   const VoiceGrant = AccessToken.VoiceGrant;
 
   const twilioAccountSid = context.ACCOUNT_SID;
-  const twilioApiKey = context.API_KEY;
+  const twilioApiKey = context.API_KEY_SID;
   const twilioApiSecret = context.API_SECRET;
 
   const outgoingApplicationSid = context.APP_SID;
