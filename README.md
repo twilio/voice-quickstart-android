@@ -113,7 +113,7 @@ Use Twilio CLI to create a TwiML app with the `make-call` endpoint you have just
 
     $ twilio api:core:applications:create \
         --friendly-name=my-twiml-app \
-        --voice-method=post \
+        --voice-method=POST \
         --voice-url="https://my-quickstart-dev.twil.io/make-call"
 
 You should receive an Appliciation SID that looks like this
@@ -149,7 +149,7 @@ Press the call button to open the call dialog.
 
 <img width="423px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/voice_make_call_dialog.png">
 
-Leave the dialog text field empty and press the call button to start a call. You will hear the congratulatory message. Support for dialing another client or number is described in steps 10 and 11.
+Leave the dialog text field empty and press the call button to start a call. You will hear the congratulatory message. Support for dialing another client or number is described in steps 9 and 10.
 
 <img width="423px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/voice_make_call.png">
 
