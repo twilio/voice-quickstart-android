@@ -9,7 +9,7 @@ The example demonstrates the custom audio device **exampleCustomAudioDevice**, w
 
 This diagram describes how **exampleCustomAudioDevice** uses `AudioDevice` to receive and deliver audio samples from/to the core audio device.
 
-<img width="800px" src="../images/quickstart/audio-device-example.png"/>
+<img width="800px" src="../images/exampleCustomAudioDevice/audio-device-example.png"/>
 
 ### Setup
 
@@ -19,15 +19,15 @@ Refer to the [README](https://github.com/twilio/voice-quickstart-android/blob/ma
 
 Once you have configured your access token, build and run the example. Press the call button to open the call dialog and make an outbound call to a [client](https://github.com/twilio/voice-quickstart-android#bullet10) or to a [PSTN](https://github.com/twilio/voice-quickstart-android#11-make-client-to-pstn-call) number.
 
-<kbd><img width="400px" src="../images/quickstart/make_call_custom_audio_device.png"/></kbd>
+<kbd><img width="400px" src="../images/exampleCustomAudioDevice/make_call_custom_audio_device.png"/></kbd>
 
 Audio from a file is selected by default. Once the Call is connected, music starts to play.
 
-<kbd><img width="400px" src="../images/quickstart/audio_device_music_file_plays.png"/></kbd>
+<kbd><img width="400px" src="../images/exampleCustomAudioDevice/audio_device_music_file_plays.png"/></kbd>
 
 You can switch to microphone by clicking the `♫` button.
 
-<kbd><img width="400px" src="../images/quickstart/audio_device_microphone.png"/></kbd>
+<kbd><img width="400px" src="../images/exampleCustomAudioDevice/audio_device_microphone.png"/></kbd>
 
 Note: The switch between audio file and microphone always starts the music from the begining of the file.
 
