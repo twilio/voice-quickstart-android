@@ -34,7 +34,6 @@ import androidx.lifecycle.ProcessLifecycleOwner;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
-import com.koushikdutta.ion.Ion;
 import com.twilio.voice.Call;
 import com.twilio.voice.CallException;
 import com.twilio.voice.ConnectOptions;
@@ -47,24 +46,12 @@ import java.util.Locale;
 
 public class CustomDeviceActivity extends AppCompatActivity {
 
-    private static final String TAG = "VoiceActivity";
-    private static final String identity = "alice";
-    /*
-     * You must provide the URL to the publicly accessible Twilio access token server route
-     *
-     * For example: https://myurl.io/accessToken
-     *
-     * If your token server is written in PHP, TWILIO_ACCESS_TOKEN_SERVER_URL needs .php extension at the end.
-     *
-     * For example : https://myurl.io/accessToken.php
-     */
-    private static final String TWILIO_ACCESS_TOKEN_SERVER_URL = "TWILIO_ACCESS_TOKEN_SERVER_URL";
-
+    private static final String TAG = "CustomDeviceActivity";
     private static final int MIC_PERMISSION_REQUEST_CODE = 1;
 
-    private String accessToken;
+    private String accessToken = "PASTE_YOUR_ACCESS_TOKEN_HERE";
     private AudioManager audioManager;
-    private int savedAudioMode = AudioManager.MODE_INVALID;
+    private int savedAudioMode = AudioManager.MODE_NORMAL;
 
     // Empty HashMap, never populated for the Quickstart
     HashMap<String, String> params = new HashMap<>();
@@ -130,10 +117,7 @@ public class CustomDeviceActivity extends AppCompatActivity {
          */
         if (!checkPermissionForMicrophone()) {
             requestPermissionForMicrophone();
-        } else {
-            retrieveAccessToken();
         }
-
         /*
          * Create custom audio device FileAndMicAudioDevice and set the audio device
          */
@@ -429,8 +413,6 @@ public class CustomDeviceActivity extends AppCompatActivity {
                 Snackbar.make(coordinatorLayout,
                         "Microphone permissions needed. Please allow in your application settings.",
                         Snackbar.LENGTH_LONG).show();
-            } else {
-                retrieveAccessToken();
             }
         }
     }
@@ -486,23 +468,5 @@ public class CustomDeviceActivity extends AppCompatActivity {
                 .getLifecycle()
                 .getCurrentState()
                 .isAtLeast(Lifecycle.State.STARTED);
-    }
-
-    /*
-     * Get an access token from your Twilio access token server
-     */
-    private void retrieveAccessToken() {
-        Ion.with(this).load(TWILIO_ACCESS_TOKEN_SERVER_URL + "?identity=" + identity)
-                .asString()
-                .setCallback((e, accessToken) -> {
-                    if (e == null) {
-                        Log.d(TAG, "Access token: " + accessToken);
-                        CustomDeviceActivity.this.accessToken = accessToken;
-                    } else {
-                        Snackbar.make(coordinatorLayout,
-                                "Error retrieving access token. Unable to make calls",
-                                Snackbar.LENGTH_LONG).show();
-                    }
-                });
     }
 }

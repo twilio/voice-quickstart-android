@@ -38,7 +38,6 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.iid.FirebaseInstanceId;
-import com.koushikdutta.ion.Ion;
 import com.twilio.audioswitch.AudioDevice;
 import com.twilio.audioswitch.AudioSwitch;
 import com.twilio.voice.Call;
@@ -61,21 +60,8 @@ import kotlin.Unit;
 public class VoiceActivity extends AppCompatActivity {
 
     private static final String TAG = "VoiceActivity";
-    private static final String identity = "alice";
-    /*
-     * You must provide the URL to the publicly accessible Twilio access token server route
-     *
-     * For example: https://myurl.io/accessToken
-     *
-     * If your token server is written in PHP, TWILIO_ACCESS_TOKEN_SERVER_URL needs .php extension at the end.
-     *
-     * For example : https://myurl.io/accessToken.php
-     */
-    private static final String TWILIO_ACCESS_TOKEN_SERVER_URL = "TWILIO_ACCESS_TOKEN_SERVER_URL";
-
     private static final int MIC_PERMISSION_REQUEST_CODE = 1;
-
-    private String accessToken;
+    private String accessToken = "PASTE_YOUR_ACCESS_TOKEN_HERE";
 
     /*
      * Audio device management
@@ -162,7 +148,7 @@ public class VoiceActivity extends AppCompatActivity {
         if (!checkPermissionForMicrophone()) {
             requestPermissionForMicrophone();
         } else {
-            retrieveAccessToken();
+            registerForCallInvites();
         }
     }
 
@@ -378,7 +364,7 @@ public class VoiceActivity extends AppCompatActivity {
                     handleCancel();
                     break;
                 case Constants.ACTION_FCM_TOKEN:
-                    retrieveAccessToken();
+                    registerForCallInvites();
                     break;
                 case Constants.ACTION_ACCEPT:
                     answer();
@@ -607,7 +593,7 @@ public class VoiceActivity extends AppCompatActivity {
                         "Microphone permissions needed. Please allow in your application settings.",
                         Snackbar.LENGTH_LONG).show();
             } else {
-                retrieveAccessToken();
+                registerForCallInvites();
             }
         }
     }
@@ -728,24 +714,5 @@ public class VoiceActivity extends AppCompatActivity {
                 .getLifecycle()
                 .getCurrentState()
                 .isAtLeast(Lifecycle.State.STARTED);
-    }
-
-    /*
-     * Get an access token from your Twilio access token server
-     */
-    private void retrieveAccessToken() {
-        Ion.with(this).load(TWILIO_ACCESS_TOKEN_SERVER_URL + "?identity=" + identity)
-                .asString()
-                .setCallback((e, accessToken) -> {
-                    if (e == null) {
-                        Log.d(TAG, "Access token: " + accessToken);
-                        VoiceActivity.this.accessToken = accessToken;
-                        registerForCallInvites();
-                    } else {
-                        Snackbar.make(coordinatorLayout,
-                                "Error retrieving access token. Unable to make calls",
-                                Snackbar.LENGTH_LONG).show();
-                    }
-                });
     }
 }
