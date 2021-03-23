@@ -92,10 +92,10 @@ Update `Server/.env` with your Account SID, auth token, API Key and secret.
     AUTH_TOKEN=xxxxxx
     API_KEY_SID=SKxxxx
     API_SECRET=xxxxxx
-    APP_SID=APxxxx
-    PUSH_CREDENTIAL_SID=CRxxxx
+    APP_SID=APxxxx(available in step 4)
+    PUSH_CREDENTIAL_SID=CRxxxx(available in step 7)
 
-The app is deployed to Twilio Serverless with the `serverless` plug-in:
+The `Server` folder contains a basic server component which can be used to vend access tokens or generate TwiML response for making call to a number or another client. The app is deployed to Twilio Serverless with the `serverless` plug-in:
 
     $ cd Server
     $ twilio serverless:deploy
