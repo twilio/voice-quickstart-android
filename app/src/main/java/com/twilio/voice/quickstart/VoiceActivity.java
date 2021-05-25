@@ -81,6 +81,7 @@ public class VoiceActivity extends AppCompatActivity {
     private FloatingActionButton hangupActionFab;
     private FloatingActionButton holdActionFab;
     private FloatingActionButton muteActionFab;
+    private FloatingActionButton sendDigitActionFab;
     private Chronometer chronometer;
 
     private NotificationManager notificationManager;
@@ -109,12 +110,14 @@ public class VoiceActivity extends AppCompatActivity {
         hangupActionFab = findViewById(R.id.hangup_action_fab);
         holdActionFab = findViewById(R.id.hold_action_fab);
         muteActionFab = findViewById(R.id.mute_action_fab);
+        sendDigitActionFab = findViewById(R.id.send_digit_action_fab);
         chronometer = findViewById(R.id.chronometer);
 
         callActionFab.setOnClickListener(callActionFabClickListener());
         hangupActionFab.setOnClickListener(hangupActionFabClickListener());
         holdActionFab.setOnClickListener(holdActionFabClickListener());
         muteActionFab.setOnClickListener(muteActionFabClickListener());
+        sendDigitActionFab.setOnClickListener(sendDigitActionFabClickListener());
 
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
@@ -304,6 +307,7 @@ public class VoiceActivity extends AppCompatActivity {
         hangupActionFab.show();
         holdActionFab.show();
         muteActionFab.show();
+        sendDigitActionFab.show();
         chronometer.setVisibility(View.VISIBLE);
         chronometer.setBase(SystemClock.elapsedRealtime());
         chronometer.start();
@@ -320,6 +324,7 @@ public class VoiceActivity extends AppCompatActivity {
                 .valueOf(ContextCompat.getColor(this, R.color.colorAccent)));
         muteActionFab.hide();
         hangupActionFab.hide();
+        sendDigitActionFab.hide();
         chronometer.setVisibility(View.INVISIBLE);
         chronometer.stop();
     }
@@ -466,6 +471,24 @@ public class VoiceActivity extends AppCompatActivity {
         };
     }
 
+    private DialogInterface.OnClickListener sendDigitsClickListener() {
+        return (dialog, which) -> {
+            EditText digits = ((AlertDialog) dialog).findViewById(R.id.digit);
+            if (activeCall != null) {
+                activeCall.sendDigits(digits.getText().toString());
+            }
+            alertDialog.dismiss();
+        };
+    }
+
+    private DialogInterface.OnClickListener cancelDigitClickListener() {
+        return (dialogInterface, i) -> {
+            if (alertDialog != null && alertDialog.isShowing()) {
+                alertDialog.dismiss();
+            }
+        };
+    }
+
     public static AlertDialog createIncomingCallDialog(
             Context context,
             CallInvite callInvite,
@@ -513,6 +536,13 @@ public class VoiceActivity extends AppCompatActivity {
 
     private View.OnClickListener muteActionFabClickListener() {
         return v -> mute();
+    }
+
+    private View.OnClickListener sendDigitActionFabClickListener() {
+        return v -> {
+            alertDialog = createSendDigitDialog(sendDigitsClickListener(), cancelDigitClickListener(), VoiceActivity.this);
+            alertDialog.show();
+        };
     }
 
     /*
@@ -690,12 +720,34 @@ public class VoiceActivity extends AppCompatActivity {
                 activity.findViewById(android.R.id.content),
                 false);
         final EditText contact = dialogView.findViewById(R.id.contact);
-        contact.setHint(R.string.callee);
+        // Call Twilio support
+        contact.setText("8448144627");
         alertDialogBuilder.setView(dialogView);
 
         return alertDialogBuilder.create();
-
     }
+
+    private static AlertDialog createSendDigitDialog(final DialogInterface.OnClickListener sendClickListener,
+                                                final DialogInterface.OnClickListener cancelClickListener,
+                                                final Activity activity) {
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(activity);
+
+        alertDialogBuilder.setIcon(R.drawable.keypad);
+        alertDialogBuilder.setTitle("Send Digits");
+        alertDialogBuilder.setPositiveButton("Send", sendClickListener);
+        alertDialogBuilder.setNegativeButton("Cancel", cancelClickListener);
+        alertDialogBuilder.setCancelable(false);
+
+        LayoutInflater li = LayoutInflater.from(activity);
+        View dialogView = li.inflate(
+                R.layout.dialog_send_digit,
+                activity.findViewById(android.R.id.content),
+                false);
+        alertDialogBuilder.setView(dialogView);
+
+        return alertDialogBuilder.create();
+    }
+
 
     private void showIncomingCallDialog() {
         SoundPoolManager.getInstance(this).playRinging();
