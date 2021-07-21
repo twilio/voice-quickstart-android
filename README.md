@@ -10,7 +10,7 @@
 ## References
 - [Access Tokens](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/access-token.md) - Using access tokens
 - [Managing Push Credentials](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/manage-push-credentials.md) - Managing Push Credentials
-- [Troubleshooting Audio](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/troubleshooting-audio.md) - Troubleshooting Audio
+- [Troubleshooting](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/troubleshooting.md) - Troubleshooting Audio
 - [More Documentation](#more-documentation) - More documentation related to the Voice Android SDK
 - [Emulator Support](#emulator-support) - Android emulator support
 - [Reducing APK Size](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/reducing-apk-size.md) - Use ABI splits to reduce APK size
