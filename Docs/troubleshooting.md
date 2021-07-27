@@ -1,4 +1,27 @@
-## Troubleshooting Audio
+## Troubleshooting
+
+### Enabling Debug Logging
+
+To enable debug level logging, add the following code in your application:
+
+```
+/*
+ * Set the log level of the Voice Android SDK
+ */
+Voice.setLogLevel(LogLevel.DEBUG);
+
+/*
+ * If your application is experiencing an issue related to a specific
+ * module, you can set the log level of each of the following modules.
+ */
+Voice.setModuleLogLevel(LogModule.CORE, LogLevel.DEBUG);
+Voice.setModuleLogLevel(LogModule.PLATFORM, LogLevel.DEBUG);
+Voice.setModuleLogLevel(LogModule.SIGNALING, LogLevel.DEBUG);
+Voice.setModuleLogLevel(LogModule.WEBRTC, LogLevel.DEBUG);
+
+```
+
+### Troubleshooting Audio
 The following sections provide guidance on how to ensure optimal audio quality in your applications.
 
 ### Managing Audio Devices with AudioSwitch
