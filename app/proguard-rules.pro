@@ -4,5 +4,3 @@
 -dontwarn tvo.webrtc.**
 -keep class com.twilio.voice.** { *; }
 -keepattributes InnerClasses
-
--dontwarn com.squareup.okhttp.**
