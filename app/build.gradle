@@ -22,6 +22,7 @@ ext.playCustomRingback = {
 
 android {
     compileSdkVersion versions.compileSdk
+    buildToolsVersion versions.buildTools
 
     compileOptions {
         sourceCompatibility versions.java
@@ -69,10 +70,7 @@ android {
 dependencies {
     implementation "com.twilio:audioswitch:${versions.audioSwitch}"
     implementation "com.twilio:voice-android:${versions.voiceAndroid}"
-    implementation "com.android.support:design:${versions.supportLibrary}"
-    implementation "com.android.support:support-media-compat:${versions.supportLibrary}"
-    implementation "com.android.support:animated-vector-drawable:${versions.supportLibrary}"
-    implementation "com.android.support:appcompat-v7:${versions.supportLibrary}"
+    implementation "com.google.android.material:material:${versions.material}"
     implementation "com.google.firebase:firebase-messaging:${versions.firebase}"
     implementation "androidx.lifecycle:lifecycle-extensions:${versions.androidxLifecycle}"
     androidTestImplementation "androidx.test.ext:junit:${versions.junit}"
