@@ -4,7 +4,7 @@ buildscript {
 
     ext.versions = [
             'java'               : JavaVersion.VERSION_1_8,
-            'androidGradlePlugin': '4.1.1',
+            'androidGradlePlugin': '7.0.3',
             'googleServices'     : '4.3.10',
             'compileSdk'         : 30,
             'buildTools'         : '30.0.2',
@@ -19,6 +19,7 @@ buildscript {
     ]
 
     repositories {
+        mavenCentral()
         jcenter()
         google()
     }
