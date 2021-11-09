@@ -12,7 +12,7 @@ buildscript {
             'targetSdk'          : 30,
             'material'           : '1.4.0',
             'firebase'           : '17.6.0',
-            'voiceAndroid'       : '6.0.0',
+            'voiceAndroid'       : '6.0.1',
             'audioSwitch'        : '1.1.2',
             'androidxLifecycle'  : '2.2.0',
             'junit'              : '1.1.1'
@@ -40,10 +40,6 @@ allprojects {
         google()
         mavenCentral()
         jcenter()
-        maven {
-            url 'https://maven.google.com/'
-            name 'Google'
-        }
     }
 }
 
