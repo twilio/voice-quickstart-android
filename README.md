@@ -1,6 +1,6 @@
 ## Twilio Voice Quickstart for Android
 
-> NOTE: This sample application uses the Programmable Voice Android 5.x APIs. If you are using prior versions of the SDK, we highly recommend planning your migration to 5.0 as soon as possible.
+> NOTE: This sample application uses the Programmable Voice Android 6.x APIs. If you are using prior versions of the SDK, we highly recommend planning your migration to 6.0 as soon as possible.
 
 ## Get started with Voice on Android
 
