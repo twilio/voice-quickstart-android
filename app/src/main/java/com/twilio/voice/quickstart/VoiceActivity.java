@@ -9,7 +9,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.media.AudioManager;
 import android.os.Build;
@@ -141,16 +140,17 @@ public class VoiceActivity extends AppCompatActivity {
         handleIncomingCallIntent(getIntent());
 
         /*
-         * Ensure the microphone permission is enabled
+         * Ensure required permissions are enabled
          */
         if (Build.VERSION.SDK_INT > VERSION_CODES.R) {
-            if (!checkPermissionForMicrophoneAndBluetooth()) {
+            if (!hasPermissions(this, Manifest.permission.RECORD_AUDIO,
+                    Manifest.permission.BLUETOOTH_CONNECT)) {
                 requestPermissionForMicrophoneAndBluetooth();
             } else {
                 registerForCallInvites();
             }
         } else {
-            if (!checkPermissionForMicrophone()) {
+            if (!hasPermissions(this, Manifest.permission.RECORD_AUDIO)) {
                 requestPermissionForMicrophone();
             } else {
                 registerForCallInvites();
@@ -577,27 +577,6 @@ public class VoiceActivity extends AppCompatActivity {
         button.setBackgroundTintList(colorStateList);
     }
 
-    private boolean checkPermissionForMicrophone() {
-        int resultMic = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO);
-        return resultMic == PackageManager.PERMISSION_GRANTED;
-    }
-
-    private boolean checkPermissionForMicrophoneAndBluetooth() {
-        if (hasPermissions(this, Manifest.permission.RECORD_AUDIO,
-                Manifest.permission.BLUETOOTH_CONNECT)) {
-            /*
-             * Start the audio device selector after the menu is created and update the icon when the
-             * selected audio device changes.
-             */
-            audioSwitch.start((audioDevices, audioDevice) -> {
-                updateAudioDeviceIcon(audioDevice);
-                return Unit.INSTANCE;
-            });
-        }
-        return (hasPermissions(this, Manifest.permission.RECORD_AUDIO,
-                Manifest.permission.BLUETOOTH_CONNECT));
-    }
-
     private void requestPermissionForMicrophone() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
             Snackbar.make(coordinatorLayout,
@@ -641,19 +620,21 @@ public class VoiceActivity extends AppCompatActivity {
          * Check if microphone permissions is granted
          */
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (checkPermissionForMicrophoneAndBluetooth()) {
-                registerForCallInvites();
-            } else {
+            if (!hasPermissions(this, Manifest.permission.RECORD_AUDIO, Manifest.permission.BLUETOOTH_CONNECT)) {
                 Snackbar.make(coordinatorLayout,
                         "Microphone &  BLUETOOTH_CONNECT permissions needed. Please allow in your application settings.",
                         Snackbar.LENGTH_LONG).show();
+            } else {
+                startAudioSwitch();
+                registerForCallInvites();
             }
         } else {
-            if (hasPermissions(this, Manifest.permission.RECORD_AUDIO)) {
+            if (!hasPermissions(this, Manifest.permission.RECORD_AUDIO)) {
                 Snackbar.make(coordinatorLayout,
                         "Microphone permissions needed. Please allow in your application settings.",
                         Snackbar.LENGTH_LONG).show();
             } else {
+                startAudioSwitch();
                 registerForCallInvites();
             }
         }
@@ -766,5 +747,16 @@ public class VoiceActivity extends AppCompatActivity {
                 .getLifecycle()
                 .getCurrentState()
                 .isAtLeast(Lifecycle.State.STARTED);
+    }
+
+    private void startAudioSwitch() {
+        /*
+         * Start the audio device selector after the menu is created and update the icon when the
+         * selected audio device changes.
+         */
+        audioSwitch.start((audioDevices, audioDevice) -> {
+            updateAudioDeviceIcon(audioDevice);
+            return Unit.INSTANCE;
+        });
     }
 }
