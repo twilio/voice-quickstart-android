@@ -665,17 +665,6 @@ public class VoiceActivity extends AppCompatActivity {
         inflater.inflate(R.menu.menu, menu);
         audioDeviceMenuItem = menu.findItem(R.id.menu_audio_device);
 
-        /*
-         * Start the audio device selector after the menu is created and update the icon when the
-         * selected audio device changes.
-
-        audioSwitch.start((audioDevices, audioDevice) -> {
-            updateAudioDeviceIcon(audioDevice);
-            return Unit.INSTANCE;
-        });
-
-         */
-
         return true;
     }
 
