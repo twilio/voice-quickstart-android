@@ -617,14 +617,24 @@ public class VoiceActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         /*
-         * Check if microphone permissions is granted
+         * Check if required permissions are granted
          */
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (!hasPermissions(this, Manifest.permission.RECORD_AUDIO, Manifest.permission.BLUETOOTH_CONNECT)) {
+            if (!hasPermissions(this, Manifest.permission.RECORD_AUDIO)) {
                 Snackbar.make(coordinatorLayout,
-                        "Microphone &  BLUETOOTH_CONNECT permissions needed. Please allow in your application settings.",
+                        "Microphone permission needed. Please allow in your application settings.",
                         Snackbar.LENGTH_LONG).show();
             } else {
+                if (!hasPermissions(this, Manifest.permission.BLUETOOTH_CONNECT)) {
+                    Snackbar.make(coordinatorLayout,
+                            "Without bluetooth permission app will fail to use bluetooth.",
+                            Snackbar.LENGTH_LONG).show();
+                }
+                /*
+                 * Due to bluetooth permissions being requested at the same time as mic
+                 * permissions, AudioSwitch should be started after providing the user the option
+                 * to grant the necessary permissions for bluetooth.
+                 */
                 startAudioSwitch();
                 registerForCallInvites();
             }
