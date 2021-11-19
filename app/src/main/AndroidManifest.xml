@@ -10,7 +10,8 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".VoiceActivity">
+        <activity android:name=".VoiceActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -19,7 +20,8 @@
 
         <service
             android:enabled="true"
-            android:name=".IncomingCallNotificationService">
+            android:name=".IncomingCallNotificationService"
+            android:exported="false">
             <intent-filter>
                 <action android:name="ACTION_ACCEPT" />
                 <action android:name="ACTION_REJECT" />
@@ -29,7 +31,8 @@
         <!-- [START fcm_listener] -->
         <service
             android:name=".fcm.VoiceFirebaseMessagingService"
-            android:stopWithTask="false">
+            android:stopWithTask="false"
+            android:exported="false">
             <intent-filter>
 
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
