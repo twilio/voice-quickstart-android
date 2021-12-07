@@ -1,5 +1,7 @@
 package com.twilio.voice.quickstart;
 
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -52,13 +54,11 @@ import com.twilio.voice.Voice;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import kotlin.Unit;
-
-import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 public class VoiceActivity extends AppCompatActivity {
 
