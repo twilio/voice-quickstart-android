@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
+import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ProcessLifecycleOwner;
@@ -90,6 +91,7 @@ public class IncomingCallNotificationService extends Service {
                     .setExtras(extras)
                     .setContentIntent(pendingIntent)
                     .setGroup("test_app_notification")
+                    .setCategory(Notification.CATEGORY_CALL)
                     .setColor(Color.rgb(214, 10, 37)).build();
         }
     }
@@ -111,13 +113,14 @@ public class IncomingCallNotificationService extends Service {
         rejectIntent.setAction(Constants.ACTION_REJECT);
         rejectIntent.putExtra(Constants.INCOMING_CALL_INVITE, callInvite);
         rejectIntent.putExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, notificationId);
-        PendingIntent piRejectIntent = PendingIntent.getService(getApplicationContext(), 0, rejectIntent, PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent piRejectIntent = PendingIntent.getService(getApplicationContext(), notificationId, rejectIntent, PendingIntent.FLAG_IMMUTABLE);
 
-        Intent acceptIntent = new Intent(getApplicationContext(), IncomingCallNotificationService.class);
+        Intent acceptIntent = new Intent(getApplicationContext(), VoiceActivity.class);
         acceptIntent.setAction(Constants.ACTION_ACCEPT);
         acceptIntent.putExtra(Constants.INCOMING_CALL_INVITE, callInvite);
         acceptIntent.putExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, notificationId);
-        PendingIntent piAcceptIntent = PendingIntent.getService(getApplicationContext(), 0, acceptIntent, PendingIntent.FLAG_IMMUTABLE);
+        acceptIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent piAcceptIntent = PendingIntent.getActivity(getApplicationContext(), notificationId, acceptIntent, PendingIntent.FLAG_IMMUTABLE);
 
         Notification.Builder builder =
                 new Notification.Builder(getApplicationContext(), channelId)
