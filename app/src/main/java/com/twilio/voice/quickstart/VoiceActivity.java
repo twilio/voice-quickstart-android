@@ -536,6 +536,7 @@ public class VoiceActivity extends AppCompatActivity {
         SoundPoolManager.getInstance(this).stopRinging();
         activeCallInvite.accept(this, callListener);
         notificationManager.cancel(activeCallNotificationId);
+        stopService(new Intent(getApplicationContext(), IncomingCallNotificationService.class));
         setCallUI();
         if (alertDialog != null && alertDialog.isShowing()) {
             alertDialog.dismiss();
