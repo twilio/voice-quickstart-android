@@ -341,6 +341,7 @@ public class VoiceActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         registerReceiver();
+        startAudioSwitch();
     }
 
     @Override
@@ -535,6 +536,7 @@ public class VoiceActivity extends AppCompatActivity {
         SoundPoolManager.getInstance(this).stopRinging();
         activeCallInvite.accept(this, callListener);
         notificationManager.cancel(activeCallNotificationId);
+        stopService(new Intent(getApplicationContext(), IncomingCallNotificationService.class));
         setCallUI();
         if (alertDialog != null && alertDialog.isShowing()) {
             alertDialog.dismiss();
@@ -713,7 +715,9 @@ public class VoiceActivity extends AppCompatActivity {
             audioDeviceMenuIcon = R.drawable.ic_volume_up_white_24dp;
         }
 
-        audioDeviceMenuItem.setIcon(audioDeviceMenuIcon);
+        if (audioDeviceMenuItem != null) {
+            audioDeviceMenuItem.setIcon(audioDeviceMenuIcon);
+        }
     }
 
     private static AlertDialog createCallDialog(final DialogInterface.OnClickListener callClickListener,
@@ -765,6 +769,7 @@ public class VoiceActivity extends AppCompatActivity {
          * selected audio device changes.
          */
         audioSwitch.start((audioDevices, audioDevice) -> {
+            Log.d(TAG, "Updating AudioDeviceIcon");
             updateAudioDeviceIcon(audioDevice);
             return Unit.INSTANCE;
         });
