@@ -10,6 +10,7 @@
 ## References
 - [Access Tokens](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/access-token.md) - Using access tokens
 - [Managing Push Credentials](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/manage-push-credentials.md) - Managing Push Credentials
+- [Managing Regional Push Credentials using Notify Credential Resource API](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/push-credentials-via-notify-api.md) - Create or update push credentials for regional usage
 - [Troubleshooting](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/troubleshooting.md) - Troubleshooting
 - [More Documentation](#more-documentation) - More documentation related to the Voice Android SDK
 - [Emulator Support](#emulator-support) - Android emulator support
