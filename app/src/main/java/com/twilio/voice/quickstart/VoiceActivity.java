@@ -40,7 +40,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
-import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.twilio.audioswitch.AudioDevice;
 import com.twilio.audioswitch.AudioSwitch;
 import com.twilio.voice.Call;
@@ -56,6 +56,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 
 import kotlin.Unit;
@@ -498,11 +499,17 @@ public class VoiceActivity extends AppCompatActivity {
      * Register your FCM token with Twilio to receive incoming call invites
      */
     private void registerForCallInvites() {
-        FirebaseInstanceId.getInstance().getInstanceId().addOnSuccessListener(this, instanceIdResult -> {
-            String fcmToken = instanceIdResult.getToken();
-            Log.i(TAG, "Registering with FCM");
-            Voice.register(accessToken, Voice.RegistrationChannel.FCM, fcmToken, registrationListener);
-        });
+        FirebaseMessaging.getInstance ().getToken ()
+                .addOnCompleteListener ( task -> {
+                    if (!task.isSuccessful ()) {
+                        return;
+                    }
+                    if (null != task.getResult ()) {
+                        String fcmToken = Objects.requireNonNull ( task.getResult () );
+                        Log.i(TAG, "Registering with FCM");
+                        Voice.register(accessToken, Voice.RegistrationChannel.FCM, fcmToken, registrationListener);
+                    }
+                } );
     }
 
     private View.OnClickListener callActionFabClickListener() {
