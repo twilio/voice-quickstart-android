@@ -499,17 +499,17 @@ public class VoiceActivity extends AppCompatActivity {
      * Register your FCM token with Twilio to receive incoming call invites
      */
     private void registerForCallInvites() {
-        FirebaseMessaging.getInstance ().getToken ()
-                .addOnCompleteListener ( task -> {
-                    if (!task.isSuccessful ()) {
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) {
                         return;
                     }
-                    if (null != task.getResult ()) {
-                        String fcmToken = Objects.requireNonNull ( task.getResult () );
+                    if (null != task.getResult()) {
+                        String fcmToken = Objects.requireNonNull(task.getResult());
                         Log.i(TAG, "Registering with FCM");
                         Voice.register(accessToken, Voice.RegistrationChannel.FCM, fcmToken, registrationListener);
                     }
-                } );
+                });
     }
 
     private View.OnClickListener callActionFabClickListener() {
