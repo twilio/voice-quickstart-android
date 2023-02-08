@@ -13,7 +13,9 @@ This diagram describes how **exampleCustomAudioDevice** uses `AudioDevice` to re
 
 ### Setup
 
-Refer to the [README](https://github.com/twilio/voice-quickstart-android/blob/master/README.md) for instructions on how to generate an access token and make an outbound `Call`.
+Refer to the [README](https://github.com/twilio/voice-quickstart-android/blob/master/README.md) for instructions on how to generate an access token and make an outbound `Call`. 
+In [step 6](https://github.com/twilio/voice-quickstart-android#6-run-the-app), update the placeholder of `accessToken` with access token string you copied in `CustomDeviceActivity.java`.
+
 
 ### Running
 
