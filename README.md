@@ -222,7 +222,7 @@ Enter a PSTN number and press the call button to place a call.
 ## Examples
 In addition to the quickstart we've also added an example that shows how to create and customize media experience in your app:
 
-- [Custom Audio Device](exampleCustomAudioDevice) - Demonstrates how to use Twilio's Programmable Voice SDK with audio playback and recording functionality provided by a custom `AudioDevice`. 
+- [Custom Audio Device](https://github.com/twilio/voice-quickstart-android/tree/master/exampleCustomAudioDevice) - Demonstrates how to use Twilio's Programmable Voice SDK with audio playback and recording functionality provided by a custom `AudioDevice`. 
 
 ## More Documentation
 
