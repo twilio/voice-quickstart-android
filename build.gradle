@@ -13,13 +13,13 @@ buildscript {
             'material'           : '1.4.0',
             'firebase'           : '17.6.0',
             'voiceAndroid'       : '6.1.2',
-            'audioSwitch'        : '1.1.4',
+            'audioSwitch'        : '1.1.7',
             'androidxLifecycle'  : '2.2.0',
             'junit'              : '1.1.1'
     ]
 
     repositories {
-        jcenter()
+        mavenCentral()
         google()
     }
     dependencies {
