@@ -66,7 +66,7 @@ public class VoiceActivity extends AppCompatActivity {
     private static final String TAG = "VoiceActivity";
     private static final int MIC_PERMISSION_REQUEST_CODE = 1;
     private static final int PERMISSIONS_REQUEST_CODE = 100;
-    private String accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJqdGkiOiJTSzhiNTk4YTUyNGNiOThlNzdiMTdiMmZmN2Y5NmJmNWE5LTE2ODAyOTcxMDUiLCJncmFudHMiOnsiaWRlbnRpdHkiOiJhbGljZSIsInZvaWNlIjp7ImluY29taW5nIjp7ImFsbG93Ijp0cnVlfSwib3V0Z29pbmciOnsiYXBwbGljYXRpb25fc2lkIjoiQVBiNDY5YzU2NDJjMjBmNmM2NjVmNjcyNzMzNDdiOTY5MiJ9LCJwdXNoX2NyZWRlbnRpYWxfc2lkIjoiQ1I4NjA0YjlkZmFjZmYwMWU5MTc5YWM5NzUwNTdmYjkxMSJ9fSwiaWF0IjoxNjgwMjk3MTA1LCJleHAiOjE2ODAzMDA3MDUsImlzcyI6IlNLOGI1OThhNTI0Y2I5OGU3N2IxN2IyZmY3Zjk2YmY1YTkiLCJzdWIiOiJBQzE0OGI2ZjkwNjgwMWZmZTYzMmEzMDEyYjlhMjg3ZWU4In0.u7Qe3G1U5cv2rxyx0iaYlNVel3vNV_yCTMg6E1VZPKQ";
+    private String accessToken = "PASTE_YOUR_ACCESS_TOKEN_HERE";
 
     /*
      * Audio device management
