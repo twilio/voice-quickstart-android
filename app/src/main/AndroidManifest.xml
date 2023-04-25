@@ -17,7 +17,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
+        <activity
+            android:name=".NotificationProxyActivity"
+            android:parentActivityName=".VoiceActivity"
+            android:noHistory="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="singleTask"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:exported="true" />
         <service
             android:enabled="true"
             android:name=".IncomingCallNotificationService"
@@ -34,7 +42,6 @@
             android:stopWithTask="false"
             android:exported="false">
             <intent-filter>
-
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
