@@ -1,6 +1,7 @@
 apply plugin: 'com.android.application'
 
 android {
+    namespace 'com.twilio.examplecustomaudiodevice'
     compileSdkVersion versions.compileSdk
     buildToolsVersion versions.buildTools
 
