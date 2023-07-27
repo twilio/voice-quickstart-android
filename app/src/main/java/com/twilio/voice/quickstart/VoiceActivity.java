@@ -1,7 +1,6 @@
 package com.twilio.voice.quickstart;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.NotificationManager;
@@ -15,6 +14,7 @@ import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.media.AudioManager;
 import android.os.Build;
+import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.util.Log;
@@ -42,10 +42,9 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.koushikdutta.ion.Ion;
-import com.twilio.audioswitch.selection.AudioDevice;
-import com.twilio.audioswitch.selection.AudioDeviceSelector;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.twilio.audioswitch.AudioDevice;
+import com.twilio.audioswitch.AudioSwitch;
 import com.twilio.voice.Call;
 import com.twilio.voice.CallException;
 import com.twilio.voice.CallInvite;
@@ -60,27 +59,17 @@ import android.telecom.TelecomManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Set;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.Set;
 
 import kotlin.Unit;
 
 public class VoiceActivity extends AppCompatActivity {
 
     private static final String TAG = "VoiceActivity";
-    private static final String identity = "alice";
-    /*
-     * You must provide the URL to the publicly accessible Twilio access token server route
-     *
-     * For example: https://myurl.io/accessToken
-     *
-     * If your token server is written in PHP, TWILIO_ACCESS_TOKEN_SERVER_URL needs .php extension at the end.
-     *
-     * For example : https://myurl.io/accessToken.php
-     */
-    private static final String TWILIO_ACCESS_TOKEN_SERVER_URL = "TWILIO_ACCESS_TOKEN_SERVER_URL";
-
     public static final String OUTGOING_CALL_ADDRESS = "OUTGOING_CALL_ADDRESS";
     public static final String ACTION_OUTGOING_CALL = "ACTION_OUTGOING_CALL";
     public static final String ACTION_DISCONNECT_CALL = "ACTION_DISCONNECT_CALL";
@@ -88,19 +77,19 @@ public class VoiceActivity extends AppCompatActivity {
     public static final String DTMF = "DTMF";
     public static final String CALLEE = "to";
     public static final String CALLER = "from";
-
-    private static final int MIC_PERMISSION_REQUEST_CODE = 1;
     private static final int CALL_PHONE_CODE = 2;
     private static final int SNACKBAR_DURATION = 4000;
-    int PERMISSION_ALL = 1;
-    String[] PERMISSIONS = {Manifest.permission.RECORD_AUDIO, Manifest.permission.CALL_PHONE};
 
-    private String accessToken;
+    private static final int MIC_PERMISSION_REQUEST_CODE = 1;
+    private static final int PERMISSIONS_REQUEST_CODE = 100;
+    private static final int PERMISSIONS_ALL = 1;
+    private String accessToken = "PASTE_YOUR_ACCESS_TOKEN_HERE";
+
 
     /*
      * Audio device management
      */
-    private AudioDeviceSelector audioDeviceSelector;
+    private AudioSwitch audioSwitch;
     private int savedVolumeControlStream;
     private MenuItem audioDeviceMenuItem;
 
@@ -170,13 +159,6 @@ public class VoiceActivity extends AppCompatActivity {
         registerReceiver();
 
         /*
-         * Setup audio device management and set the volume control stream
-         */
-        audioDeviceSelector = new AudioDeviceSelector(getApplicationContext());
-        savedVolumeControlStream = getVolumeControlStream();
-        setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
-
-        /*
          * Setup the UI
          */
         resetUI();
@@ -187,20 +169,40 @@ public class VoiceActivity extends AppCompatActivity {
         handleIncomingCallIntent(getIntent());
 
         /*
-         * Ensure the microphone and CALL_PHONE permissions are enabled
+         * Ensure required permissions are enabled
          */
-        if (!hasPermissions(this, PERMISSIONS)) {
-            ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
+        String[] PERMISSIONS;
+        if (Build.VERSION.SDK_INT > VERSION_CODES.R) {
+            PERMISSIONS = new String[]{
+                    Manifest.permission.RECORD_AUDIO,
+                    Manifest.permission.BLUETOOTH_CONNECT,
+                    Manifest.permission.CALL_PHONE};
         } else {
-            retrieveAccessToken();
+            PERMISSIONS = new String[]{
+                    Manifest.permission.RECORD_AUDIO,
+                    Manifest.permission.CALL_PHONE};
         }
+        if (!hasPermissions(this, PERMISSIONS)) {
+            ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSIONS_ALL);
+        } else {
+            registerForCallInvites();
+        }
+
+
+        /*
+         * Setup audio device management and set the volume control stream
+         */
+        audioSwitch = new AudioSwitch(getApplicationContext());
+        savedVolumeControlStream = getVolumeControlStream();
+        setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     void setupPhoneAccount() {
         String appName = this.getString(R.string.connection_service_name);
         handle = new PhoneAccountHandle(new ComponentName(this.getApplicationContext(), VoiceConnectionService.class), appName);
-        telecomManager = (TelecomManager) this.getApplicationContext().getSystemService(this.getApplicationContext().TELECOM_SERVICE);
+        this.getApplicationContext();
+        telecomManager = (TelecomManager) this.getApplicationContext().getSystemService(TELECOM_SERVICE);
         phoneAccount = new PhoneAccount.Builder(handle, appName)
                 .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER)
                 .build();
@@ -268,7 +270,7 @@ public class VoiceActivity extends AppCompatActivity {
 
             @Override
             public void onConnectFailure(@NonNull Call call, @NonNull CallException error) {
-                audioDeviceSelector.deactivate();
+                audioSwitch.deactivate();
                 if (BuildConfig.playCustomRingback) {
                     SoundPoolManager.getInstance(VoiceActivity.this).stopRinging();
                 }
@@ -285,7 +287,7 @@ public class VoiceActivity extends AppCompatActivity {
 
             @Override
             public void onConnected(@NonNull Call call) {
-                audioDeviceSelector.activate();
+                audioSwitch.activate();
                 if (BuildConfig.playCustomRingback) {
                     SoundPoolManager.getInstance(VoiceActivity.this).stopRinging();
                 }
@@ -305,7 +307,7 @@ public class VoiceActivity extends AppCompatActivity {
 
             @Override
             public void onDisconnected(@NonNull Call call, CallException error) {
-                audioDeviceSelector.deactivate();
+                audioSwitch.deactivate();
                 if (BuildConfig.playCustomRingback) {
                     SoundPoolManager.getInstance(VoiceActivity.this).stopRinging();
                 }
@@ -333,10 +335,16 @@ public class VoiceActivity extends AppCompatActivity {
              * Newly cleared warnings = previousWarnings - intersection = { C }
              */
             public void onCallQualityWarningsChanged(@NonNull Call call,
-                                              @NonNull Set<Call.CallQualityWarning> currentWarnings,
-                                              @NonNull Set<Call.CallQualityWarning> previousWarnings) {
-                currentWarnings.retainAll(previousWarnings);
-                previousWarnings.removeAll(currentWarnings);
+                                                     @NonNull Set<Call.CallQualityWarning> currentWarnings,
+                                                     @NonNull Set<Call.CallQualityWarning> previousWarnings) {
+
+                if (previousWarnings.size() > 1) {
+                    Set<Call.CallQualityWarning> intersection = new HashSet<>(currentWarnings);
+                    currentWarnings.removeAll(previousWarnings);
+                    intersection.retainAll(previousWarnings);
+                    previousWarnings.removeAll(intersection);
+                }
+
                 String message = String.format(
                         Locale.US,
                         "Newly raised warnings: " + currentWarnings + " Clear warnings " + previousWarnings);
@@ -378,6 +386,7 @@ public class VoiceActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         registerReceiver();
+        startAudioSwitch();
     }
 
     @Override
@@ -391,7 +400,7 @@ public class VoiceActivity extends AppCompatActivity {
         /*
          * Tear down audio device management and restore previous volume stream
          */
-        audioDeviceSelector.stop();
+        audioSwitch.stop();
         setVolumeControlStream(savedVolumeControlStream);
         SoundPoolManager.getInstance(this).release();
         super.onDestroy();
@@ -415,7 +424,7 @@ public class VoiceActivity extends AppCompatActivity {
                     handleCancel();
                     break;
                 case Constants.ACTION_FCM_TOKEN:
-                    retrieveAccessToken();
+                    registerForCallInvites();
                     break;
                 case Constants.ACTION_ACCEPT:
                     answer();
@@ -428,23 +437,13 @@ public class VoiceActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void handleIncomingCall() {
-        Log.d(TAG, "incoming");
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT < VERSION_CODES.O) {
             showIncomingCallDialog();
         } else {
             if (isAppVisible()) {
                 showIncomingCallDialog();
             }
         }
-
-        /*q
-        Bundle extras = new Bundle();
-        Uri uri = Uri.fromParts(PhoneAccount.SCHEME_TEL, activeCallInvite.getFrom(), null);
-        extras.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, uri);
-        extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, handle);
-        telecomManager.addNewIncomingCall(handle, extras);
-
-         */
     }
 
     private void handleCancel() {
@@ -599,11 +598,17 @@ public class VoiceActivity extends AppCompatActivity {
      * Register your FCM token with Twilio to receive incoming call invites
      */
     private void registerForCallInvites() {
-        FirebaseInstanceId.getInstance().getInstanceId().addOnSuccessListener(this, instanceIdResult -> {
-            String fcmToken = instanceIdResult.getToken();
-            Log.i(TAG, "Registering with FCM");
-            Voice.register(accessToken, Voice.RegistrationChannel.FCM, fcmToken, registrationListener);
-        });
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) {
+                        return;
+                    }
+                    if (null != task.getResult()) {
+                        String fcmToken = Objects.requireNonNull(task.getResult());
+                        Log.i(TAG, "Registering with FCM");
+                        Voice.register(accessToken, Voice.RegistrationChannel.FCM, fcmToken, registrationListener);
+                    }
+                });
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -625,8 +630,6 @@ public class VoiceActivity extends AppCompatActivity {
 
     private View.OnClickListener holdActionFabClickListener() {
         return v -> hold();
-        // Tried explicitly requesting audio focus and it did not make a difference
-        //return v -> requestAudioFocus();
     }
 
     private View.OnClickListener muteActionFabClickListener() {
@@ -640,6 +643,7 @@ public class VoiceActivity extends AppCompatActivity {
         SoundPoolManager.getInstance(this).stopRinging();
         activeCallInvite.accept(this, callListener);
         notificationManager.cancel(activeCallNotificationId);
+        stopService(new Intent(getApplicationContext(), IncomingCallNotificationService.class));
         setCallUI();
         if (alertDialog != null && alertDialog.isShowing()) {
             alertDialog.dismiss();
@@ -662,12 +666,6 @@ public class VoiceActivity extends AppCompatActivity {
            activeCall.hold(hold);
            applyFabState(holdActionFab, hold);
 
-        }
-    }
-
-    private void requestAudioFocus() {
-        if (activeCall != null) {
-            audioDeviceSelector.activate();
         }
     }
 
@@ -700,28 +698,54 @@ public class VoiceActivity extends AppCompatActivity {
         return true;
     }
 
-    @SuppressLint("WrongConstant")
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         /*
-         * Check if microphone permissions is granted
+         * Check if required permissions are granted
          */
-        if (requestCode == MIC_PERMISSION_REQUEST_CODE && permissions.length > 0) {
-            if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (!hasPermissions(this, Manifest.permission.CALL_PHONE)) {
+                Snackbar.make(coordinatorLayout,
+                        "Call Phone permission needed. Please allow in your application settings.",
+                        Snackbar.LENGTH_LONG).show();
+            }
+            if (!hasPermissions(this, Manifest.permission.BLUETOOTH_CONNECT)) {
+                Snackbar.make(coordinatorLayout,
+                        "Without bluetooth permission app will fail to use bluetooth.",
+                        Snackbar.LENGTH_LONG).show();
+            }
+            if (!hasPermissions(this, Manifest.permission.RECORD_AUDIO)) {
+                Snackbar.make(coordinatorLayout,
+                        "Microphone permission needed. Please allow in your application settings.",
+                        Snackbar.LENGTH_LONG).show();
+            } else {
+                /*
+                 * Due to bluetooth permissions being requested at the same time as mic
+                 * permissions, AudioSwitch should be started after providing the user the option
+                 * to grant the necessary permissions for bluetooth.
+                 */
+                startAudioSwitch();
+                registerForCallInvites();
+            }
+        } else {
+            if (!hasPermissions(this, Manifest.permission.CALL_PHONE)) {
+                Snackbar.make(coordinatorLayout,
+                        "Call Phone permission needed. Please allow in your application settings.",
+                        Snackbar.LENGTH_LONG).show();
+            }
+            if (!hasPermissions(this, Manifest.permission.RECORD_AUDIO)) {
                 Snackbar.make(coordinatorLayout,
                         "Microphone permissions needed. Please allow in your application settings.",
-                        SNACKBAR_DURATION).show();
+                        Snackbar.LENGTH_LONG).show();
+            } else {
+                /*
+                 * Due to bluetooth permissions being requested at the same time as mic
+                 * permissions, AudioSwitch should be started after providing the user the option
+                 * to grant the necessary permissions for bluetooth.
+                 */
+                startAudioSwitch();
+                registerForCallInvites();
             }
-        } else if (requestCode == CALL_PHONE_CODE && permissions.length > 0) {
-            if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                Snackbar.make(coordinatorLayout,
-                        "CALL_PHONE permissions needed. Please allow in your application settings.",
-                        SNACKBAR_DURATION).show();
-            }
-        }
-
-        if (hasPermissions(this, PERMISSIONS)) {
-            retrieveAccessToken();
         }
     }
 
@@ -730,15 +754,6 @@ public class VoiceActivity extends AppCompatActivity {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu, menu);
         audioDeviceMenuItem = menu.findItem(R.id.menu_audio_device);
-
-        /*
-         * Start the audio device selector after the menu is created and update the icon when the
-         * selected audio device changes.
-         */
-        audioDeviceSelector.start((audioDevices, audioDevice) -> {
-            updateAudioDeviceIcon(audioDevice);
-            return Unit.INSTANCE;
-        });
 
         return true;
     }
@@ -756,8 +771,8 @@ public class VoiceActivity extends AppCompatActivity {
      * Show the current available audio devices.
      */
     private void showAudioDevices() {
-        AudioDevice selectedDevice = audioDeviceSelector.getSelectedAudioDevice();
-        List<AudioDevice> availableAudioDevices = audioDeviceSelector.getAvailableAudioDevices();
+        AudioDevice selectedDevice = audioSwitch.getSelectedAudioDevice();
+        List<AudioDevice> availableAudioDevices = audioSwitch.getAvailableAudioDevices();
 
         if (selectedDevice != null) {
             int selectedDeviceIndex = availableAudioDevices.indexOf(selectedDevice);
@@ -776,7 +791,7 @@ public class VoiceActivity extends AppCompatActivity {
                                 dialog.dismiss();
                                 AudioDevice selectedAudioDevice = availableAudioDevices.get(index);
                                 updateAudioDeviceIcon(selectedAudioDevice);
-                                audioDeviceSelector.selectDevice(selectedAudioDevice);
+                                audioSwitch.selectDevice(selectedAudioDevice);
                             }).create().show();
         }
     }
@@ -797,7 +812,9 @@ public class VoiceActivity extends AppCompatActivity {
             audioDeviceMenuIcon = R.drawable.ic_volume_up_white_24dp;
         }
 
-        audioDeviceMenuItem.setIcon(audioDeviceMenuIcon);
+        if (audioDeviceMenuItem != null) {
+            audioDeviceMenuItem.setIcon(audioDeviceMenuIcon);
+        }
     }
 
     private static AlertDialog createCallDialog(final DialogInterface.OnClickListener callClickListener,
@@ -843,23 +860,15 @@ public class VoiceActivity extends AppCompatActivity {
                 .isAtLeast(Lifecycle.State.STARTED);
     }
 
-    /*
-     * Get an access token from your Twilio access token server
-     */
-    private void retrieveAccessToken() {
-
-        Ion.with(this).load(TWILIO_ACCESS_TOKEN_SERVER_URL + "?identity=" + identity)
-                .asString()
-                .setCallback((e, accessToken) -> {
-                    if (e == null) {
-                        Log.d(TAG, "Access token: " + accessToken);
-                        VoiceActivity.this.accessToken = accessToken;
-                        registerForCallInvites();
-                    } else {
-                        Snackbar.make(coordinatorLayout,
-                                "Error retrieving access token. Unable to make calls",
-                                Snackbar.LENGTH_LONG).show();
-                    }
-                });
+    private void startAudioSwitch() {
+        /*
+         * Start the audio device selector after the menu is created and update the icon when the
+         * selected audio device changes.
+         */
+        audioSwitch.start((audioDevices, audioDevice) -> {
+            Log.d(TAG, "Updating AudioDeviceIcon");
+            updateAudioDeviceIcon(audioDevice);
+            return Unit.INSTANCE;
+        });
     }
 }

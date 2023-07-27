@@ -1,17 +1,30 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
+
+    ext.versions = [
+            'java'               : JavaVersion.VERSION_11,
+            'androidGradlePlugin': '8.0.2',
+            'googleServices'     : '4.3.14',
+            'compileSdk'         : 31,
+            'buildTools'         : '34.0.0',
+            'minSdk'             : 21,
+            'targetSdk'          : 31,
+            'material'           : '1.4.0',
+            'firebase'           : '23.1.2',
+            'voiceAndroid'       : '6.2.1',
+            'audioSwitch'        : '1.1.8',
+            'androidxLifecycle'  : '2.2.0',
+            'junit'              : '1.1.5'
+    ]
+
     repositories {
-        jcenter()
-        maven {
-            url 'https://maven.google.com/'
-            name 'Google'
-        }
+        mavenCentral()
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.0.0'
-        classpath 'com.google.gms:google-services:4.2.0'
+        classpath "com.android.tools.build:gradle:${versions.androidGradlePlugin}"
+        classpath "com.google.gms:google-services:${versions.googleServices}"
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -21,12 +34,7 @@ buildscript {
 allprojects {
     repositories {
         google()
-        jcenter()
         mavenCentral()
-        maven {
-            url 'https://maven.google.com/'
-            name 'Google'
-        }
     }
 }
 

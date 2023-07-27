@@ -4,13 +4,6 @@
 -dontwarn tvo.webrtc.**
 -keep class com.twilio.voice.** { *; }
 -keepattributes InnerClasses
-
-# Retrofit
--dontwarn okio.**
--dontwarn retrofit.**
--keep class retrofit.** { *; }
--keepclassmembers,allowobfuscation interface * {
-    @retrofit.http.** <methods>;
-}
-
--dontwarn com.squareup.okhttp.**
+# needed with AGP 8.x
+-dontwarn android.content.pm.PackageManager$ApplicationInfoFlags
+-dontwarn android.content.pm.PackageManager$PackageInfoFlags
