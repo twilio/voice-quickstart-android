@@ -7,7 +7,7 @@ exports.handler = function(context, event, callback) {
 
   const client = context.getTwilioClient();
 
-  var to = event.to;
+  var to =  (event.to) ? event.to : event.To;
   if (!to) {
     client.calls.create({
       url: url,
