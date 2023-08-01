@@ -4,7 +4,7 @@ const callerId = 'client:alice';
 exports.handler = function(context, event, callback) {
   const twiml = new Twilio.twiml.VoiceResponse();
 
-  var to = event.to;
+  var to =  (event.to) ? event.to : event.To;
   if (!to) {
   	twiml.say('Congratulations! You have made your first call! Good bye.');
   } else if (isNumber(to)) {
