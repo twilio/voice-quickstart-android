@@ -46,7 +46,8 @@ public class VoiceConnectionService extends ConnectionService {
     }
 
     @Override
-    public Connection onCreateOutgoingConnection(PhoneAccountHandle connectionManagerPhoneAccount, ConnectionRequest request) {
+    public Connection onCreateOutgoingConnection(PhoneAccountHandle connectionManagerPhoneAccount,
+                                                 ConnectionRequest request) {
         Connection outgoingCallConnection = createConnection(request);
         outgoingCallConnection.setDialing();
         return outgoingCallConnection;
@@ -59,12 +60,7 @@ public class VoiceConnectionService extends ConnectionService {
             public void onStateChanged(int state) {
                 if (state == Connection.STATE_DIALING) {
                     final Handler handler = new Handler();
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            sendCallRequestToActivity(ACTION_OUTGOING_CALL);
-                        }
-                    });
+                    handler.post(() -> sendCallRequestToActivity(ACTION_OUTGOING_CALL));
                 }
             }
 
@@ -80,12 +76,7 @@ public class VoiceConnectionService extends ConnectionService {
                 extras.putString(DTMF, Character.toString(c));
                 connection.setExtras(extras);
                 final Handler handler = new Handler();
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        sendCallRequestToActivity(ACTION_DTMF_SEND);
-                    }
-                });
+                handler.post(() -> sendCallRequestToActivity(ACTION_DTMF_SEND));
             }
 
             @Override
@@ -95,12 +86,7 @@ public class VoiceConnectionService extends ConnectionService {
                 connection.destroy();
                 connection = null;
                 final Handler handler = new Handler();
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        sendCallRequestToActivity(ACTION_DISCONNECT_CALL);
-                    }
-                });
+                handler.post(() -> sendCallRequestToActivity(ACTION_DISCONNECT_CALL));
             }
 
             @Override
@@ -133,10 +119,12 @@ public class VoiceConnectionService extends ConnectionService {
             }
         };
         connection.setConnectionCapabilities(Connection.CAPABILITY_MUTE);
-        if (request.getExtras().getString(CALLEE) == null) {
-            connection.setAddress(request.getAddress(), TelecomManager.PRESENTATION_ALLOWED);
-        } else {
-            connection.setAddress(Uri.parse(request.getExtras().getString(CALLEE)), TelecomManager.PRESENTATION_ALLOWED);
+        final Uri callee = (request.getExtras().getString(CALLEE) == null)
+                ? request.getAddress()
+                : Uri.parse(request.getExtras().getString(CALLEE));
+        connection.setAddress(callee, TelecomManager.PRESENTATION_ALLOWED);
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            connection.setConnectionProperties(Connection.PROPERTY_SELF_MANAGED);
         }
         connection.setDialing();
         connection.setExtras(request.getExtras());

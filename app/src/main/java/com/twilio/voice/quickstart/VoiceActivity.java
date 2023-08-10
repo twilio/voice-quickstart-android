@@ -3,6 +3,7 @@ package com.twilio.voice.quickstart;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Application;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -17,6 +18,8 @@ import android.os.Build;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.telecom.DisconnectCause;
+import android.telecom.VideoProfile;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -77,6 +80,7 @@ public class VoiceActivity extends AppCompatActivity {
     public static final String DTMF = "DTMF";
     public static final String CALLEE = "to";
     public static final String CALLER = "from";
+    public static final String VOICE_SCHEME = "voice";
     private static final int CALL_PHONE_CODE = 2;
     private static final int SNACKBAR_DURATION = 4000;
 
@@ -199,12 +203,13 @@ public class VoiceActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     void setupPhoneAccount() {
+        Context appContext = this.getApplicationContext();
         String appName = this.getString(R.string.connection_service_name);
-        handle = new PhoneAccountHandle(new ComponentName(this.getApplicationContext(), VoiceConnectionService.class), appName);
-        this.getApplicationContext();
-        telecomManager = (TelecomManager) this.getApplicationContext().getSystemService(TELECOM_SERVICE);
+        handle = new PhoneAccountHandle(new ComponentName(appContext, VoiceConnectionService.class), appName);
+        telecomManager = (TelecomManager)appContext.getSystemService(TELECOM_SERVICE);
         phoneAccount = new PhoneAccount.Builder(handle, appName)
                 .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER)
+                .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
                 .build();
         telecomManager.registerPhoneAccount(phoneAccount);
     }
@@ -270,11 +275,12 @@ public class VoiceActivity extends AppCompatActivity {
 
             @Override
             public void onConnectFailure(@NonNull Call call, @NonNull CallException error) {
+                Log.d(TAG, "Connect failure");
                 audioSwitch.deactivate();
                 if (BuildConfig.playCustomRingback) {
                     SoundPoolManager.getInstance(VoiceActivity.this).stopRinging();
                 }
-                Log.d(TAG, "Connect failure");
+                resetConnectionService();
                 String message = String.format(
                         Locale.US,
                         "Call Error: %d, %s",
@@ -307,11 +313,16 @@ public class VoiceActivity extends AppCompatActivity {
 
             @Override
             public void onDisconnected(@NonNull Call call, CallException error) {
+                Log.d(TAG, "Disconnected");
                 audioSwitch.deactivate();
                 if (BuildConfig.playCustomRingback) {
                     SoundPoolManager.getInstance(VoiceActivity.this).stopRinging();
                 }
-                Log.d(TAG, "Disconnected");
+                if (Build.VERSION.SDK_INT >= VERSION_CODES.M) {
+                    VoiceConnectionService.getConnection().setDisconnected(
+                            new DisconnectCause(DisconnectCause.UNKNOWN));
+                }
+                resetConnectionService();
                 if (error != null) {
                     String message = String.format(
                             Locale.US,
@@ -323,6 +334,7 @@ public class VoiceActivity extends AppCompatActivity {
                 }
                 resetUI();
             }
+
             /*
              * currentWarnings: existing quality warnings that have not been cleared yet
              * previousWarnings: last set of warnings prior to receiving this callback
@@ -497,24 +509,13 @@ public class VoiceActivity extends AppCompatActivity {
 
     private void handleCallRequest(Intent intent) {
         if (intent != null && intent.getAction() != null) {
-                String contact = intent.getStringExtra(VoiceActivity.OUTGOING_CALL_ADDRESS);
-                String[] contactparts = contact.split(":");
-                if (contactparts.length > 1) {
-                    params.put("To", contactparts[1]);
-                    params.put("PhoneNumber", contactparts[1]);
-                } else {
-                    params.put("To", contactparts[0]);
-                    params.put("PhoneNumber", contactparts[0]);
-                }
-                params.put("Type", "client");
-                params.put("From", "client:kumkum");
-                params.put("Mode", "Voice");
-
-                ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
+            String contact = intent.getStringExtra(VoiceActivity.OUTGOING_CALL_ADDRESS);
+            params.put("to", contact.split(":")[0]);
+            ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
                     .params(params)
                     .build();
-                activeCall = Voice.connect(VoiceActivity.this, connectOptions, callListener);
-            }
+            activeCall = Voice.connect(VoiceActivity.this, connectOptions, callListener);
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -526,11 +527,10 @@ public class VoiceActivity extends AppCompatActivity {
         Bundle callInfo = new Bundle();
         callInfo.putParcelable(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, callInfoBundle);
         callInfo.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, handle);
-        callInfo.putBoolean(TelecomManager.EXTRA_START_CALL_WITH_VIDEO_STATE, true);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
-            return;
+        callInfo.putInt(TelecomManager.EXTRA_START_CALL_WITH_VIDEO_STATE, VideoProfile.STATE_AUDIO_ONLY);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.MANAGE_OWN_CALLS) == PackageManager.PERMISSION_GRANTED) {
+            telecomManager.placeCall(uri, callInfo);
         }
-        telecomManager.placeCall(uri, callInfo);
     }
 
     private DialogInterface.OnClickListener answerCallClickListener() {
@@ -704,9 +704,9 @@ public class VoiceActivity extends AppCompatActivity {
          * Check if required permissions are granted
          */
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (!hasPermissions(this, Manifest.permission.CALL_PHONE)) {
+            if (!hasPermissions(this, Manifest.permission.MANAGE_OWN_CALLS)) {
                 Snackbar.make(coordinatorLayout,
-                        "Call Phone permission needed. Please allow in your application settings.",
+                        "Manage Own Calls permission needed. Please allow in your application settings.",
                         Snackbar.LENGTH_LONG).show();
             }
             if (!hasPermissions(this, Manifest.permission.BLUETOOTH_CONNECT)) {
@@ -728,9 +728,9 @@ public class VoiceActivity extends AppCompatActivity {
                 registerForCallInvites();
             }
         } else {
-            if (!hasPermissions(this, Manifest.permission.CALL_PHONE)) {
+            if (!hasPermissions(this, Manifest.permission.MANAGE_OWN_CALLS)) {
                 Snackbar.make(coordinatorLayout,
-                        "Call Phone permission needed. Please allow in your application settings.",
+                        "Manage Own Calls permission needed. Please allow in your application settings.",
                         Snackbar.LENGTH_LONG).show();
             }
             if (!hasPermissions(this, Manifest.permission.RECORD_AUDIO)) {
@@ -870,5 +870,14 @@ public class VoiceActivity extends AppCompatActivity {
             updateAudioDeviceIcon(audioDevice);
             return Unit.INSTANCE;
         });
+    }
+
+    private void resetConnectionService() {
+        if (Build.VERSION.SDK_INT >= VERSION_CODES.M) {
+            if (null != VoiceConnectionService.getConnection()) {
+                VoiceConnectionService.getConnection().destroy();
+                VoiceConnectionService.deinitConnection();
+            }
+        }
     }
 }
