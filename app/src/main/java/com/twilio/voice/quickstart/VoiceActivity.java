@@ -193,8 +193,8 @@ public class VoiceActivity extends AppCompatActivity {
         handle = new PhoneAccountHandle(new ComponentName(appContext, VoiceConnectionService.class), appName);
         telecomManager = (TelecomManager)appContext.getSystemService(TELECOM_SERVICE);
         phoneAccount = new PhoneAccount.Builder(handle, appName)
+                .setCapabilities(PhoneAccount.CAPABILITY_CONNECTION_MANAGER)
                 .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER)
-                .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
                 .build();
         telecomManager.registerPhoneAccount(phoneAccount);
     }
@@ -209,10 +209,7 @@ public class VoiceActivity extends AppCompatActivity {
     static private String[] providePermissions() {
         List<String> permissionsList = new Vector<>() {{
             add(Manifest.permission.RECORD_AUDIO);
-            //add(Manifest.permission.CALL_PHONE); // <- Add for different behavior
-            if (Build.VERSION.SDK_INT >= VERSION_CODES.O) {
-                add(Manifest.permission.MANAGE_OWN_CALLS);
-            }
+            add(Manifest.permission.CALL_PHONE);
             if (Build.VERSION.SDK_INT >= VERSION_CODES.S) {
                 add(Manifest.permission.BLUETOOTH_CONNECT);
             }
@@ -545,7 +542,7 @@ public class VoiceActivity extends AppCompatActivity {
         callInfo.putParcelable(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, callInfoBundle);
         callInfo.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, handle);
         callInfo.putInt(TelecomManager.EXTRA_START_CALL_WITH_VIDEO_STATE, VideoProfile.STATE_AUDIO_ONLY);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.MANAGE_OWN_CALLS) == PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) {
             telecomManager.placeCall(uri, callInfo);
         }
     }
