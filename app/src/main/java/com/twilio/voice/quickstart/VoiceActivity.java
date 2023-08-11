@@ -65,8 +65,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.Vector;
 
 import kotlin.Unit;
 
@@ -79,13 +81,6 @@ public class VoiceActivity extends AppCompatActivity {
     public static final String ACTION_DTMF_SEND = "ACTION_DTMF_SEND";
     public static final String DTMF = "DTMF";
     public static final String CALLEE = "to";
-    public static final String CALLER = "from";
-    public static final String VOICE_SCHEME = "voice";
-    private static final int CALL_PHONE_CODE = 2;
-    private static final int SNACKBAR_DURATION = 4000;
-
-    private static final int MIC_PERMISSION_REQUEST_CODE = 1;
-    private static final int PERMISSIONS_REQUEST_CODE = 100;
     private static final int PERMISSIONS_ALL = 1;
     private String accessToken = "PASTE_YOUR_ACCESS_TOKEN_HERE";
 
@@ -175,19 +170,9 @@ public class VoiceActivity extends AppCompatActivity {
         /*
          * Ensure required permissions are enabled
          */
-        String[] PERMISSIONS;
-        if (Build.VERSION.SDK_INT > VERSION_CODES.R) {
-            PERMISSIONS = new String[]{
-                    Manifest.permission.RECORD_AUDIO,
-                    Manifest.permission.BLUETOOTH_CONNECT,
-                    Manifest.permission.CALL_PHONE};
-        } else {
-            PERMISSIONS = new String[]{
-                    Manifest.permission.RECORD_AUDIO,
-                    Manifest.permission.CALL_PHONE};
-        }
-        if (!hasPermissions(this, PERMISSIONS)) {
-            ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSIONS_ALL);
+        String[] permissionsList = providePermissions();
+        if (!hasPermissions(this, permissionsList)) {
+            ActivityCompat.requestPermissions(this, permissionsList, PERMISSIONS_ALL);
         } else {
             registerForCallInvites();
         }
@@ -219,6 +204,38 @@ public class VoiceActivity extends AppCompatActivity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         handleIncomingCallIntent(intent);
+    }
+
+    static private String[] providePermissions() {
+        List<String> permissionsList = new Vector<>() {{
+            add(Manifest.permission.RECORD_AUDIO);
+            //add(Manifest.permission.CALL_PHONE); // <- Add for different behavior
+            if (Build.VERSION.SDK_INT >= VERSION_CODES.O) {
+                add(Manifest.permission.MANAGE_OWN_CALLS);
+            }
+            if (Build.VERSION.SDK_INT >= VERSION_CODES.S) {
+                add(Manifest.permission.BLUETOOTH_CONNECT);
+            }
+        }};
+        String[] list = new String[permissionsList.size()];
+        return permissionsList.toArray(list);
+    }
+
+    static private Map<String, String> providePermissionsMesageMap() {
+        return new HashMap<>() {{
+            put(Manifest.permission.RECORD_AUDIO,
+                "Audio recording permission needed. Please allow in your application settings.");
+            put(Manifest.permission.CALL_PHONE,
+                "Call phone permission needed. Please allow in your application settings.");
+            if (Build.VERSION.SDK_INT >= VERSION_CODES.O) {
+                put(Manifest.permission.MANAGE_OWN_CALLS,
+                    "Manage Own Calls permission needed. Please allow in your application settings.");
+            }
+            if (Build.VERSION.SDK_INT >= VERSION_CODES.S) {
+                put(Manifest.permission.BLUETOOTH_CONNECT,
+                    "Without bluetooth permission app will fail to use bluetooth.");
+            }
+        }};
     }
 
     private RegistrationListener registrationListener() {
@@ -700,51 +717,22 @@ public class VoiceActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        /*
-         * Check if required permissions are granted
-         */
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (!hasPermissions(this, Manifest.permission.MANAGE_OWN_CALLS)) {
-                Snackbar.make(coordinatorLayout,
-                        "Manage Own Calls permission needed. Please allow in your application settings.",
-                        Snackbar.LENGTH_LONG).show();
-            }
-            if (!hasPermissions(this, Manifest.permission.BLUETOOTH_CONNECT)) {
-                Snackbar.make(coordinatorLayout,
-                        "Without bluetooth permission app will fail to use bluetooth.",
-                        Snackbar.LENGTH_LONG).show();
-            }
-            if (!hasPermissions(this, Manifest.permission.RECORD_AUDIO)) {
-                Snackbar.make(coordinatorLayout,
-                        "Microphone permission needed. Please allow in your application settings.",
-                        Snackbar.LENGTH_LONG).show();
-            } else {
+        final Map<String, String> permissionsMessageMap = providePermissionsMesageMap();
+        for (String permission: providePermissions()) {
+            if (!hasPermissions(this, permission)) {
                 /*
                  * Due to bluetooth permissions being requested at the same time as mic
                  * permissions, AudioSwitch should be started after providing the user the option
                  * to grant the necessary permissions for bluetooth.
                  */
-                startAudioSwitch();
-                registerForCallInvites();
-            }
-        } else {
-            if (!hasPermissions(this, Manifest.permission.MANAGE_OWN_CALLS)) {
-                Snackbar.make(coordinatorLayout,
-                        "Manage Own Calls permission needed. Please allow in your application settings.",
-                        Snackbar.LENGTH_LONG).show();
-            }
-            if (!hasPermissions(this, Manifest.permission.RECORD_AUDIO)) {
-                Snackbar.make(coordinatorLayout,
-                        "Microphone permissions needed. Please allow in your application settings.",
-                        Snackbar.LENGTH_LONG).show();
-            } else {
-                /*
-                 * Due to bluetooth permissions being requested at the same time as mic
-                 * permissions, AudioSwitch should be started after providing the user the option
-                 * to grant the necessary permissions for bluetooth.
-                 */
-                startAudioSwitch();
-                registerForCallInvites();
+                if (!permission.equals(Manifest.permission.BLUETOOTH_CONNECT)) {
+                    Snackbar.make(coordinatorLayout,
+                            Objects.requireNonNull(permissionsMessageMap.get(permission)),
+                            Snackbar.LENGTH_LONG).show();
+                } else {
+                    startAudioSwitch();
+                    registerForCallInvites();
+                }
             }
         }
     }
