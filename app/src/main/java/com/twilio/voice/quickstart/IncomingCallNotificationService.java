@@ -1,19 +1,30 @@
 package com.twilio.voice.quickstart;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.telecom.DisconnectCause;
+import android.telecom.PhoneAccount;
+import android.telecom.PhoneAccountHandle;
+import android.telecom.TelecomManager;
+import android.telecom.VideoProfile;
 import android.util.Log;
 
+import androidx.annotation.RequiresApi;
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ProcessLifecycleOwner;
@@ -21,9 +32,23 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.twilio.voice.CallInvite;
 
+import java.util.Objects;
+
 public class IncomingCallNotificationService extends Service {
 
     private static final String TAG = IncomingCallNotificationService.class.getSimpleName();
+
+    private TelecomManager telecomManager = null;
+    private PhoneAccount phoneAccount = null;
+    private PhoneAccountHandle phoneAccountHandle = null;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            setupTelecom();
+        }
+    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -45,7 +70,7 @@ public class IncomingCallNotificationService extends Service {
                 case Constants.ACTION_CANCEL_CALL:
                     handleCancelledCall(intent);
                     break;
-                case VoiceActivity.ACTION_OUTGOING_CALL:
+                case Constants.ACTION_OUTGOING_CALL:
                     handleOutgoingCall(intent);
                 default:
                     break;
@@ -175,10 +200,30 @@ public class IncomingCallNotificationService extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             setCallInProgressNotification(callInvite, notificationId);
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Bundle inviteBundle = new Bundle();
+            inviteBundle.putParcelable(Constants.INCOMING_CALL_INVITE, callInvite);
+            Bundle callInfo = new Bundle();
+            Uri uri = Uri.fromParts(PhoneAccount.SCHEME_TEL, callInvite.getFrom(), null);
+            callInfo.putParcelable(Constants.OUTGOING_CALL_ADDRESS, uri);
+            callInfo.putBundle(Constants.INCOMING_CALL_INVITE, inviteBundle);
+            callInfo.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, phoneAccountHandle);
+            callInfo.putInt(TelecomManager.EXTRA_START_CALL_WITH_VIDEO_STATE, VideoProfile.STATE_AUDIO_ONLY);
+            telecomManager.addNewIncomingCall(phoneAccountHandle, callInfo);
+        }
     }
 
     private void handleOutgoingCall(Intent intent) {
-
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Bundle callInfo = new Bundle();
+            callInfo.putParcelable(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, intent.getExtras());
+            callInfo.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, phoneAccountHandle);
+            callInfo.putInt(TelecomManager.EXTRA_START_CALL_WITH_VIDEO_STATE, VideoProfile.STATE_AUDIO_ONLY);
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) {
+                Uri uri = intent.getExtras().getParcelable(Constants.OUTGOING_CALL_ADDRESS);
+                telecomManager.placeCall(uri, callInfo);
+            }
+        }
     }
 
 
@@ -197,6 +242,20 @@ public class IncomingCallNotificationService extends Service {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void setupTelecom() {
+        Context appContext = getApplicationContext();
+        String appName = this.getString(R.string.connection_service_name);
+        telecomManager = (TelecomManager)appContext.getSystemService(TELECOM_SERVICE);
+        phoneAccountHandle = new PhoneAccountHandle(
+                new ComponentName(appContext, VoiceConnectionService.class),
+                appName);
+        phoneAccount = new PhoneAccount.Builder(phoneAccountHandle, appName)
+                .setCapabilities(PhoneAccount.CAPABILITY_CONNECTION_MANAGER)
+                .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER)
+                .build();
+        telecomManager.registerPhoneAccount(phoneAccount);
+    }
 
     private boolean isAppVisible() {
         return ProcessLifecycleOwner
