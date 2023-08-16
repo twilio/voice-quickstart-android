@@ -1,19 +1,28 @@
 package com.twilio.voice.quickstart;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.telecom.PhoneAccount;
+import android.telecom.PhoneAccountHandle;
+import android.telecom.TelecomManager;
+import android.telecom.VideoProfile;
 import android.util.Log;
 
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ProcessLifecycleOwner;
@@ -22,8 +31,29 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.twilio.voice.CallInvite;
 
 public class IncomingCallNotificationService extends Service {
-
     private static final String TAG = IncomingCallNotificationService.class.getSimpleName();
+
+    private PhoneAccountHandle phoneAccountHandle;
+    private TelecomManager telecomManager;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        // register telecom account info
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Context appContext = this.getApplicationContext();
+            String appName = this.getString(R.string.connection_service_name);
+            phoneAccountHandle =
+                    new PhoneAccountHandle(new ComponentName(appContext, VoiceConnectionService.class),
+                            appName);
+            telecomManager = (TelecomManager) appContext.getSystemService(TELECOM_SERVICE);
+            PhoneAccount phoneAccount = new PhoneAccount.Builder(phoneAccountHandle, appName)
+                    .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER)
+                    .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
+                    .build();
+            telecomManager.registerPhoneAccount(phoneAccount);
+        }
+    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -36,6 +66,9 @@ public class IncomingCallNotificationService extends Service {
                 case Constants.ACTION_INCOMING_CALL:
                     handleIncomingCall(callInvite, notificationId);
                     break;
+                case Constants.ACTION_OUTGOING_CALL:
+                    handleOutgoingCall(intent);
+                    break;
                 case Constants.ACTION_ACCEPT:
                     accept(callInvite, notificationId);
                     break;
@@ -45,8 +78,6 @@ public class IncomingCallNotificationService extends Service {
                 case Constants.ACTION_CANCEL_CALL:
                     handleCancelledCall(intent);
                     break;
-                case VoiceActivity.ACTION_OUTGOING_CALL:
-                    handleOutgoingCall(intent);
                 default:
                     break;
             }
@@ -107,9 +138,9 @@ public class IncomingCallNotificationService extends Service {
      */
     @TargetApi(Build.VERSION_CODES.O)
     private Notification buildNotification(String text, PendingIntent pendingIntent, Bundle extras,
-                                          final CallInvite callInvite,
-                                          int notificationId,
-                                          String channelId) {
+                                           final CallInvite callInvite,
+                                           int notificationId,
+                                           String channelId) {
         Intent rejectIntent = new Intent(getApplicationContext(), NotificationProxyActivity.class);
         rejectIntent.setAction(Constants.ACTION_REJECT);
         rejectIntent.putExtra(Constants.INCOMING_CALL_INVITE, callInvite);
@@ -178,7 +209,21 @@ public class IncomingCallNotificationService extends Service {
     }
 
     private void handleOutgoingCall(Intent intent) {
-
+        // place a call with the telecom subsystem
+        final Bundle extra = intent.getExtras();
+        if ((null != extra) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Bundle callInfo = new Bundle();
+            final Uri recipient = extra.getParcelable(Constants.OUTGOING_CALL_RECIPIENT);
+            final int permissionsState =
+                    ActivityCompat.checkSelfPermission(this,
+                                                        Manifest.permission.MANAGE_OWN_CALLS);
+            callInfo.putParcelable(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, extra);
+            callInfo.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, phoneAccountHandle);
+            callInfo.putInt(TelecomManager.EXTRA_START_CALL_WITH_VIDEO_STATE, VideoProfile.STATE_AUDIO_ONLY);
+            if (permissionsState == PackageManager.PERMISSION_GRANTED) {
+                telecomManager.placeCall(recipient, callInfo);
+            }
+        }
     }
 
 

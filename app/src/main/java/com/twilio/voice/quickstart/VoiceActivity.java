@@ -76,13 +76,11 @@ public class VoiceActivity extends AppCompatActivity {
 
     private static final String TAG = "VoiceActivity";
     public static final String OUTGOING_CALL_ADDRESS = "OUTGOING_CALL_ADDRESS";
-    public static final String ACTION_OUTGOING_CALL = "ACTION_OUTGOING_CALL";
     public static final String ACTION_DISCONNECT_CALL = "ACTION_DISCONNECT_CALL";
     public static final String ACTION_DTMF_SEND = "ACTION_DTMF_SEND";
     public static final String DTMF = "DTMF";
-    public static final String CALLEE = "to";
     private static final int PERMISSIONS_ALL = 1;
-    private String accessToken = "PASTE_YOUR_ACCESS_TOKEN_HERE";
+    private String accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJqdGkiOiJTSzk5ZmYxYzJiODkwYzc3MGE0ZTgyYTA2Y2Q3MDE3YzI2LTE2OTIxNDYyNTEiLCJncmFudHMiOnsiaWRlbnRpdHkiOiJhbGljZSIsInZvaWNlIjp7ImluY29taW5nIjp7ImFsbG93Ijp0cnVlfSwib3V0Z29pbmciOnsiYXBwbGljYXRpb25fc2lkIjoiQVBlMTU3NzAzMjMzMzBiNjM0MmVmNTdiMmY2MDY5MTJkZSJ9LCJwdXNoX2NyZWRlbnRpYWxfc2lkIjoiQ1I4NjA0YjlkZmFjZmYwMWU5MTc5YWM5NzUwNTdmYjkxMSJ9fSwiaWF0IjoxNjkyMTQ2MjUxLCJleHAiOjE2OTIxNDk4NTEsImlzcyI6IlNLOTlmZjFjMmI4OTBjNzcwYTRlODJhMDZjZDcwMTdjMjYiLCJzdWIiOiJBQ2JhMTkxNmEzYTcwNjMzODY0MDZiODI1MDc2MDFjMGMzIn0.4mVJXIOJyD4MYspU-SimTLLNx0fsdHijjz--3N478_0";
 
 
     /*
@@ -94,10 +92,6 @@ public class VoiceActivity extends AppCompatActivity {
 
     private boolean isReceiverRegistered = false;
     private VoiceBroadcastReceiver voiceBroadcastReceiver;
-
-    private TelecomManager telecomManager;
-    private PhoneAccountHandle handle;
-    private PhoneAccount phoneAccount;
 
     // Empty HashMap, never populated for the Quickstart
     HashMap<String, String> params = new HashMap<>();
@@ -146,11 +140,6 @@ public class VoiceActivity extends AppCompatActivity {
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         /*
-         * Setup a phone Account
-         */
-        setupPhoneAccount();
-
-        /*
          * Setup the broadcast receiver to be notified of FCM Token updates
          * or incoming call invite in this Activity.
          */
@@ -184,19 +173,6 @@ public class VoiceActivity extends AppCompatActivity {
         audioSwitch = new AudioSwitch(getApplicationContext());
         savedVolumeControlStream = getVolumeControlStream();
         setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    void setupPhoneAccount() {
-        Context appContext = this.getApplicationContext();
-        String appName = this.getString(R.string.connection_service_name);
-        handle = new PhoneAccountHandle(new ComponentName(appContext, VoiceConnectionService.class), appName);
-        telecomManager = (TelecomManager)appContext.getSystemService(TELECOM_SERVICE);
-        phoneAccount = new PhoneAccount.Builder(handle, appName)
-                .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER)
-                .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
-                .build();
-        telecomManager.registerPhoneAccount(phoneAccount);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -485,10 +461,10 @@ public class VoiceActivity extends AppCompatActivity {
     private void registerReceiver() {
         if (!isReceiverRegistered) {
             IntentFilter intentFilter = new IntentFilter();
-            intentFilter.addAction(ACTION_OUTGOING_CALL);
             intentFilter.addAction(ACTION_DISCONNECT_CALL);
             intentFilter.addAction(ACTION_DTMF_SEND);
             intentFilter.addAction(Constants.ACTION_INCOMING_CALL);
+            intentFilter.addAction(Constants.ACTION_OUTGOING_CALL);
             intentFilter.addAction(Constants.ACTION_CANCEL_CALL);
             intentFilter.addAction(Constants.ACTION_FCM_TOKEN);
             LocalBroadcastManager.getInstance(this).registerReceiver(
@@ -505,29 +481,32 @@ public class VoiceActivity extends AppCompatActivity {
     }
 
     private class VoiceBroadcastReceiver extends BroadcastReceiver {
-
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if (action.equals(ACTION_OUTGOING_CALL)) {
-                handleCallRequest(intent);
-            } else if (action.equals(ACTION_DISCONNECT_CALL)) {
-                if (activeCall != null) {
-                    activeCall.disconnect();
-                }
-            } else if (action.equals(ACTION_DTMF_SEND)) {
-                if (activeCall != null) {
-                    String digits = intent.getStringExtra(DTMF);
-                    activeCall.sendDigits(digits);
-                }
+            switch (action) {
+                case Constants.ACTION_OUTGOING_CALL:
+                    handleCallRequest(intent);
+                    break;
+                case ACTION_DISCONNECT_CALL:
+                    if (activeCall != null) {
+                        activeCall.disconnect();
+                    }
+                    break;
+                case ACTION_DTMF_SEND:
+                    if (activeCall != null) {
+                        activeCall.sendDigits(Objects.requireNonNull(intent.getStringExtra(DTMF)));
+                    }
+                    break;
             }
         }
     }
 
     private void handleCallRequest(Intent intent) {
         if (intent != null && intent.getAction() != null) {
-            String contact = intent.getStringExtra(VoiceActivity.OUTGOING_CALL_ADDRESS);
-            params.put("to", contact.split(":")[0]);
+            final Bundle extras = intent.getExtras();
+            final Uri recipient = extras.getParcelable(Constants.OUTGOING_CALL_RECIPIENT);
+            params.put("to", recipient.getEncodedSchemeSpecificPart());
             ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
                     .params(params)
                     .build();
@@ -536,18 +515,12 @@ public class VoiceActivity extends AppCompatActivity {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
-    private void makeCall(String to) {
-        Log.d(TAG, "makeCall");
-        Uri uri = Uri.fromParts(PhoneAccount.SCHEME_TEL, to, null);
-        Bundle callInfoBundle = new Bundle();
-        callInfoBundle.putString(CALLEE, to);
-        Bundle callInfo = new Bundle();
-        callInfo.putParcelable(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, callInfoBundle);
-        callInfo.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, handle);
-        callInfo.putInt(TelecomManager.EXTRA_START_CALL_WITH_VIDEO_STATE, VideoProfile.STATE_AUDIO_ONLY);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.MANAGE_OWN_CALLS) == PackageManager.PERMISSION_GRANTED) {
-            telecomManager.placeCall(uri, callInfo);
-        }
+    private void initiateCall(String to) {
+        Intent intent = new Intent(VoiceActivity.this, IncomingCallNotificationService.class);
+        intent.setAction(Constants.ACTION_OUTGOING_CALL);
+        intent.putExtra(Constants.OUTGOING_CALL_RECIPIENT,
+                        Uri.fromParts(PhoneAccount.SCHEME_TEL, to, null));
+        startService(intent);
     }
 
     private DialogInterface.OnClickListener answerCallClickListener() {
@@ -566,18 +539,9 @@ public class VoiceActivity extends AppCompatActivity {
     private DialogInterface.OnClickListener callClickListener() {
         return (dialog, which) -> {
             // Place a call
-            //EditText contact = ((AlertDialog) dialog).findViewById(R.id.contact);
-            //params.put("to", contact.getText().toString());
-            /*ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
-                    .params(params)
-                    .build();
-            activeCall = Voice.connect(VoiceActivity.this, connectOptions, callListener);
-            setCallUI();*/
-            // Place a call
             EditText contact = (EditText) ((AlertDialog) dialog).findViewById(R.id.contact);
-            params.put("to", contact.getText().toString());
             // Initiate the dialer
-            makeCall(contact.getText().toString());
+            initiateCall(contact.getText().toString());
             alertDialog.dismiss();
         };
     }
@@ -863,8 +827,7 @@ public class VoiceActivity extends AppCompatActivity {
     private void resetConnectionService() {
         if (Build.VERSION.SDK_INT >= VERSION_CODES.M) {
             if (null != VoiceConnectionService.getConnection()) {
-                VoiceConnectionService.getConnection().destroy();
-                VoiceConnectionService.deinitConnection();
+                VoiceConnectionService.releaseConnection();
             }
         }
     }
