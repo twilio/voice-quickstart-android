@@ -3,6 +3,7 @@ package com.twilio.voice.quickstart;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.speech.tts.Voice;
 
 public class NotificationProxyActivity extends Activity {
   @Override
@@ -20,16 +21,20 @@ public class NotificationProxyActivity extends Activity {
   }
 
   private void handleIntent(Intent intent) {
-    String action = intent.getAction();
+    final String action = intent.getAction();
     if (action != null) {
+      final Intent serviceIntent =
+              (new Intent(intent)).setClass(this, IncomingCallNotificationService.class);
+      final Intent appIntent =
+              (new Intent(intent)).setClass(this, VoiceActivity.class);
       switch (action) {
         case Constants.ACTION_INCOMING_CALL:
         case Constants.ACTION_ACCEPT:
-          launchService(intent);
-          launchMainActivity(intent);
+          launchService(serviceIntent);
+          launchMainActivity(appIntent);
           break;
         default:
-          launchService(intent);
+          launchService(serviceIntent);
           break;
       }
     }

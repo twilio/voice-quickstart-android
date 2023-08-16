@@ -16,6 +16,9 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.telecom.Call;
+import android.telecom.Connection;
+import android.telecom.DisconnectCause;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
@@ -141,7 +144,7 @@ public class IncomingCallNotificationService extends Service {
                                            final CallInvite callInvite,
                                            int notificationId,
                                            String channelId) {
-        Intent rejectIntent = new Intent(getApplicationContext(), NotificationProxyActivity.class);
+        Intent rejectIntent = new Intent(getApplicationContext(), IncomingCallNotificationService.class);
         rejectIntent.setAction(Constants.ACTION_REJECT);
         rejectIntent.putExtra(Constants.INCOMING_CALL_INVITE, callInvite);
         rejectIntent.putExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, notificationId);
@@ -190,11 +193,23 @@ public class IncomingCallNotificationService extends Service {
 
     private void accept(CallInvite callInvite, int notificationId) {
         endForeground();
+        // notify telephony service of call approval
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            VoiceConnectionService.getConnection().setActive();
+        }
     }
 
     private void reject(CallInvite callInvite) {
         endForeground();
         callInvite.reject(getApplicationContext());
+        // notify telephony service of call rejection
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Connection cxn = VoiceConnectionService.getConnection();
+            if (null != cxn) {
+                cxn.setDisconnected(new DisconnectCause(DisconnectCause.REJECTED));
+                VoiceConnectionService.releaseConnection();
+            }
+        }
     }
 
     private void handleCancelledCall(Intent intent) {
@@ -205,6 +220,18 @@ public class IncomingCallNotificationService extends Service {
     private void handleIncomingCall(CallInvite callInvite, int notificationId) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             setCallInProgressNotification(callInvite, notificationId);
+        }
+        // register new call with telecom subsystem
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Bundle inviteBundle = new Bundle(CallInvite.class.getClassLoader());
+            inviteBundle.putParcelable(Constants.INCOMING_CALL_INVITE, callInvite);
+            Bundle callInfo = new Bundle();
+            Uri uri = Uri.fromParts(PhoneAccount.SCHEME_TEL, callInvite.getFrom(), null);
+            callInfo.putBundle(Constants.INCOMING_CALL_INVITE, inviteBundle);
+            callInfo.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, uri);
+            callInfo.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, phoneAccountHandle);
+            callInfo.putInt(TelecomManager.EXTRA_INCOMING_VIDEO_STATE, VideoProfile.STATE_AUDIO_ONLY);
+            telecomManager.addNewIncomingCall(phoneAccountHandle, callInfo);
         }
     }
 

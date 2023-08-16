@@ -104,15 +104,11 @@ public class VoiceConnectionService extends ConnectionService {
             @Override
             public void onAnswer() {
                 super.onAnswer();
-                // todo
             }
 
             @Override
             public void onReject() {
                 super.onReject();
-                // todo
-                activeConnection.setDisconnected(new DisconnectCause(DisconnectCause.REJECTED));
-                releaseConnection();
             }
 
             @Override
@@ -133,7 +129,6 @@ public class VoiceConnectionService extends ConnectionService {
         }
         // set mute capability (for DTMF support?)
         activeConnection.setConnectionCapabilities(Connection.CAPABILITY_MUTE);
-        activeConnection.setDialing();
         return activeConnection;
     }
 
