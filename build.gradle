@@ -7,7 +7,7 @@ buildscript {
             'androidGradlePlugin': '8.0.2',
             'googleServices'     : '4.3.14',
             'compileSdk'         : 31,
-            'buildTools'         : '30.0.2',
+            'buildTools'         : '34.0.0',
             'minSdk'             : 21,
             'targetSdk'          : 31,
             'material'           : '1.4.0',
