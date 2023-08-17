@@ -80,7 +80,7 @@ public class VoiceActivity extends AppCompatActivity {
     public static final String ACTION_DTMF_SEND = "ACTION_DTMF_SEND";
     public static final String DTMF = "DTMF";
     private static final int PERMISSIONS_ALL = 1;
-    private String accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJqdGkiOiJTSzk5ZmYxYzJiODkwYzc3MGE0ZTgyYTA2Y2Q3MDE3YzI2LTE2OTIxNDYyNTEiLCJncmFudHMiOnsiaWRlbnRpdHkiOiJhbGljZSIsInZvaWNlIjp7ImluY29taW5nIjp7ImFsbG93Ijp0cnVlfSwib3V0Z29pbmciOnsiYXBwbGljYXRpb25fc2lkIjoiQVBlMTU3NzAzMjMzMzBiNjM0MmVmNTdiMmY2MDY5MTJkZSJ9LCJwdXNoX2NyZWRlbnRpYWxfc2lkIjoiQ1I4NjA0YjlkZmFjZmYwMWU5MTc5YWM5NzUwNTdmYjkxMSJ9fSwiaWF0IjoxNjkyMTQ2MjUxLCJleHAiOjE2OTIxNDk4NTEsImlzcyI6IlNLOTlmZjFjMmI4OTBjNzcwYTRlODJhMDZjZDcwMTdjMjYiLCJzdWIiOiJBQ2JhMTkxNmEzYTcwNjMzODY0MDZiODI1MDc2MDFjMGMzIn0.4mVJXIOJyD4MYspU-SimTLLNx0fsdHijjz--3N478_0";
+    private String accessToken = "PASTE_YOUR_ACCESS_TOKEN_HERE";
 
 
     /*
