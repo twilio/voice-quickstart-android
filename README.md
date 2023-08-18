@@ -27,7 +27,7 @@
 
 ## Quickstart
 
-To get started with the Quickstart application follow these steps. Steps 1-5 will enable the application to make a call. The remaining steps 7-10 will enable the application to receive incoming calls in the form of push notifications using FCM.
+The quickstart is broken into two flavors, "standard" & "connection_service", the latter showing how to integrate with the Android Telecom subsystem but requiring Android API 26.  To get started with the Quickstart application follow these steps. Steps 1-5 will enable the application to make a call. The remaining steps 7-10 will enable the application to receive incoming calls in the form of push notifications using FCM.
 
 1. [Generate google-services.json](#bullet1)
 2. [Open this project in Android Studio](#bullet2)
