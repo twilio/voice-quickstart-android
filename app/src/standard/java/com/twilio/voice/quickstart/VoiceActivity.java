@@ -1,25 +1,22 @@
 package com.twilio.voice.quickstart;
 
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Application;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.os.SystemClock;
-import android.telecom.DisconnectCause;
-import android.telecom.VideoProfile;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -30,8 +27,6 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Chronometer;
 import android.widget.EditText;
-
-import android.net.Uri;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
@@ -56,32 +51,22 @@ import com.twilio.voice.RegistrationException;
 import com.twilio.voice.RegistrationListener;
 import com.twilio.voice.Voice;
 
-import android.telecom.PhoneAccount;
-import android.telecom.PhoneAccountHandle;
-import android.telecom.TelecomManager;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.Vector;
 
 import kotlin.Unit;
 
 public class VoiceActivity extends AppCompatActivity {
 
     private static final String TAG = "VoiceActivity";
-    public static final String OUTGOING_CALL_ADDRESS = "OUTGOING_CALL_ADDRESS";
-    public static final String ACTION_DISCONNECT_CALL = "ACTION_DISCONNECT_CALL";
-    public static final String ACTION_DTMF_SEND = "ACTION_DTMF_SEND";
-    public static final String DTMF = "DTMF";
-    private static final int PERMISSIONS_ALL = 1;
-    private String accessToken = "PASTE_YOUR_ACCESS_TOKEN_HERE";
-
+    private static final int MIC_PERMISSION_REQUEST_CODE = 1;
+    private static final int PERMISSIONS_REQUEST_CODE = 100;
+    private String accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJqdGkiOiJTSzk5ZmYxYzJiODkwYzc3MGE0ZTgyYTA2Y2Q3MDE3YzI2LTE2OTIzOTUzMjciLCJncmFudHMiOnsiaWRlbnRpdHkiOiJhbGljZSIsInZvaWNlIjp7ImluY29taW5nIjp7ImFsbG93Ijp0cnVlfSwib3V0Z29pbmciOnsiYXBwbGljYXRpb25fc2lkIjoiQVBlMTU3NzAzMjMzMzBiNjM0MmVmNTdiMmY2MDY5MTJkZSJ9LCJwdXNoX2NyZWRlbnRpYWxfc2lkIjoiQ1I4NjA0YjlkZmFjZmYwMWU5MTc5YWM5NzUwNTdmYjkxMSJ9fSwiaWF0IjoxNjkyMzk1MzI3LCJleHAiOjE2OTIzOTg5MjcsImlzcyI6IlNLOTlmZjFjMmI4OTBjNzcwYTRlODJhMDZjZDcwMTdjMjYiLCJzdWIiOiJBQ2JhMTkxNmEzYTcwNjMzODY0MDZiODI1MDc2MDFjMGMzIn0.rwhYlGItH9ETr3XYpBvywskMXjKqssmxbM7Gc2El3TY";
 
     /*
      * Audio device management
@@ -112,7 +97,6 @@ public class VoiceActivity extends AppCompatActivity {
     RegistrationListener registrationListener = registrationListener();
     Call.Listener callListener = callListener();
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -159,13 +143,20 @@ public class VoiceActivity extends AppCompatActivity {
         /*
          * Ensure required permissions are enabled
          */
-        String[] permissionsList = providePermissions();
-        if (!hasPermissions(this, permissionsList)) {
-            ActivityCompat.requestPermissions(this, permissionsList, PERMISSIONS_ALL);
+        if (Build.VERSION.SDK_INT > VERSION_CODES.R) {
+            if (!hasPermissions(this, Manifest.permission.RECORD_AUDIO,
+                    Manifest.permission.BLUETOOTH_CONNECT)) {
+                requestPermissionForMicrophoneAndBluetooth();
+            } else {
+                registerForCallInvites();
+            }
         } else {
-            registerForCallInvites();
+            if (!hasPermissions(this, Manifest.permission.RECORD_AUDIO)) {
+                requestPermissionForMicrophone();
+            } else {
+                registerForCallInvites();
+            }
         }
-
 
         /*
          * Setup audio device management and set the volume control stream
@@ -175,43 +166,10 @@ public class VoiceActivity extends AppCompatActivity {
         setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         handleIncomingCallIntent(intent);
-    }
-
-    static private String[] providePermissions() {
-        List<String> permissionsList = new Vector<>() {{
-            add(Manifest.permission.RECORD_AUDIO);
-            //add(Manifest.permission.CALL_PHONE); // <- Add for different behavior
-            if (Build.VERSION.SDK_INT >= VERSION_CODES.O) {
-                add(Manifest.permission.MANAGE_OWN_CALLS);
-            }
-            if (Build.VERSION.SDK_INT >= VERSION_CODES.S) {
-                add(Manifest.permission.BLUETOOTH_CONNECT);
-            }
-        }};
-        String[] list = new String[permissionsList.size()];
-        return permissionsList.toArray(list);
-    }
-
-    static private Map<String, String> providePermissionsMesageMap() {
-        return new HashMap<>() {{
-            put(Manifest.permission.RECORD_AUDIO,
-                "Audio recording permission needed. Please allow in your application settings.");
-            put(Manifest.permission.CALL_PHONE,
-                "Call phone permission needed. Please allow in your application settings.");
-            if (Build.VERSION.SDK_INT >= VERSION_CODES.O) {
-                put(Manifest.permission.MANAGE_OWN_CALLS,
-                    "Manage Own Calls permission needed. Please allow in your application settings.");
-            }
-            if (Build.VERSION.SDK_INT >= VERSION_CODES.S) {
-                put(Manifest.permission.BLUETOOTH_CONNECT,
-                    "Without bluetooth permission app will fail to use bluetooth.");
-            }
-        }};
     }
 
     private RegistrationListener registrationListener() {
@@ -268,12 +226,11 @@ public class VoiceActivity extends AppCompatActivity {
 
             @Override
             public void onConnectFailure(@NonNull Call call, @NonNull CallException error) {
-                Log.d(TAG, "Connect failure");
                 audioSwitch.deactivate();
                 if (BuildConfig.playCustomRingback) {
                     SoundPoolManager.getInstance(VoiceActivity.this).stopRinging();
                 }
-                resetConnectionService();
+                Log.d(TAG, "Connect failure");
                 String message = String.format(
                         Locale.US,
                         "Call Error: %d, %s",
@@ -306,16 +263,11 @@ public class VoiceActivity extends AppCompatActivity {
 
             @Override
             public void onDisconnected(@NonNull Call call, CallException error) {
-                Log.d(TAG, "Disconnected");
                 audioSwitch.deactivate();
                 if (BuildConfig.playCustomRingback) {
                     SoundPoolManager.getInstance(VoiceActivity.this).stopRinging();
                 }
-                if (Build.VERSION.SDK_INT >= VERSION_CODES.M) {
-                    VoiceConnectionService.getConnection().setDisconnected(
-                            new DisconnectCause(DisconnectCause.UNKNOWN));
-                }
-                resetConnectionService();
+                Log.d(TAG, "Disconnected");
                 if (error != null) {
                     String message = String.format(
                             Locale.US,
@@ -327,7 +279,6 @@ public class VoiceActivity extends AppCompatActivity {
                 }
                 resetUI();
             }
-
             /*
              * currentWarnings: existing quality warnings that have not been cleared yet
              * previousWarnings: last set of warnings prior to receiving this callback
@@ -397,7 +348,7 @@ public class VoiceActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        //unregisterReceiver();
+        unregisterReceiver();
     }
 
     @Override
@@ -411,7 +362,6 @@ public class VoiceActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
     private void handleIncomingCallIntent(Intent intent) {
         if (intent != null && intent.getAction() != null) {
             String action = intent.getAction();
@@ -440,7 +390,6 @@ public class VoiceActivity extends AppCompatActivity {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
     private void handleIncomingCall() {
         if (Build.VERSION.SDK_INT < VERSION_CODES.O) {
             showIncomingCallDialog();
@@ -461,10 +410,7 @@ public class VoiceActivity extends AppCompatActivity {
     private void registerReceiver() {
         if (!isReceiverRegistered) {
             IntentFilter intentFilter = new IntentFilter();
-            intentFilter.addAction(ACTION_DISCONNECT_CALL);
-            intentFilter.addAction(ACTION_DTMF_SEND);
             intentFilter.addAction(Constants.ACTION_INCOMING_CALL);
-            intentFilter.addAction(Constants.ACTION_OUTGOING_CALL);
             intentFilter.addAction(Constants.ACTION_CANCEL_CALL);
             intentFilter.addAction(Constants.ACTION_FCM_TOKEN);
             LocalBroadcastManager.getInstance(this).registerReceiver(
@@ -481,46 +427,17 @@ public class VoiceActivity extends AppCompatActivity {
     }
 
     private class VoiceBroadcastReceiver extends BroadcastReceiver {
+
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            switch (action) {
-                case Constants.ACTION_OUTGOING_CALL:
-                    handleCallRequest(intent);
-                    break;
-                case ACTION_DISCONNECT_CALL:
-                    if (activeCall != null) {
-                        activeCall.disconnect();
-                    }
-                    break;
-                case ACTION_DTMF_SEND:
-                    if (activeCall != null) {
-                        activeCall.sendDigits(Objects.requireNonNull(intent.getStringExtra(DTMF)));
-                    }
-                    break;
+            if (action != null && (action.equals(Constants.ACTION_INCOMING_CALL) || action.equals(Constants.ACTION_CANCEL_CALL))) {
+                /*
+                 * Handle the incoming or cancelled call invite
+                 */
+                handleIncomingCallIntent(intent);
             }
         }
-    }
-
-    private void handleCallRequest(Intent intent) {
-        if (intent != null && intent.getAction() != null) {
-            final Bundle extras = intent.getExtras();
-            final Uri recipient = extras.getParcelable(Constants.OUTGOING_CALL_RECIPIENT);
-            params.put("to", recipient.getEncodedSchemeSpecificPart());
-            ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
-                    .params(params)
-                    .build();
-            activeCall = Voice.connect(VoiceActivity.this, connectOptions, callListener);
-        }
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    private void initiateCall(String to) {
-        Intent intent = new Intent(VoiceActivity.this, IncomingCallNotificationService.class);
-        intent.setAction(Constants.ACTION_OUTGOING_CALL);
-        intent.putExtra(Constants.OUTGOING_CALL_RECIPIENT,
-                        Uri.fromParts(PhoneAccount.SCHEME_TEL, to, null));
-        startService(intent);
     }
 
     private DialogInterface.OnClickListener answerCallClickListener() {
@@ -535,13 +452,16 @@ public class VoiceActivity extends AppCompatActivity {
         };
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
     private DialogInterface.OnClickListener callClickListener() {
         return (dialog, which) -> {
             // Place a call
-            EditText contact = (EditText) ((AlertDialog) dialog).findViewById(R.id.contact);
-            // Initiate the dialer
-            initiateCall(contact.getText().toString());
+            EditText contact = ((AlertDialog) dialog).findViewById(R.id.contact);
+            params.put("to", contact.getText().toString());
+            ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
+                    .params(params)
+                    .build();
+            activeCall = Voice.connect(VoiceActivity.this, connectOptions, callListener);
+            setCallUI();
             alertDialog.dismiss();
         };
     }
@@ -592,7 +512,6 @@ public class VoiceActivity extends AppCompatActivity {
                 });
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
     private View.OnClickListener callActionFabClickListener() {
         return v -> {
             alertDialog = createCallDialog(callClickListener(), cancelCallClickListener(), VoiceActivity.this);
@@ -643,10 +562,9 @@ public class VoiceActivity extends AppCompatActivity {
 
     private void hold() {
         if (activeCall != null) {
-           boolean hold = !activeCall.isOnHold();
-           activeCall.hold(hold);
-           applyFabState(holdActionFab, hold);
-
+            boolean hold = !activeCall.isOnHold();
+            activeCall.hold(hold);
+            applyFabState(holdActionFab, hold);
         }
     }
 
@@ -668,10 +586,36 @@ public class VoiceActivity extends AppCompatActivity {
         button.setBackgroundTintList(colorStateList);
     }
 
+    private void requestPermissionForMicrophone() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
+            Snackbar.make(coordinatorLayout,
+                    "Microphone permissions needed. Please allow in your application settings.",
+                    Snackbar.LENGTH_LONG).show();
+        } else {
+            ActivityCompat.requestPermissions(
+                    this,
+                    new String[]{Manifest.permission.RECORD_AUDIO},
+                    MIC_PERMISSION_REQUEST_CODE);
+        }
+    }
+
+    @RequiresApi(api = VERSION_CODES.M)
+    private void requestPermissionForMicrophoneAndBluetooth() {
+        if (!hasPermissions(this, Manifest.permission.RECORD_AUDIO,
+                Manifest.permission.BLUETOOTH_CONNECT)) {
+            requestPermissions(
+                    new String[]{Manifest.permission.RECORD_AUDIO,
+                            Manifest.permission.BLUETOOTH_CONNECT},
+                    PERMISSIONS_REQUEST_CODE);
+        } else {
+            registerForCallInvites();
+        }
+    }
+
     public static boolean hasPermissions(Context context, String... permissions) {
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context != null && permissions != null) {
+        if (context != null && permissions != null) {
             for (String permission : permissions) {
-                if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+                if (ActivityCompat.checkSelfPermission(context, permission) != PERMISSION_GRANTED) {
                     return false;
                 }
             }
@@ -681,22 +625,36 @@ public class VoiceActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        final Map<String, String> permissionsMessageMap = providePermissionsMesageMap();
-        for (String permission: providePermissions()) {
-            if (!hasPermissions(this, permission)) {
+        /*
+         * Check if required permissions are granted
+         */
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (!hasPermissions(this, Manifest.permission.RECORD_AUDIO)) {
+                Snackbar.make(coordinatorLayout,
+                        "Microphone permission needed. Please allow in your application settings.",
+                        Snackbar.LENGTH_LONG).show();
+            } else {
+                if (!hasPermissions(this, Manifest.permission.BLUETOOTH_CONNECT)) {
+                    Snackbar.make(coordinatorLayout,
+                            "Without bluetooth permission app will fail to use bluetooth.",
+                            Snackbar.LENGTH_LONG).show();
+                }
                 /*
                  * Due to bluetooth permissions being requested at the same time as mic
                  * permissions, AudioSwitch should be started after providing the user the option
                  * to grant the necessary permissions for bluetooth.
                  */
-                if (!permission.equals(Manifest.permission.BLUETOOTH_CONNECT)) {
-                    Snackbar.make(coordinatorLayout,
-                            Objects.requireNonNull(permissionsMessageMap.get(permission)),
-                            Snackbar.LENGTH_LONG).show();
-                } else {
-                    startAudioSwitch();
-                    registerForCallInvites();
-                }
+                startAudioSwitch();
+                registerForCallInvites();
+            }
+        } else {
+            if (!hasPermissions(this, Manifest.permission.RECORD_AUDIO)) {
+                Snackbar.make(coordinatorLayout,
+                        "Microphone permissions needed. Please allow in your application settings.",
+                        Snackbar.LENGTH_LONG).show();
+            } else {
+                startAudioSwitch();
+                registerForCallInvites();
             }
         }
     }
@@ -822,13 +780,5 @@ public class VoiceActivity extends AppCompatActivity {
             updateAudioDeviceIcon(audioDevice);
             return Unit.INSTANCE;
         });
-    }
-
-    private void resetConnectionService() {
-        if (Build.VERSION.SDK_INT >= VERSION_CODES.M) {
-            if (null != VoiceConnectionService.getConnection()) {
-                VoiceConnectionService.releaseConnection();
-            }
-        }
     }
 }
