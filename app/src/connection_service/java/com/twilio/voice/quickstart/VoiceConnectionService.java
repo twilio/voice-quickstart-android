@@ -2,7 +2,6 @@ package com.twilio.voice.quickstart;
 
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.telecom.CallAudioState;
@@ -10,20 +9,16 @@ import android.telecom.Connection;
 import android.telecom.ConnectionRequest;
 import android.telecom.ConnectionService;
 import android.telecom.DisconnectCause;
-import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.util.Log;
 
-import androidx.annotation.RequiresApi;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import static com.twilio.voice.quickstart.VoiceActivity.ACTION_DISCONNECT_CALL;
 import static com.twilio.voice.quickstart.VoiceActivity.ACTION_DTMF_SEND;
 import static com.twilio.voice.quickstart.VoiceActivity.DTMF;
-import static com.twilio.voice.quickstart.VoiceActivity.OUTGOING_CALL_ADDRESS;
 
-@RequiresApi(api = Build.VERSION_CODES.M)
 public class VoiceConnectionService extends ConnectionService {
     private static final String TAG = "VoiceConnectionService";
     private static Connection activeConnection;
@@ -124,9 +119,7 @@ public class VoiceConnectionService extends ConnectionService {
             activeConnection.setAddress(request.getAddress(), TelecomManager.PRESENTATION_ALLOWED);
         }
         // self managed isn't available before version O
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            activeConnection.setConnectionProperties(Connection.PROPERTY_SELF_MANAGED);
-        }
+        activeConnection.setConnectionProperties(Connection.PROPERTY_SELF_MANAGED);
         // set mute capability (for DTMF support?)
         activeConnection.setConnectionCapabilities(Connection.CAPABILITY_MUTE);
         return activeConnection;

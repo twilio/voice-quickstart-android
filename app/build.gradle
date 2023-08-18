@@ -38,14 +38,29 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("boolean", "playCustomRingback", "${playCustomRingback()}")
+        }
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.debug
             buildConfigField("boolean", "playCustomRingback", "${playCustomRingback()}")
         }
-        debug {
-            buildConfigField("boolean", "playCustomRingback", "${playCustomRingback()}")
+    }
+
+    flavorDimensions.add("editions")
+    productFlavors {
+        standard {
+            dimension "editions"
+        }
+        connection_service {
+            dimension "editions"
+            applicationIdSuffix ".connection_service"
+            versionNameSuffix "-connection_service"
+
+            minSdkVersion 26
+            targetSdkVersion versions.targetSdk
         }
     }
 
@@ -73,7 +88,7 @@ dependencies {
     implementation "com.google.android.material:material:${versions.material}"
     implementation "com.google.firebase:firebase-messaging:${versions.firebase}"
     implementation "androidx.lifecycle:lifecycle-extensions:${versions.androidxLifecycle}"
-    implementation 'com.google.firebase:firebase-auth:22.1.0'
+    implementation 'com.google.firebase:firebase-auth:22.1.1'
     androidTestImplementation "androidx.test.ext:junit:${versions.junit}"
 
     // Import the BoM
