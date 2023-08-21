@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="true" />
+
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
     <application
@@ -9,13 +14,6 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".VoiceActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
         <activity
             android:name=".NotificationProxyActivity"
             android:parentActivityName=".VoiceActivity"
@@ -26,17 +24,6 @@
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:exported="true" />
         <service
-            android:enabled="true"
-            android:name=".IncomingCallNotificationService"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="ACTION_ACCEPT" />
-                <action android:name="ACTION_REJECT" />
-            </intent-filter>
-        </service>
-
-        <!-- [START fcm_listener] -->
-        <service
             android:name=".fcm.VoiceFirebaseMessagingService"
             android:stopWithTask="false"
             android:exported="false">
@@ -44,6 +31,5 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-        <!-- [END fcm_listener] -->
     </application>
 </manifest>
