@@ -114,7 +114,7 @@ Follow the instructions in the project's README to get the application server up
 
 Next, we need to create a TwiML application. A TwiML application identifies a public URL for retrieving [TwiML call control instructions](https://www.twilio.com/docs/api/twiml). When your QS app makes a call to the Twilio cloud, Twilio will make a webhook request to this URL, your application server will respond with generated TwiML, and Twilio will execute the instructions you’ve provided.
 
-Use Twilio CLI to create a TwiML app with the `make-call` endpoint you have just deployed
+Use Twilio CLI to create a TwiML app with the `make-call` endpoint you have just deployed (**Note: replace the value of `--voice-url` parameter with your `make-call` endpoint you just deployed to Twilio Serverless**)
 
     $ twilio api:core:applications:create \
         --friendly-name=my-twiml-app \
