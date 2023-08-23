@@ -2,7 +2,8 @@
 {
   "project_info": {
     "project_number": "your_project_number",
-    "project_id": "your_project_id"
+    "project_id": "your_project_id",
+    "storage_bucket": "your_storage_bucket"
   },
   "client": [
     {
@@ -19,15 +20,27 @@
         }
       ],
       "services": {
-        "analytics_service": {
-          "status": 1
-        },
         "appinvite_service": {
-          "status": 1,
           "other_platform_oauth_client": []
-        },
-        "ads_service": {
-          "status": 1
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "your_mobilesdk_app_id",
+        "android_client_info": {
+          "package_name": "com.twilio.voice.quickstart.connection_service"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "your_current_key"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
         }
       }
     }
