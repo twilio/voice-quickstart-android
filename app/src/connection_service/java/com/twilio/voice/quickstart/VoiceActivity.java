@@ -164,6 +164,7 @@ public class VoiceActivity extends AppCompatActivity {
          * Setup audio device management and set the volume control stream
          */
         audioSwitch = new AudioSwitch(getApplicationContext());
+        audioSwitch.setLoggingEnabled(true);
         savedVolumeControlStream = getVolumeControlStream();
         setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
     }
@@ -721,6 +722,7 @@ public class VoiceActivity extends AppCompatActivity {
                                 AudioDevice selectedAudioDevice = availableAudioDevices.get(index);
                                 updateAudioDeviceIcon(selectedAudioDevice);
                                 audioSwitch.selectDevice(selectedAudioDevice);
+                                VoiceConnectionService.selectAudioDevice(selectedAudioDevice);
                             }).create().show();
         }
     }
