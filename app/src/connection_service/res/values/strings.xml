@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="call_permissions_rational">Call phone permission needed. Please allow in your application settings.</string>
+    <string name="manage_call_permissions_rational">Manage Own Calls permission needed. Please allow in your application settings.</string>
+</resources>
