@@ -141,22 +141,22 @@ public class VoiceActivity extends AppCompatActivity {
         handleIncomingCallIntent(getIntent());
 
         /*
+         * Setup audio device management and set the volume control stream
+         */
+        audioSwitch = new AudioSwitch(getApplicationContext());
+        savedVolumeControlStream = getVolumeControlStream();
+        setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
+
+        /*
          * Ensure required permissions are enabled
          */
         String[] permissionsList = providePermissions();
         if (!hasPermissions(this, permissionsList)) {
             ActivityCompat.requestPermissions(this, permissionsList, PERMISSIONS_ALL);
         } else {
-            startAudioSwitch();
             registerForCallInvites();
+            startAudioSwitch();
         }
-
-        /*
-         * Setup audio device management and set the volume control stream
-         */
-        audioSwitch = new AudioSwitch(getApplicationContext());
-        savedVolumeControlStream = getVolumeControlStream();
-        setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
     }
 
     @Override
@@ -361,7 +361,6 @@ public class VoiceActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         registerReceiver();
-        startAudioSwitch();
     }
 
     @Override
@@ -623,7 +622,7 @@ public class VoiceActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         final Map<String, String> permissionsMessageMap = providePermissionsMesageMap();
         for (String permission : permissions) {
-            if (hasPermissions(this, permission)) {
+            if (!hasPermissions(this, permission)) {
                 Snackbar.make(
                         coordinatorLayout,
                         Objects.requireNonNull(permissionsMessageMap.get(permission)),

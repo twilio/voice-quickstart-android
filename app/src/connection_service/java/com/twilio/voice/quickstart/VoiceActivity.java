@@ -74,7 +74,7 @@ public class VoiceActivity extends AppCompatActivity {
     public static final String ACTION_DTMF_SEND = "ACTION_DTMF_SEND";
     public static final String DTMF = "DTMF";
     private static final int PERMISSIONS_ALL = 100;
-    private final String accessToken = "PASTE_YOUR_ACCESS_TOKEN_HERE";
+    private final String accessToken = "PASTfE_YOUR_ACCESS_TOKEN_HERE";
 
 
     /*
@@ -150,6 +150,14 @@ public class VoiceActivity extends AppCompatActivity {
         handleIncomingCallIntent(getIntent());
 
         /*
+         * Setup audio device management and set the volume control stream
+         */
+        audioSwitch = new AudioSwitch(getApplicationContext());
+        audioSwitch.setLoggingEnabled(true);
+        savedVolumeControlStream = getVolumeControlStream();
+        setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
+
+        /*
          * Ensure required permissions are enabled
          */
         String[] permissionsList = providePermissions();
@@ -159,14 +167,6 @@ public class VoiceActivity extends AppCompatActivity {
             startAudioSwitch();
             registerForCallInvites();
         }
-
-        /*
-         * Setup audio device management and set the volume control stream
-         */
-        audioSwitch = new AudioSwitch(getApplicationContext());
-        audioSwitch.setLoggingEnabled(true);
-        savedVolumeControlStream = getVolumeControlStream();
-        setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
     }
 
     @Override
@@ -380,7 +380,6 @@ public class VoiceActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         registerReceiver();
-        startAudioSwitch();
     }
 
     @Override
@@ -666,7 +665,7 @@ public class VoiceActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         final Map<String, String> permissionsMessageMap = providePermissionsMesageMap();
         for (String permission : permissions) {
-            if (hasPermissions(this, permission)) {
+            if (!hasPermissions(this, permission)) {
                 Snackbar.make(
                         coordinatorLayout,
                         Objects.requireNonNull(permissionsMessageMap.get(permission)),
