@@ -74,7 +74,7 @@ public class VoiceActivity extends AppCompatActivity {
     public static final String ACTION_DTMF_SEND = "ACTION_DTMF_SEND";
     public static final String DTMF = "DTMF";
     private static final int PERMISSIONS_ALL = 100;
-    private final String accessToken = "PASTfE_YOUR_ACCESS_TOKEN_HERE";
+    private final String accessToken = "PASTE_YOUR_ACCESS_TOKEN_HERE";
 
 
     /*
