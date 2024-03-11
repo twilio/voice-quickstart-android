@@ -1,5 +1,7 @@
 package com.twilio.voice.quickstart;
 
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -9,7 +11,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.media.AudioManager;
 import android.os.Build;
@@ -69,11 +70,10 @@ import kotlin.Unit;
 public class VoiceActivity extends AppCompatActivity {
 
     private static final String TAG = "VoiceActivity";
-    public static final String OUTGOING_CALL_ADDRESS = "OUTGOING_CALL_ADDRESS";
     public static final String ACTION_DISCONNECT_CALL = "ACTION_DISCONNECT_CALL";
     public static final String ACTION_DTMF_SEND = "ACTION_DTMF_SEND";
     public static final String DTMF = "DTMF";
-    private static final int PERMISSIONS_ALL = 1;
+    private static final int PERMISSIONS_ALL = 100;
     private final String accessToken = "PASTE_YOUR_ACCESS_TOKEN_HERE";
 
 
@@ -156,9 +156,9 @@ public class VoiceActivity extends AppCompatActivity {
         if (!hasPermissions(this, permissionsList)) {
             ActivityCompat.requestPermissions(this, permissionsList, PERMISSIONS_ALL);
         } else {
+            startAudioSwitch();
             registerForCallInvites();
         }
-
 
         /*
          * Setup audio device management and set the volume control stream
@@ -183,22 +183,24 @@ public class VoiceActivity extends AppCompatActivity {
             if (Build.VERSION.SDK_INT >= VERSION_CODES.S) {
                 add(Manifest.permission.BLUETOOTH_CONNECT);
             }
+            if (Build.VERSION.SDK_INT >= VERSION_CODES.TIRAMISU) {
+                add(Manifest.permission.POST_NOTIFICATIONS);
+            }
         }};
         String[] list = new String[permissionsList.size()];
         return permissionsList.toArray(list);
     }
 
-    static private Map<String, String> providePermissionsMesageMap() {
+    private Map<String, String> providePermissionsMesageMap() {
         return new HashMap<>() {{
-            put(Manifest.permission.RECORD_AUDIO,
-                "Audio recording permission needed. Please allow in your application settings.");
-            put(Manifest.permission.CALL_PHONE,
-                "Call phone permission needed. Please allow in your application settings.");
-            put(Manifest.permission.MANAGE_OWN_CALLS,
-                "Manage Own Calls permission needed. Please allow in your application settings.");
+            put(Manifest.permission.RECORD_AUDIO, getString(R.string.audio_permissions_rational));
+            put(Manifest.permission.CALL_PHONE, getString(R.string.call_permissions_rational));
+            put(Manifest.permission.MANAGE_OWN_CALLS, getString(R.string.manage_call_permissions_rational));
             if (Build.VERSION.SDK_INT >= VERSION_CODES.S) {
-                put(Manifest.permission.BLUETOOTH_CONNECT,
-                    "Without bluetooth permission app will fail to use bluetooth.");
+                put(Manifest.permission.BLUETOOTH_CONNECT, getString(R.string.bluetooth_permissions_rational));
+            }
+            if (Build.VERSION.SDK_INT >= VERSION_CODES.TIRAMISU) {
+                put(Manifest.permission.POST_NOTIFICATIONS, getString(R.string.notification_permissions_rational));
             }
         }};
     }
@@ -646,10 +648,10 @@ public class VoiceActivity extends AppCompatActivity {
         button.setBackgroundTintList(colorStateList);
     }
 
-    public static boolean hasPermissions(Context context, String... permissions) {
+    private static boolean hasPermissions(Context context, final String... permissions) {
         if (context != null && permissions != null) {
             for (String permission : permissions) {
-                if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+                if (PERMISSION_GRANTED != ActivityCompat.checkSelfPermission(context, permission)) {
                     return false;
                 }
             }
@@ -658,25 +660,21 @@ public class VoiceActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         final Map<String, String> permissionsMessageMap = providePermissionsMesageMap();
-        for (String permission: providePermissions()) {
-            if (!hasPermissions(this, permission)) {
-                /*
-                 * Due to bluetooth permissions being requested at the same time as mic
-                 * permissions, AudioSwitch should be started after providing the user the option
-                 * to grant the necessary permissions for bluetooth.
-                 */
-                if (!permission.equals(Manifest.permission.BLUETOOTH_CONNECT)) {
-                    Snackbar.make(coordinatorLayout,
-                            Objects.requireNonNull(permissionsMessageMap.get(permission)),
-                            Snackbar.LENGTH_LONG).show();
-                } else {
-                    startAudioSwitch();
-                    registerForCallInvites();
-                }
+        for (String permission : permissions) {
+            if (hasPermissions(this, permission)) {
+                Snackbar.make(
+                        coordinatorLayout,
+                        Objects.requireNonNull(permissionsMessageMap.get(permission)),
+                        Snackbar.LENGTH_LONG).show();
             }
         }
+        startAudioSwitch();
+        registerForCallInvites();
     }
 
     @Override
@@ -749,8 +747,8 @@ public class VoiceActivity extends AppCompatActivity {
     }
 
     private static AlertDialog createCallDialog(final DialogInterface.OnClickListener callClickListener,
-                                               final DialogInterface.OnClickListener cancelClickListener,
-                                               final Activity activity) {
+                                                final DialogInterface.OnClickListener cancelClickListener,
+                                                final Activity activity) {
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(activity);
 
         alertDialogBuilder.setIcon(R.drawable.ic_call_black_24dp);

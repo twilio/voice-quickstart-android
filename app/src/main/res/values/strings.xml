@@ -7,4 +7,7 @@
     <string name="connection_service_name">Twilio Voice</string>
     <string name="callHint">Dial a client name or phone number. Leaving the field empty results in an automated response.</string>
     <string name="select_device">Select Audio Device</string>
+    <string name="audio_permissions_rational">Audio recording permission needed. Please allow in your application settings.</string>
+    <string name="bluetooth_permissions_rational">Without bluetooth permission app will fail to use bluetooth.</string>
+    <string name="notification_permissions_rational">Notification permissions needed for receiving incoming phone calls. Please allow in your application settings.</string>
 </resources>
