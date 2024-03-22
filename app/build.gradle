@@ -37,6 +37,10 @@ android {
         versionName "1.0"
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     buildTypes {
         debug {
             buildConfigField("boolean", "playCustomRingback", "${playCustomRingback()}")
@@ -53,6 +57,7 @@ android {
     productFlavors {
         standard {
             dimension "editions"
+            getIsDefault().set(true)
         }
         connection_service {
             dimension "editions"
