@@ -19,8 +19,6 @@ import static com.twilio.voice.quickstart.VoiceActivity.ACTION_DISCONNECT_CALL;
 import static com.twilio.voice.quickstart.VoiceActivity.ACTION_DTMF_SEND;
 import static com.twilio.voice.quickstart.VoiceActivity.DTMF;
 
-import com.twilio.audioswitch.AudioDevice;
-
 public class VoiceConnectionService extends ConnectionService {
     private static final String TAG = "VoiceConnectionService";
     private static Connection activeConnection;
@@ -160,15 +158,15 @@ public class VoiceConnectionService extends ConnectionService {
     }
 
 
-    public static void selectAudioDevice(AudioDevice audioDevice) {
+    protected static void selectAudioDevice(VoiceActivity.AudioDevices audioDevice) {
         if (activeConnection != null) {
-            if (audioDevice instanceof AudioDevice.Speakerphone) {
+            if (audioDevice == VoiceActivity.AudioDevices.Speaker) {
                activeConnection.setAudioRoute(CallAudioState.ROUTE_SPEAKER);
-            } else if (audioDevice instanceof AudioDevice.Earpiece) {
+            } else if (audioDevice == VoiceActivity.AudioDevices.Earpiece) {
                 activeConnection.setAudioRoute(CallAudioState.ROUTE_EARPIECE);
-            } else if (audioDevice instanceof AudioDevice.WiredHeadset) {
+            } else if (audioDevice == VoiceActivity.AudioDevices.Headset) {
                 activeConnection.setAudioRoute(CallAudioState.ROUTE_WIRED_HEADSET);
-            } else if (audioDevice instanceof AudioDevice.BluetoothHeadset) {
+            } else if (audioDevice == VoiceActivity.AudioDevices.Bluetooth) {
                 activeConnection.setAudioRoute(CallAudioState.ROUTE_BLUETOOTH);
             }
         }
