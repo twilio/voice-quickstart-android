@@ -34,7 +34,7 @@ public class IncomingCallNotificationService extends Service {
             int notificationId = intent.getIntExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, 0);
             switch (action) {
                 case Constants.ACTION_INCOMING_CALL:
-                    handleIncomingCall(callInvite, notificationId);
+                    handleIncomingCall(intent, callInvite, notificationId);
                     break;
                 case Constants.ACTION_ACCEPT:
                     accept(callInvite, notificationId);
@@ -169,7 +169,9 @@ public class IncomingCallNotificationService extends Service {
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
-    private void handleIncomingCall(CallInvite callInvite, int notificationId) {
+    private void handleIncomingCall(Intent intent, CallInvite callInvite, int notificationId) {
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             setCallInProgressNotification(callInvite, notificationId);
         }

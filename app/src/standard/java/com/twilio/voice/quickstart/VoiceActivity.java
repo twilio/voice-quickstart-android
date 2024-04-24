@@ -467,6 +467,7 @@ public class VoiceActivity extends AppCompatActivity {
             acceptIntent.putExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, activeCallNotificationId);
             Log.d(TAG, "Clicked accept startService");
             startService(acceptIntent);
+            answer();
         };
     }
 
