@@ -3,9 +3,12 @@ package com.twilio.voice.quickstart;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.NotificationManager;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothHeadset;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -43,8 +46,6 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.messaging.FirebaseMessaging;
-import com.twilio.audioswitch.AudioDevice;
-import com.twilio.audioswitch.AudioSwitch;
 import com.twilio.voice.Call;
 import com.twilio.voice.CallException;
 import com.twilio.voice.CallInvite;
@@ -56,6 +57,7 @@ import com.twilio.voice.Voice;
 import android.telecom.PhoneAccount;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -64,8 +66,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.Vector;
-
-import kotlin.Unit;
 
 public class VoiceActivity extends AppCompatActivity {
 
@@ -76,11 +76,8 @@ public class VoiceActivity extends AppCompatActivity {
     private static final int PERMISSIONS_ALL = 100;
     private final String accessToken = "PASTE_YOUR_ACCESS_TOKEN_HERE";
 
+    private final List<AudioDevices> audioDevices = new ArrayList<>();
 
-    /*
-     * Audio device management
-     */
-    private AudioSwitch audioSwitch;
     private int savedVolumeControlStream;
     private MenuItem audioDeviceMenuItem;
 
@@ -102,6 +99,10 @@ public class VoiceActivity extends AppCompatActivity {
     private CallInvite activeCallInvite;
     private Call activeCall;
     private int activeCallNotificationId;
+
+    private final BroadcastReceiver wiredHeadsetReceiver = wiredHeadsetReceiver();
+
+    private final BroadcastReceiver bluetoothReceiver = bluetoothReceiver();
 
     RegistrationListener registrationListener = registrationListener();
     Call.Listener callListener = callListener();
@@ -151,11 +152,17 @@ public class VoiceActivity extends AppCompatActivity {
 
         /*
          * Setup audio device management and set the volume control stream
+         * Assume devices have speaker and earpiece
          */
-        audioSwitch = new AudioSwitch(getApplicationContext());
-        audioSwitch.setLoggingEnabled(true);
         savedVolumeControlStream = getVolumeControlStream();
         setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
+        audioDevices.add(AudioDevices.Earpiece);
+        audioDevices.add(AudioDevices.Speaker);
+        boolean isBluetoothConnected = setupBluetooth();
+        if (isBluetoothConnected) {
+            audioDevices.add(AudioDevices.Bluetooth);
+        }
+        registerReceiver(wiredHeadsetReceiver, new IntentFilter(AudioManager.ACTION_HEADSET_PLUG));
 
         /*
          * Ensure required permissions are enabled
@@ -164,7 +171,6 @@ public class VoiceActivity extends AppCompatActivity {
         if (!hasPermissions(this, permissionsList)) {
             ActivityCompat.requestPermissions(this, permissionsList, PERMISSIONS_ALL);
         } else {
-            startAudioSwitch();
             registerForCallInvites();
         }
     }
@@ -260,7 +266,6 @@ public class VoiceActivity extends AppCompatActivity {
             @Override
             public void onConnectFailure(@NonNull Call call, @NonNull CallException error) {
                 Log.d(TAG, "Connect failure");
-                audioSwitch.deactivate();
                 if (BuildConfig.playCustomRingback) {
                     SoundPoolManager.getInstance(VoiceActivity.this).stopRinging();
                 }
@@ -277,7 +282,6 @@ public class VoiceActivity extends AppCompatActivity {
 
             @Override
             public void onConnected(@NonNull Call call) {
-                audioSwitch.activate();
                 if (BuildConfig.playCustomRingback) {
                     SoundPoolManager.getInstance(VoiceActivity.this).stopRinging();
                 }
@@ -298,7 +302,6 @@ public class VoiceActivity extends AppCompatActivity {
             @Override
             public void onDisconnected(@NonNull Call call, CallException error) {
                 Log.d(TAG, "Disconnected");
-                audioSwitch.deactivate();
                 if (BuildConfig.playCustomRingback) {
                     SoundPoolManager.getInstance(VoiceActivity.this).stopRinging();
                 }
@@ -390,10 +393,8 @@ public class VoiceActivity extends AppCompatActivity {
 
     @Override
     public void onDestroy() {
-        /*
-         * Tear down audio device management and restore previous volume stream
-         */
-        audioSwitch.stop();
+        unregisterReceiver(bluetoothReceiver);
+        unregisterReceiver(wiredHeadsetReceiver);
         setVolumeControlStream(savedVolumeControlStream);
         SoundPoolManager.getInstance(this).release();
         super.onDestroy();
@@ -672,7 +673,6 @@ public class VoiceActivity extends AppCompatActivity {
                         Snackbar.LENGTH_LONG).show();
             }
         }
-        startAudioSwitch();
         registerForCallInvites();
     }
 
@@ -681,6 +681,11 @@ public class VoiceActivity extends AppCompatActivity {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu, menu);
         audioDeviceMenuItem = menu.findItem(R.id.menu_audio_device);
+        if (audioDevices.contains(AudioDevices.Bluetooth)) {
+            updateAudioDeviceIcon(AudioDevices.Bluetooth);
+        } else {
+            updateAudioDeviceIcon(audioDevices.get(audioDevices.size() - 1));
+        }
 
         return true;
     }
@@ -698,45 +703,38 @@ public class VoiceActivity extends AppCompatActivity {
      * Show the current available audio devices.
      */
     private void showAudioDevices() {
-        AudioDevice selectedDevice = audioSwitch.getSelectedAudioDevice();
-        List<AudioDevice> availableAudioDevices = audioSwitch.getAvailableAudioDevices();
+        List<String> devices = new ArrayList<>();
 
-        if (selectedDevice != null) {
-            int selectedDeviceIndex = availableAudioDevices.indexOf(selectedDevice);
-
-            ArrayList<String> audioDeviceNames = new ArrayList<>();
-            for (AudioDevice a : availableAudioDevices) {
-                audioDeviceNames.add(a.getName());
-            }
-
-            new AlertDialog.Builder(this)
-                    .setTitle(R.string.select_device)
-                    .setSingleChoiceItems(
-                            audioDeviceNames.toArray(new CharSequence[0]),
-                            selectedDeviceIndex,
-                            (dialog, index) -> {
-                                dialog.dismiss();
-                                AudioDevice selectedAudioDevice = availableAudioDevices.get(index);
-                                updateAudioDeviceIcon(selectedAudioDevice);
-                                audioSwitch.selectDevice(selectedAudioDevice);
-                                VoiceConnectionService.selectAudioDevice(selectedAudioDevice);
-                            }).create().show();
+        for (AudioDevices device : audioDevices) {
+            devices.add(device.name());
         }
+
+        new AlertDialog.Builder(this)
+            .setTitle(R.string.select_device)
+            .setSingleChoiceItems(
+                devices.toArray(new CharSequence[0]),
+                0,
+                (dialog, index) -> {
+                    dialog.dismiss();
+                    AudioDevices selectedDevice = audioDevices.get(index);
+                    updateAudioDeviceIcon(selectedDevice);
+                    VoiceConnectionService.selectAudioDevice(selectedDevice);
+                    Collections.swap(audioDevices, 0, index);
+                }).create().show();
     }
 
     /*
      * Update the menu icon based on the currently selected audio device.
      */
-    private void updateAudioDeviceIcon(AudioDevice selectedAudioDevice) {
+    private void updateAudioDeviceIcon(AudioDevices selectedAudioDevice) {
         int audioDeviceMenuIcon = R.drawable.ic_phonelink_ring_white_24dp;
-
-        if (selectedAudioDevice instanceof AudioDevice.BluetoothHeadset) {
+        if (selectedAudioDevice == AudioDevices.Bluetooth) {
             audioDeviceMenuIcon = R.drawable.ic_bluetooth_white_24dp;
-        } else if (selectedAudioDevice instanceof AudioDevice.WiredHeadset) {
+        } else if (selectedAudioDevice == AudioDevices.Headset) {
             audioDeviceMenuIcon = R.drawable.ic_headset_mic_white_24dp;
-        } else if (selectedAudioDevice instanceof AudioDevice.Earpiece) {
+        } else if (selectedAudioDevice == AudioDevices.Earpiece) {
             audioDeviceMenuIcon = R.drawable.ic_phonelink_ring_white_24dp;
-        } else if (selectedAudioDevice instanceof AudioDevice.Speakerphone) {
+        } else if (selectedAudioDevice == AudioDevices.Speaker) {
             audioDeviceMenuIcon = R.drawable.ic_volume_up_white_24dp;
         }
 
@@ -788,16 +786,63 @@ public class VoiceActivity extends AppCompatActivity {
                 .isAtLeast(Lifecycle.State.STARTED);
     }
 
-    private void startAudioSwitch() {
-        /*
-         * Start the audio device selector after the menu is created and update the icon when the
-         * selected audio device changes.
-         */
-        audioSwitch.start((audioDevices, audioDevice) -> {
-            Log.d(TAG, "Updating AudioDeviceIcon");
-            updateAudioDeviceIcon(audioDevice);
-            return Unit.INSTANCE;
-        });
+    protected enum AudioDevices {
+        Earpiece,
+        Speaker,
+        Headset,
+        Bluetooth
+    }
+
+    private BroadcastReceiver wiredHeadsetReceiver() {
+        return new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                int state = intent.getIntExtra("state", 0);
+                if (state == 1) { // plugged
+                    audioDevices.add(AudioDevices.Headset);
+                    updateAudioDeviceIcon(AudioDevices.Headset);
+                } else {
+                    audioDevices.remove(AudioDevices.Headset);
+                    if (audioDevices.contains(AudioDevices.Bluetooth)) {
+                        updateAudioDeviceIcon(AudioDevices.Bluetooth);
+                    } else {
+                        updateAudioDeviceIcon(AudioDevices.Earpiece);
+                    }
+                }
+            }
+        };
+    }
+
+    private BroadcastReceiver bluetoothReceiver() {
+        return new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                int state = intent.getIntExtra(BluetoothAdapter.EXTRA_CONNECTION_STATE, BluetoothAdapter.ERROR);
+                switch (state) {
+                    case BluetoothAdapter.STATE_CONNECTED:
+                        audioDevices.add(AudioDevices.Bluetooth);
+                        updateAudioDeviceIcon(AudioDevices.Bluetooth);
+                        break;
+                    case BluetoothAdapter.STATE_DISCONNECTED:
+                        audioDevices.remove(AudioDevices.Bluetooth);
+                        if (audioDevices.contains(AudioDevices.Headset)) {
+                            updateAudioDeviceIcon(AudioDevices.Headset);
+                        } else {
+                            updateAudioDeviceIcon(AudioDevices.Earpiece);
+                        }
+                        break;
+                }
+            }
+        };
+    }
+
+    @SuppressLint("MissingPermission")
+    private boolean setupBluetooth() {
+        IntentFilter intentFilter = new IntentFilter(BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED);
+        registerReceiver(bluetoothReceiver, intentFilter);
+        BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        return mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()
+                && mBluetoothAdapter.getProfileConnectionState(BluetoothHeadset.HEADSET) == BluetoothAdapter.STATE_CONNECTED;
     }
 
     private void resetConnectionService() {
