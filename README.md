@@ -163,14 +163,19 @@ Leave the dialog text field empty and press the call button to start a call. You
 
 You will need to store the FCM Server key(The **Server key** of your project from the Firebase console, found under Settings/Cloud messaging) with Twilio so that we can send push notifications to your app on your behalf. Once you store the Server key with Twilio, it will get assigned a Push Credential SID so that you can later specify which key we should use to send push notifications.
 
-Use Twilio CLI to create a Push Credential using the FCM Server Key. 
+Please follow this [document](https://help.twilio.com/articles/20768292997147-Updating-Twilio-Push-for-FCM-HTTP-v1-API) to create a FCMv1 token. Once that token is created, go to your Twilio Console and from the "Account" drop-down on the upper right, select "Credentials".
 
-    $ twilio api:chat:v2:credentials:create \
-        --type=fcm \
-        --friendly-name="voice-push-credential-fcm" \
-        --secret=SERVER_KEY_VALUE
+<img width="446px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/account-menu.png">
 
-This will return a Push Credential SID that looks like this
+From the within the "Credentials" page, select the tab labeled "Push Credentials" and then click the large "+" button. 
+
+<img width="660px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/credentials-tab.png">
+
+After providing a friendly name, from the drop-down menu labeled "Type" select "FCM Push Credentials" and paste the key you generated in Firebase in the third box labeled "FCM Secret". Under the list of created "Push Credentials" you should now find your new push credential SID.
+
+<img width="1080px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/credentials-sid.png">
+
+The newly created Push Credential SID should look like this 
 
     CRxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
