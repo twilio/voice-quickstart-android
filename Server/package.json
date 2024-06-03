@@ -12,7 +12,7 @@
     "body-parser": "^1.18.2",
     "dotenv": "^4.0.0",
     "express": "^4.15.2",
-    "twilio": "^3.60.0",
+    "twilio": "^5.1.0",
     "twilio-run": "^2.0.0"
   },
   "engines": {
