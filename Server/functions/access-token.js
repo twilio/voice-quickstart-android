@@ -15,9 +15,13 @@ exports.handler = function(context, event, callback) {
     pushCredentialSid: pushCredentialSid
   });
 
-  const token = new AccessToken(twilioAccountSid, twilioApiKey, twilioApiSecret);
+  const token = new AccessToken(
+    twilioAccountSid,
+    twilioApiKey,
+    twilioApiSecret,
+    { identity }
+  );
   token.addGrant(voiceGrant);
-  token.identity = identity;
 
   callback(null, token.toJwt());
 };
