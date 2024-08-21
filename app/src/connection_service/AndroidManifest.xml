@@ -5,9 +5,12 @@
         android:name="android.hardware.telephony"
         android:required="true" />
 
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.MANAGE_OWN_CALLS"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
     <uses-permission android:name="android.permission.BLUETOOTH"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
 
     <application
         android:allowBackup="true"
@@ -27,6 +30,7 @@
         <service
             android:enabled="true"
             android:name=".IncomingCallNotificationService"
+            android:foregroundServiceType="microphone"
             android:exported="false">
             <intent-filter>
                 <action android:name="ACTION_ACCEPT" />

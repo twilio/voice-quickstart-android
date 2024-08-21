@@ -10,8 +10,10 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ServiceInfo;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.telecom.Connection;
@@ -231,10 +233,18 @@ public class IncomingCallNotificationService extends Service {
     private void setCallInProgressNotification(CallInvite callInvite, int notificationId) {
         if (isAppVisible()) {
             Log.i(TAG, "setCallInProgressNotification - app is visible.");
-            startForeground(notificationId, createNotification(callInvite, notificationId, NotificationManager.IMPORTANCE_LOW));
+            startForegroundService(notificationId, createNotification(callInvite, notificationId, NotificationManager.IMPORTANCE_LOW));
         } else {
             Log.i(TAG, "setCallInProgressNotification - app is NOT visible.");
-            startForeground(notificationId, createNotification(callInvite, notificationId, NotificationManager.IMPORTANCE_HIGH));
+            startForegroundService(notificationId, createNotification(callInvite, notificationId, NotificationManager.IMPORTANCE_HIGH));
+        }
+    }
+
+    private void startForegroundService(final int id, final Notification notification) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            startForeground(id, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
+        } else {
+            startForeground(id, notification);
         }
     }
 

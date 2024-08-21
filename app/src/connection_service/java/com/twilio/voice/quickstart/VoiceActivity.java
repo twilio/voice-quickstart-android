@@ -151,20 +151,6 @@ public class VoiceActivity extends AppCompatActivity {
         handleIncomingCallIntent(getIntent());
 
         /*
-         * Setup audio device management and set the volume control stream
-         * Assume devices have speaker and earpiece
-         */
-        savedVolumeControlStream = getVolumeControlStream();
-        setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
-        audioDevices.add(AudioDevices.Earpiece);
-        audioDevices.add(AudioDevices.Speaker);
-        boolean isBluetoothConnected = setupBluetooth();
-        if (isBluetoothConnected) {
-            audioDevices.add(AudioDevices.Bluetooth);
-        }
-        registerReceiver(wiredHeadsetReceiver, new IntentFilter(AudioManager.ACTION_HEADSET_PLUG));
-
-        /*
          * Ensure required permissions are enabled
          */
         String[] permissionsList = providePermissions();
@@ -172,6 +158,7 @@ public class VoiceActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, permissionsList, PERMISSIONS_ALL);
         } else {
             registerForCallInvites();
+            setupAudioDeviceManagement();
         }
     }
 
@@ -674,6 +661,7 @@ public class VoiceActivity extends AppCompatActivity {
             }
         }
         registerForCallInvites();
+        setupAudioDeviceManagement();
     }
 
     @Override
@@ -683,7 +671,7 @@ public class VoiceActivity extends AppCompatActivity {
         audioDeviceMenuItem = menu.findItem(R.id.menu_audio_device);
         if (audioDevices.contains(AudioDevices.Bluetooth)) {
             updateAudioDeviceIcon(AudioDevices.Bluetooth);
-        } else {
+        } else if (!audioDevices.isEmpty()) {
             updateAudioDeviceIcon(audioDevices.get(audioDevices.size() - 1));
         }
 
@@ -849,5 +837,21 @@ public class VoiceActivity extends AppCompatActivity {
         if (null != VoiceConnectionService.getConnection()) {
             VoiceConnectionService.releaseConnection();
         }
+    }
+
+    private void setupAudioDeviceManagement() {
+        /*
+         * Setup audio device management and set the volume control stream
+         * Assume devices have speaker and earpiece
+         */
+        savedVolumeControlStream = getVolumeControlStream();
+        setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
+        audioDevices.add(AudioDevices.Earpiece);
+        audioDevices.add(AudioDevices.Speaker);
+        boolean isBluetoothConnected = setupBluetooth();
+        if (isBluetoothConnected) {
+            audioDevices.add(AudioDevices.Bluetooth);
+        }
+        registerReceiver(wiredHeadsetReceiver, new IntentFilter(AudioManager.ACTION_HEADSET_PLUG));
     }
 }
