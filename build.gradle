@@ -9,11 +9,11 @@ buildscript {
             'compileSdk'         : 33,
             'buildTools'         : '34.0.0',
             'minSdk'             : 21,
-            'targetSdk'          : 33,
+            'targetSdk'          : 34,
             'material'           : '1.9.0',
             'firebase'           : '23.2.1',
             'voiceAndroid'       : '6.6.1',
-            'audioSwitch'        : '1.1.8',
+            'audioSwitch'        : '1.2.0',
             'androidxLifecycle'  : '2.2.0',
             'junit'              : '1.1.5'
     ]

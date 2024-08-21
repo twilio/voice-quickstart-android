@@ -8,6 +8,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -19,6 +20,7 @@ import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.twilio.voice.Call;
 import com.twilio.voice.CallInvite;
 
 public class IncomingCallNotificationService extends Service {
@@ -185,13 +187,21 @@ public class IncomingCallNotificationService extends Service {
     private void setCallInProgressNotification(CallInvite callInvite, int notificationId) {
         if (isAppVisible()) {
             Log.i(TAG, "setCallInProgressNotification - app is visible.");
-            startForeground(notificationId, createNotification(callInvite, notificationId, NotificationManager.IMPORTANCE_LOW));
+            startForegroundService(notificationId, createNotification(callInvite, notificationId, NotificationManager.IMPORTANCE_LOW));
         } else {
             Log.i(TAG, "setCallInProgressNotification - app is NOT visible.");
             startForeground(notificationId, createNotification(callInvite, notificationId, NotificationManager.IMPORTANCE_HIGH));
         }
     }
 
+    @TargetApi(Build.VERSION_CODES.O)
+    private void startForegroundService(final int id, final Notification notification) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            startForeground(id, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
+        } else {
+            startForeground(id, notification);
+        }
+    }
 
     private boolean isAppVisible() {
         return ProcessLifecycleOwner
