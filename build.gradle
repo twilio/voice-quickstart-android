@@ -12,7 +12,7 @@ buildscript {
             'targetSdk'          : 34,
             'material'           : '1.9.0',
             'firebase'           : '23.2.1',
-            'voiceAndroid'       : '6.6.2',
+            'voiceAndroid'       : '6.6.3',
             'audioSwitch'        : '1.2.0',
             'androidxLifecycle'  : '2.2.0',
             'junit'              : '1.1.5'
