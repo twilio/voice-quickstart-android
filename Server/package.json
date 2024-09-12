@@ -9,9 +9,9 @@
     "deploy": "twilio-run deploy"
   },
   "devDependencies": {
-    "body-parser": "^1.18.2",
+    "body-parser": "^1.20.3",
     "dotenv": "^4.0.0",
-    "express": "^4.19.2",
+    "express": "^4.21.0",
     "twilio": "^5.1.0",
     "twilio-run": "^2.0.0"
   },
