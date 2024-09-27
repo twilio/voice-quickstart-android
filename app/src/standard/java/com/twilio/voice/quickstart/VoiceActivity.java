@@ -66,7 +66,7 @@ public class VoiceActivity extends AppCompatActivity {
 
     private static final String TAG = "VoiceActivity";
     private static final int PERMISSIONS_ALL = 100;
-    private final String accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJqdGkiOiJTSzk5ZmYxYzJiODkwYzc3MGE0ZTgyYTA2Y2Q3MDE3YzI2LTE3MjU2NTEwMjAiLCJncmFudHMiOnsiaWRlbnRpdHkiOiJhbGljZSIsInZvaWNlIjp7ImluY29taW5nIjp7ImFsbG93Ijp0cnVlfSwib3V0Z29pbmciOnsiYXBwbGljYXRpb25fc2lkIjoiQVBlMTU3NzAzMjMzMzBiNjM0MmVmNTdiMmY2MDY5MTJkZSJ9LCJwdXNoX2NyZWRlbnRpYWxfc2lkIjoiQ1IxZDQyMTIzMDcwNWJkNjE4MWY3YzAyOTQ3MmVlNWFiOSJ9fSwiaWF0IjoxNzI1NjUxMDIwLCJleHAiOjE3MjU2NTQ2MjAsImlzcyI6IlNLOTlmZjFjMmI4OTBjNzcwYTRlODJhMDZjZDcwMTdjMjYiLCJzdWIiOiJBQ2JhMTkxNmEzYTcwNjMzODY0MDZiODI1MDc2MDFjMGMzIn0.J61YSdssMLWDLmg2GBtLXouLeZ-xr2xB56icbQRtTa0";
+    private final String accessToken = "";
 
     /*
      * Audio device management
