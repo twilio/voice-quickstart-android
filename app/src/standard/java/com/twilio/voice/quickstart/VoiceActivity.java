@@ -66,7 +66,7 @@ public class VoiceActivity extends AppCompatActivity {
 
     private static final String TAG = "VoiceActivity";
     private static final int PERMISSIONS_ALL = 100;
-    private final String accessToken = "";
+    private final String accessToken = "PASTE_YOUR_ACCESS_TOKEN_HERE";
 
     /*
      * Audio device management
