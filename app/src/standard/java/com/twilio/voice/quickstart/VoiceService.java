@@ -1,5 +1,11 @@
 package com.twilio.voice.quickstart;
 
+import static com.twilio.voice.quickstart.Constants.ACTION_CANCEL_CALL;
+import static com.twilio.voice.quickstart.Constants.ACTION_FCM_TOKEN;
+import static com.twilio.voice.quickstart.Constants.ACTION_INCOMING_CALL;
+import static com.twilio.voice.quickstart.Constants.ACTION_REJECT_CALL;
+import static com.twilio.voice.quickstart.Constants.FCM_TOKEN;
+
 import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -10,54 +16,155 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ServiceInfo;
 import android.graphics.Color;
+import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.ServiceCompat;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.twilio.voice.Call;
 import com.twilio.voice.CallInvite;
+import com.twilio.voice.CancelledCallInvite;
+import com.twilio.voice.ConnectOptions;
+import com.twilio.voice.Voice;
 
-public class IncomingCallNotificationService extends Service {
+import java.lang.ref.WeakReference;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.Vector;
 
-    private static final String TAG = IncomingCallNotificationService.class.getSimpleName();
+public class VoiceService extends Service {
+    private static final Logger log = new Logger(VoiceService.class);
+    private String fcmToken;
+    private SoundPoolManager soundPoolManager;
+    private Map<String, CallRecord> callDatabase;
+    private WeakReference<VoiceActivity> voiceActiviy;
 
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        String action = intent.getAction();
-
-        if (action != null) {
-            CallInvite callInvite = intent.getParcelableExtra(Constants.INCOMING_CALL_INVITE);
-            int notificationId = intent.getIntExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, 0);
-            switch (action) {
-                case Constants.ACTION_INCOMING_CALL:
-                    handleIncomingCall(intent, callInvite, notificationId);
-                    break;
-                case Constants.ACTION_ACCEPT:
-                    accept(callInvite, notificationId);
-                    break;
-                case Constants.ACTION_REJECT:
-                    reject(callInvite);
-                    break;
-                case Constants.ACTION_CANCEL_CALL:
-                    handleCancelledCall(intent);
-                    break;
-                default:
-                    break;
-            }
+    public static class CallRecord {
+        public CallInvite callInvite;
+        public CallRecord(final CallInvite callInvite) {
+            this.callInvite = callInvite;
         }
-        return START_NOT_STICKY;
+    }
+
+    public VoiceService() {
+        fcmToken = "unavailable";
+        soundPoolManager = new SoundPoolManager(this);
+        callDatabase = new HashMap<>();
+        voiceActiviy = new WeakReference<>(null);
     }
 
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return new Binder() {
+            VoiceService getService() {
+                return VoiceService.this;
+            }
+        };
     }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        switch (Objects.requireNonNull(intent.getAction())) {
+            case ACTION_FCM_TOKEN:
+                fcmToken = Objects.requireNonNull(intent.getStringExtra(FCM_TOKEN));
+                break;
+            case ACTION_INCOMING_CALL:
+                incomingCall(
+                        Objects.requireNonNull(
+                                intent.getParcelableExtra(Constants.INCOMING_CALL_INVITE)));
+                break;
+            case ACTION_CANCEL_CALL:
+                cancelledCall(
+                        Objects.requireNonNull(
+                                intent.getParcelableExtra(Constants.CANCELLED_CALL_INVITE)));
+                break;
+            case ACTION_REJECT_CALL:
+                rejectIncomingCall(
+                        Objects.requireNonNull(intent.getStringExtra(Constants.CALL_SID)));
+                break;
+            default:
+                log.error("should never get here");
+        }
+        return START_NOT_STICKY;
+    }
+
+    public String getFcmToken() {
+        return fcmToken;
+    }
+
+    public void registerVoiceActivity(final VoiceActivity voiceActivity) {
+        voiceActiviy = new WeakReference<>(voiceActivity);
+    }
+
+    public void rejectIncomingCall(final String callSID) {
+        // find call record
+        final CallRecord callRecord = Objects.requireNonNull(callDatabase.get(callSID));
+
+        // remove notification
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE);
+
+        // kill ringer
+        soundPoolManager.stopSound(SoundPoolManager.Sound.RINGER);
+
+        // remove call record
+        callDatabase.remove(callRecord);
+
+        // notify voice activity
+        if (null != voiceActiviy.get()) {
+            // todo
+        }
+    }
+
+    private void incomingCall(@NonNull final CallInvite callInvite) {
+        // create call record
+        callDatabase.put(callInvite.getCallSid(), new CallRecord(callInvite));
+
+        // create incoming call notification
+        // todo
+
+        // create ringer sound
+        soundPoolManager.playSound(SoundPoolManager.Sound.RINGER);
+
+        // notify voice activity
+        if (null != voiceActiviy.get()) {
+            // todo
+        }
+    }
+
+    private void cancelledCall(@NonNull final CancelledCallInvite cancelledCallInvite) {
+        // find call record
+        final CallRecord callRecord =
+                Objects.requireNonNull(callDatabase.get(cancelledCallInvite.getCallSid()));
+
+        // remove notification
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE);
+
+        // kill ringer
+        soundPoolManager.stopSound(SoundPoolManager.Sound.RINGER);
+
+        // remove call record
+        callDatabase.remove(callRecord);
+
+        // notify voice activity
+        if (null != voiceActiviy.get()) {
+            // todo
+        }
+    }
+
+
+    //// old
+
 
     private Notification createNotification(CallInvite callInvite, int notificationId, int channelImportance) {
         Intent intent = new Intent(this, NotificationProxyActivity.class);

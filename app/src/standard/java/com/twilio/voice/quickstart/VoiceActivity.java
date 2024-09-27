@@ -66,7 +66,7 @@ public class VoiceActivity extends AppCompatActivity {
 
     private static final String TAG = "VoiceActivity";
     private static final int PERMISSIONS_ALL = 100;
-    private final String accessToken = "PASTE_YOUR_ACCESS_TOKEN_HERE";
+    private final String accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJqdGkiOiJTSzk5ZmYxYzJiODkwYzc3MGE0ZTgyYTA2Y2Q3MDE3YzI2LTE3MjU2NTEwMjAiLCJncmFudHMiOnsiaWRlbnRpdHkiOiJhbGljZSIsInZvaWNlIjp7ImluY29taW5nIjp7ImFsbG93Ijp0cnVlfSwib3V0Z29pbmciOnsiYXBwbGljYXRpb25fc2lkIjoiQVBlMTU3NzAzMjMzMzBiNjM0MmVmNTdiMmY2MDY5MTJkZSJ9LCJwdXNoX2NyZWRlbnRpYWxfc2lkIjoiQ1IxZDQyMTIzMDcwNWJkNjE4MWY3YzAyOTQ3MmVlNWFiOSJ9fSwiaWF0IjoxNzI1NjUxMDIwLCJleHAiOjE3MjU2NTQ2MjAsImlzcyI6IlNLOTlmZjFjMmI4OTBjNzcwYTRlODJhMDZjZDcwMTdjMjYiLCJzdWIiOiJBQ2JhMTkxNmEzYTcwNjMzODY0MDZiODI1MDc2MDFjMGMzIn0.J61YSdssMLWDLmg2GBtLXouLeZ-xr2xB56icbQRtTa0";
 
     /*
      * Audio device management
@@ -461,7 +461,7 @@ public class VoiceActivity extends AppCompatActivity {
     private DialogInterface.OnClickListener answerCallClickListener() {
         return (dialog, which) -> {
             Log.d(TAG, "Clicked accept");
-            Intent acceptIntent = new Intent(getApplicationContext(), IncomingCallNotificationService.class);
+            Intent acceptIntent = new Intent(getApplicationContext(), VoiceService.class);
             acceptIntent.setAction(Constants.ACTION_ACCEPT);
             acceptIntent.putExtra(Constants.INCOMING_CALL_INVITE, activeCallInvite);
             acceptIntent.putExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, activeCallNotificationId);
@@ -489,7 +489,7 @@ public class VoiceActivity extends AppCompatActivity {
         return (dialogInterface, i) -> {
             SoundPoolManager.getInstance(VoiceActivity.this).stopRinging();
             if (activeCallInvite != null) {
-                Intent intent = new Intent(VoiceActivity.this, IncomingCallNotificationService.class);
+                Intent intent = new Intent(VoiceActivity.this, VoiceService.class);
                 intent.setAction(Constants.ACTION_REJECT);
                 intent.putExtra(Constants.INCOMING_CALL_INVITE, activeCallInvite);
                 startService(intent);
@@ -562,7 +562,7 @@ public class VoiceActivity extends AppCompatActivity {
         SoundPoolManager.getInstance(this).stopRinging();
         activeCallInvite.accept(this, callListener);
         notificationManager.cancel(activeCallNotificationId);
-        stopService(new Intent(getApplicationContext(), IncomingCallNotificationService.class));
+        stopService(new Intent(getApplicationContext(), VoiceService.class));
         setCallUI();
         if (alertDialog != null && alertDialog.isShowing()) {
             alertDialog.dismiss();

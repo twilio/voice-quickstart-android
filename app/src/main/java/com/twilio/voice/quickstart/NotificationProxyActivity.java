@@ -3,7 +3,6 @@ package com.twilio.voice.quickstart;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.speech.tts.Voice;
 
 public class NotificationProxyActivity extends Activity {
   @Override
@@ -24,7 +23,7 @@ public class NotificationProxyActivity extends Activity {
     final String action = intent.getAction();
     if (action != null) {
       final Intent serviceIntent =
-              (new Intent(intent)).setClass(this, IncomingCallNotificationService.class);
+              (new Intent(intent)).setClass(this, VoiceService.class);
       final Intent appIntent =
               (new Intent(intent)).setClass(this, VoiceActivity.class);
       switch (action) {
@@ -52,7 +51,7 @@ public class NotificationProxyActivity extends Activity {
   }
   private void launchService(Intent intent) {
     Intent launchIntent = new Intent(intent);
-    launchIntent.setClass(this, IncomingCallNotificationService.class);
+    launchIntent.setClass(this, VoiceService.class);
     startService(launchIntent);
   }
 }
