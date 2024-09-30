@@ -21,7 +21,7 @@
         </activity>
         <service
             android:enabled="true"
-            android:name=".IncomingCallNotificationService"
+            android:name=".VoiceService"
             android:foregroundServiceType="microphone"
             android:exported="false">
             <intent-filter>

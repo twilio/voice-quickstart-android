@@ -461,7 +461,7 @@ public class VoiceActivity extends AppCompatActivity {
     private DialogInterface.OnClickListener answerCallClickListener() {
         return (dialog, which) -> {
             Log.d(TAG, "Clicked accept");
-            Intent acceptIntent = new Intent(getApplicationContext(), IncomingCallNotificationService.class);
+            Intent acceptIntent = new Intent(getApplicationContext(), VoiceService.class);
             acceptIntent.setAction(Constants.ACTION_ACCEPT);
             acceptIntent.putExtra(Constants.INCOMING_CALL_INVITE, activeCallInvite);
             acceptIntent.putExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, activeCallNotificationId);
@@ -489,7 +489,7 @@ public class VoiceActivity extends AppCompatActivity {
         return (dialogInterface, i) -> {
             SoundPoolManager.getInstance(VoiceActivity.this).stopRinging();
             if (activeCallInvite != null) {
-                Intent intent = new Intent(VoiceActivity.this, IncomingCallNotificationService.class);
+                Intent intent = new Intent(VoiceActivity.this, VoiceService.class);
                 intent.setAction(Constants.ACTION_REJECT);
                 intent.putExtra(Constants.INCOMING_CALL_INVITE, activeCallInvite);
                 startService(intent);
@@ -562,7 +562,7 @@ public class VoiceActivity extends AppCompatActivity {
         SoundPoolManager.getInstance(this).stopRinging();
         activeCallInvite.accept(this, callListener);
         notificationManager.cancel(activeCallNotificationId);
-        stopService(new Intent(getApplicationContext(), IncomingCallNotificationService.class));
+        stopService(new Intent(getApplicationContext(), VoiceService.class));
         setCallUI();
         if (alertDialog != null && alertDialog.isShowing()) {
             alertDialog.dismiss();

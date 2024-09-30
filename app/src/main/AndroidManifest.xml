@@ -24,7 +24,7 @@
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:exported="true" />
         <service
-            android:name=".fcm.VoiceFirebaseMessagingService"
+            android:name=".IncomingMessageService"
             android:stopWithTask="false"
             android:exported="false">
             <intent-filter>
