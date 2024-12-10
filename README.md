@@ -10,7 +10,7 @@
 ## References
 - [Access Tokens](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/access-token.md) - Using access tokens
 - [Managing Push Credentials](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/manage-push-credentials.md) - Managing Push Credentials
-- [Managing Regional Push Credentials using Notify Credential Resource API](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/push-credentials-via-notify-api.md) - Create or update push credentials for regional usage
+- [Managing Regional Push Credentials using Conversations Credential Resource API](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/push-credentials-via-conversations-api.md) - Create or update push credentials for regional usage
 - [Troubleshooting](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/troubleshooting.md) - Troubleshooting
 - [More Documentation](#more-documentation) - More documentation related to the Voice Android SDK
 - [Emulator Support](#emulator-support) - Android emulator support
@@ -163,7 +163,11 @@ Leave the dialog text field empty and press the call button to start a call. You
 
 You will need to store the FCM Server key(The **Server key** of your project from the Firebase console, found under Settings/Cloud messaging) with Twilio so that we can send push notifications to your app on your behalf. Once you store the Server key with Twilio, it will get assigned a Push Credential SID so that you can later specify which key we should use to send push notifications.
 
-Please follow this [document](https://help.twilio.com/articles/20768292997147-Updating-Twilio-Push-for-FCM-HTTP-v1-API) to create a FCMv1 token. Once that token is created, go to your Twilio Console and from the "Account" drop-down on the upper right, select "Credentials".
+A FCMv1 server key can be generated from a Firebase Service account by selecting `Create New Key` and subsequently selecting a 'JSON' key type. Keep track of this generated key due to its limited accessibility. For more information on how to create a FCMv1 token,  please follow this [document](https://help.twilio.com/articles/20768292997147-Updating-Twilio-Push-for-FCM-HTTP-v1-API).
+
+<img width="446px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/firebase-fcm-token-creation.png">
+
+Once that token is created, go to your Twilio Console and from the "Account" drop-down on the upper right, select "Credentials".
 
 <img width="446px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/account-menu.png">
 

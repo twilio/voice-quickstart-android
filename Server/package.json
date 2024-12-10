@@ -11,7 +11,7 @@
   "devDependencies": {
     "body-parser": "^1.18.2",
     "dotenv": "^4.0.0",
-    "express": "^4.21.0",
+    "express": "^4.21.1",
     "twilio": "^5.1.0",
     "twilio-run": "^2.0.0"
   },
