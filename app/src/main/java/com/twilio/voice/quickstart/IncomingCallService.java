@@ -2,7 +2,6 @@ package com.twilio.voice.quickstart;
 
 import static com.twilio.voice.quickstart.Constants.ACTION_FCM_TOKEN;
 import static com.twilio.voice.quickstart.Constants.ACTION_INCOMING_CALL;
-import static com.twilio.voice.quickstart.Constants.CALL_SID;
 import static com.twilio.voice.quickstart.Constants.FCM_TOKEN;
 import static com.twilio.voice.quickstart.Constants.INCOMING_CALL_INVITE;
 import static com.twilio.voice.quickstart.Constants.ACTION_CANCEL_CALL;
@@ -10,9 +9,10 @@ import static com.twilio.voice.quickstart.Constants.CANCELLED_CALL_INVITE;
 import static java.lang.String.format;
 
 import android.content.Intent;
+
+import androidx.annotation.CallSuper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.os.Parcelable;
 import android.util.Pair;
@@ -25,8 +25,8 @@ import com.twilio.voice.CancelledCallInvite;
 import com.twilio.voice.MessageListener;
 import com.twilio.voice.Voice;
 
-public class IncomingMessageService extends FirebaseMessagingService implements MessageListener {
-    private static final Logger log = new Logger(IncomingMessageService.class);
+public class IncomingCallService extends FirebaseMessagingService implements MessageListener {
+    private static final Logger log = new Logger(IncomingCallService.class);
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
@@ -41,10 +41,10 @@ public class IncomingMessageService extends FirebaseMessagingService implements 
         }
     }
 
+    @CallSuper
     @Override
     public void onNewToken(@NonNull String token) {
-        super.onNewToken(token);
-        startVoiceService(ACTION_FCM_TOKEN, new Pair<>(FCM_TOKEN, token));
+        log.debug("[debug] onNewToken");
     }
 
     @Override

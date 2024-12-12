@@ -28,24 +28,16 @@ public class SoundPoolManager {
 
         // Load the sounds
         int maxStreams = 1;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            soundPool = new SoundPool.Builder()
-                    .setMaxStreams(maxStreams)
-                    .build();
-        } else {
-            soundPool = new SoundPool(maxStreams, AudioManager.STREAM_MUSIC, 0);
-        }
+        soundPool = new SoundPool.Builder()
+                .setMaxStreams(maxStreams)
+                .build();
 
-        soundPool.setOnLoadCompleteListener(new SoundPool.OnLoadCompleteListener() {
-            @Override
-            public void onLoadComplete(SoundPool soundPool, int sampleId, int status) {
-                loaded = true;
-                if (playingCalled) {
-                    playRinging();
-                    playingCalled = false;
-                }
+        soundPool.setOnLoadCompleteListener((soundPool, sampleId, status) -> {
+            loaded = true;
+            if (playingCalled) {
+                playRinging();
+                playingCalled = false;
             }
-
         });
         ringingSoundId = soundPool.load(context, R.raw.incoming, 1);
         disconnectSoundId = soundPool.load(context, R.raw.disconnect, 1);

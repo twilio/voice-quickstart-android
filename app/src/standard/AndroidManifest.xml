@@ -24,10 +24,6 @@
             android:name=".VoiceService"
             android:foregroundServiceType="microphone"
             android:exported="false">
-            <intent-filter>
-                <action android:name="ACTION_ACCEPT" />
-                <action android:name="ACTION_REJECT" />
-            </intent-filter>
         </service>
     </application>
 </manifest>

@@ -50,7 +50,7 @@ class SoundPoolManager {
     private Map<Sound, SoundRecord> soundBank;
     private int lastActiveAudioStreamId;
 
-    SoundPoolManager(Context context) {
+    SoundPoolManager(final Context context) {
         // construct sound pool
         soundPool = new SoundPool.Builder().setMaxStreams(1).build();
         soundPool.setOnLoadCompleteListener((soundPool, sampleId, status) -> {

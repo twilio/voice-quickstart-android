@@ -1,313 +1,326 @@
 package com.twilio.voice.quickstart;
 
 import static com.twilio.voice.quickstart.Constants.ACTION_CANCEL_CALL;
-import static com.twilio.voice.quickstart.Constants.ACTION_FCM_TOKEN;
 import static com.twilio.voice.quickstart.Constants.ACTION_INCOMING_CALL;
 import static com.twilio.voice.quickstart.Constants.ACTION_REJECT_CALL;
-import static com.twilio.voice.quickstart.Constants.FCM_TOKEN;
 
-import android.annotation.TargetApi;
+import static java.lang.String.format;
+
 import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ServiceInfo;
 import android.graphics.Color;
 import android.os.Binder;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.NotificationChannelCompat;
 import androidx.core.app.NotificationCompat;
-import androidx.core.app.ServiceCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ProcessLifecycleOwner;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.twilio.voice.Call;
+import com.twilio.voice.CallException;
 import com.twilio.voice.CallInvite;
 import com.twilio.voice.CancelledCallInvite;
 import com.twilio.voice.ConnectOptions;
+import com.twilio.voice.RegistrationException;
+import com.twilio.voice.RegistrationListener;
 import com.twilio.voice.Voice;
 
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
-import java.util.Vector;
 
 public class VoiceService extends Service {
     private static final Logger log = new Logger(VoiceService.class);
-    private String fcmToken;
+    private final NotificationChannelCompat[] notificationChannels;
+    private final Map<UUID, CallRecord> callDatabase;
     private SoundPoolManager soundPoolManager;
-    private Map<String, CallRecord> callDatabase;
-    private WeakReference<VoiceActivity> voiceActiviy;
+    private WeakReference<VoiceActivity> voiceActivity;
+    private String accessToken;
 
-    public static class CallRecord {
-        public CallInvite callInvite;
+    private enum NotificationPriority {
+        LOW,
+        HIGH
+    }
+
+    private static class CallRecord {
+        public final CallInvite callInvite;
+        public int callInviteNotificationId;
+        public Call activeCall;
+        public int ringCount;
+
+        public CallRecord(final Call activeCall) {
+            this.callInvite = null;
+            this.activeCall = activeCall;
+            this.callInviteNotificationId = 0;
+            this.ringCount = 0;
+        }
+
         public CallRecord(final CallInvite callInvite) {
             this.callInvite = callInvite;
+            this.activeCall = null;
+            this.callInviteNotificationId = 0;
+        }
+    }
+
+    public class VideoServiceBinder extends Binder {
+        VoiceService getService() {
+            return VoiceService.this;
         }
     }
 
     public VoiceService() {
-        fcmToken = "unavailable";
-        soundPoolManager = new SoundPoolManager(this);
+        notificationChannels = new NotificationChannelCompat[NotificationPriority.values().length];
         callDatabase = new HashMap<>();
-        voiceActiviy = new WeakReference<>(null);
+        voiceActivity = new WeakReference<>(null);
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        soundPoolManager = new SoundPoolManager(getApplicationContext());
+
+        // create notification channels
+        notificationChannels[NotificationPriority.LOW.ordinal()] =
+                new NotificationChannelCompat.Builder(
+                        Constants.VOICE_CHANNEL_LOW_IMPORTANCE,
+                        NotificationManagerCompat.IMPORTANCE_LOW)
+                        .setName("Primary Voice Channel")
+                        .setLightColor(Color.GREEN)
+                        .build();
+        notificationChannels[NotificationPriority.HIGH.ordinal()] =
+                new NotificationChannelCompat.Builder(
+                        Constants.VOICE_CHANNEL_HIGH_IMPORTANCE,
+                        NotificationManagerCompat.IMPORTANCE_HIGH)
+                        .setName("Primary Voice Channel")
+                        .setLightColor(Color.GREEN)
+                        .build();
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        for (NotificationChannelCompat notificationChannel : notificationChannels) {
+            notificationManager.createNotificationChannel(notificationChannel);
+        }
     }
 
     @Override
     public IBinder onBind(Intent intent) {
-        return new Binder() {
-            VoiceService getService() {
-                return VoiceService.this;
-            }
-        };
+        return new VideoServiceBinder();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        switch (Objects.requireNonNull(intent.getAction())) {
-            case ACTION_FCM_TOKEN:
-                fcmToken = Objects.requireNonNull(intent.getStringExtra(FCM_TOKEN));
-                break;
-            case ACTION_INCOMING_CALL:
-                incomingCall(
-                        Objects.requireNonNull(
-                                intent.getParcelableExtra(Constants.INCOMING_CALL_INVITE)));
-                break;
-            case ACTION_CANCEL_CALL:
-                cancelledCall(
-                        Objects.requireNonNull(
-                                intent.getParcelableExtra(Constants.CANCELLED_CALL_INVITE)));
-                break;
-            case ACTION_REJECT_CALL:
-                rejectIncomingCall(
-                        Objects.requireNonNull(intent.getStringExtra(Constants.CALL_SID)));
-                break;
-            default:
-                log.error("should never get here");
+        if (null != intent) {
+            switch (Objects.requireNonNull(intent.getAction())) {
+                case ACTION_INCOMING_CALL:
+                    incomingCall(
+                            Objects.requireNonNull(
+                                    intent.getParcelableExtra(Constants.INCOMING_CALL_INVITE)));
+                    break;
+                case ACTION_CANCEL_CALL:
+                    cancelledCall(
+                            Objects.requireNonNull(
+                                    intent.getParcelableExtra(Constants.CANCELLED_CALL_INVITE)));
+                    break;
+                case ACTION_REJECT_CALL:
+                    rejectIncomingCall((UUID)Objects.requireNonNull(intent.getSerializableExtra(
+                                    Constants.CALL_UUID)));
+                    break;
+                default:
+                    log.error("should never get here");
+            }
         }
         return START_NOT_STICKY;
     }
 
-    public String getFcmToken() {
-        return fcmToken;
+    public void registerVoiceActivity(@NonNull final VoiceActivity voiceActivity,
+                                      @NonNull final String accessToken) {
+        this.voiceActivity = new WeakReference<>(voiceActivity);
+        this.accessToken = accessToken;
     }
 
-    public void registerVoiceActivity(final VoiceActivity voiceActivity) {
-        voiceActiviy = new WeakReference<>(voiceActivity);
-    }
-
-    public void rejectIncomingCall(final String callSID) {
+    public void acceptCall(@NonNull final UUID callId) {
         // find call record
-        final CallRecord callRecord = Objects.requireNonNull(callDatabase.get(callSID));
+        final CallRecord callRecord = Objects.requireNonNull(callDatabase.get(callId));
 
         // remove notification
-        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE);
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        notificationManager.cancel(callRecord.callInviteNotificationId);
 
         // kill ringer
         soundPoolManager.stopSound(SoundPoolManager.Sound.RINGER);
 
-        // remove call record
-        callDatabase.remove(callRecord);
+        // accept call
+        callRecord.activeCall = callRecord.callInvite.accept(this, callListener);
+    }
+
+    public UUID connectCall(@NonNull final ConnectOptions options) {
+        UUID callId = UUID.randomUUID();
+
+        // connect call & create call record
+        callDatabase.put(
+                callId,
+                new CallRecord(Voice.connect(this, options, callListener)));
+
+        // return call Id
+        return callId;
+    }
+
+    public void disconnectCall(@NonNull final UUID callId) {
+        // find call record
+        final CallRecord callRecord = Objects.requireNonNull(callDatabase.get(callId));
+
+        // play disconnect sound
+        soundPoolManager.playSound(SoundPoolManager.Sound.DISCONNECT);
+
+        // disconnect call
+        callRecord.activeCall.disconnect();
+    }
+
+    public Call getCall(@NonNull final UUID callId) {
+        // find call record
+        final CallRecord callRecord = Objects.requireNonNull(callDatabase.get(callId));
+
+        // return call
+        return callRecord.activeCall;
+    }
+
+    public void rejectIncomingCall(final UUID callId) {
+        // find & remove call record
+        final CallRecord callRecord = Objects.requireNonNull(callDatabase.remove(callId));
+
+        // remove notification
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        notificationManager.cancel(callRecord.callInviteNotificationId);
+
+        // kill ringer
+        soundPoolManager.stopSound(SoundPoolManager.Sound.RINGER);
 
         // notify voice activity
-        if (null != voiceActiviy.get()) {
-            // todo
+        if (null != voiceActivity.get()) {
+            voiceActivity.get().canceledCall();
         }
+    }
+
+    public void registerFCMToken(@NonNull final String fcmToken) {
+        Voice.register(accessToken, Voice.RegistrationChannel.FCM, fcmToken, registrationListener);
     }
 
     private void incomingCall(@NonNull final CallInvite callInvite) {
         // create call record
-        callDatabase.put(callInvite.getCallSid(), new CallRecord(callInvite));
+        final UUID uuid = UUID.randomUUID();
+        final CallRecord callRecord = new CallRecord(callInvite);
+        callDatabase.put(uuid, callRecord);
 
         // create incoming call notification
-        // todo
+        NotificationPriority priority =
+                isAppVisible() ? NotificationPriority.LOW : NotificationPriority.HIGH;
+        final Notification notification = createIncomingCallNotification(uuid, callRecord, priority);
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        notificationManager.notify(callRecord.callInviteNotificationId, notification);
 
         // create ringer sound
         soundPoolManager.playSound(SoundPoolManager.Sound.RINGER);
 
         // notify voice activity
-        if (null != voiceActiviy.get()) {
-            // todo
+        if (null != voiceActivity.get()) {
+            voiceActivity.get().incomingCall(uuid);
         }
     }
 
     private void cancelledCall(@NonNull final CancelledCallInvite cancelledCallInvite) {
         // find call record
-        final CallRecord callRecord =
-                Objects.requireNonNull(callDatabase.get(cancelledCallInvite.getCallSid()));
+        final UUID callId =
+                Objects.requireNonNull(findAssociatedCallId(cancelledCallInvite.getCallSid()));
+        final CallRecord callRecord = Objects.requireNonNull(callDatabase.remove(callId));
 
         // remove notification
-        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE);
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        notificationManager.cancel(callRecord.callInviteNotificationId);
 
         // kill ringer
         soundPoolManager.stopSound(SoundPoolManager.Sound.RINGER);
 
-        // remove call record
-        callDatabase.remove(callRecord);
-
         // notify voice activity
-        if (null != voiceActiviy.get()) {
-            // todo
+        if (null != voiceActivity.get()) {
+            voiceActivity.get().canceledCall();
         }
     }
 
+    private Notification createIncomingCallNotification(
+            final UUID callId,
+            final CallRecord callRecord,
+            final NotificationPriority priority) {
+        final int notificationId = generateRandomId();
+        String channelId = (priority == NotificationPriority.LOW) ?
+                Constants.VOICE_CHANNEL_LOW_IMPORTANCE : Constants.VOICE_CHANNEL_HIGH_IMPORTANCE;
 
-    //// old
-
-
-    private Notification createNotification(CallInvite callInvite, int notificationId, int channelImportance) {
-        Intent intent = new Intent(this, NotificationProxyActivity.class);
-        intent.setAction(Constants.ACTION_INCOMING_CALL_NOTIFICATION);
-        intent.putExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, notificationId);
-        intent.putExtra(Constants.INCOMING_CALL_INVITE, callInvite);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-        PendingIntent pendingIntent =
-                PendingIntent.getActivity(this, notificationId, intent, PendingIntent.FLAG_IMMUTABLE);
-        /*
-         * Pass the notification id and call sid to use as an identifier to cancel the
-         * notification later
-         */
+        // pass the call sid to use an identifier to retrieve the call info later
         Bundle extras = new Bundle();
-        extras.putString(Constants.CALL_SID_KEY, callInvite.getCallSid());
+        extras.putSerializable(Constants.CALL_UUID, callId);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            return buildNotification(callInvite.getFrom() + " is calling.",
-                    pendingIntent,
-                    extras,
-                    callInvite,
-                    notificationId,
-                    createChannel(channelImportance));
-        } else {
-            //noinspection deprecation
-            return new NotificationCompat.Builder(this)
-                    .setSmallIcon(R.drawable.ic_call_end_white_24dp)
-                    .setContentTitle(getString(R.string.app_name))
-                    .setContentText(callInvite.getFrom() + " is calling.")
-                    .setAutoCancel(true)
-                    .setExtras(extras)
-                    .setContentIntent(pendingIntent)
-                    .setGroup("test_app_notification")
-                    .setCategory(Notification.CATEGORY_CALL)
-                    .setColor(Color.rgb(214, 10, 37)).build();
-        }
-    }
+        // create pending intents
+        Intent foregroundIntent = new Intent(this, VoiceActivity.class);
+        foregroundIntent.setAction(Constants.ACTION_INCOMING_CALL_NOTIFICATION);
+        foregroundIntent.putExtra(Constants.CALL_UUID, callId);
+        foregroundIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pendingForegroundIntent = PendingIntent.getActivity(this,
+                notificationId, foregroundIntent, PendingIntent.FLAG_IMMUTABLE);
 
-    /**
-     * Build a notification.
-     *
-     * @param text          the text of the notification
-     * @param pendingIntent the body, pending intent for the notification
-     * @param extras        extras passed with the notification
-     * @return the builder
-     */
-    @TargetApi(Build.VERSION_CODES.O)
-    private Notification buildNotification(String text, PendingIntent pendingIntent, Bundle extras,
-                                          final CallInvite callInvite,
-                                          int notificationId,
-                                          String channelId) {
-        Intent rejectIntent = new Intent(getApplicationContext(), NotificationProxyActivity.class);
-        rejectIntent.setAction(Constants.ACTION_REJECT);
-        rejectIntent.putExtra(Constants.INCOMING_CALL_INVITE, callInvite);
-        rejectIntent.putExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, notificationId);
-        PendingIntent piRejectIntent = PendingIntent.getActivity(getApplicationContext(), notificationId, rejectIntent, PendingIntent.FLAG_IMMUTABLE);
+        Intent rejectIntent = new Intent(getApplicationContext(), VoiceService.class);
+        rejectIntent.setAction(Constants.ACTION_REJECT_CALL);
+        rejectIntent.putExtra(Constants.CALL_UUID, callId);
+        PendingIntent pendingRejectIntent = PendingIntent.getActivity(
+                this, notificationId, rejectIntent, PendingIntent.FLAG_IMMUTABLE);
 
-        Intent acceptIntent = new Intent(getApplicationContext(), NotificationProxyActivity.class);
-        acceptIntent.setAction(Constants.ACTION_ACCEPT);
-        acceptIntent.putExtra(Constants.INCOMING_CALL_INVITE, callInvite);
-        acceptIntent.putExtra(Constants.INCOMING_CALL_NOTIFICATION_ID, notificationId);
+        Intent acceptIntent = new Intent(getApplicationContext(), VoiceActivity.class);
+        acceptIntent.setAction(Constants.ACTION_ACCEPT_CALL);
+        acceptIntent.putExtra(Constants.CALL_UUID, callId);
         acceptIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent piAcceptIntent = PendingIntent.getActivity(getApplicationContext(), notificationId, acceptIntent, PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent pendingAcceptIntent = PendingIntent.getActivity(
+                this, notificationId, acceptIntent, PendingIntent.FLAG_IMMUTABLE);
 
-        Notification.Builder builder =
-                new Notification.Builder(getApplicationContext(), channelId)
-                        .setSmallIcon(R.drawable.ic_call_end_white_24dp)
-                        .setContentTitle(getString(R.string.app_name))
-                        .setContentText(text)
-                        .setCategory(Notification.CATEGORY_CALL)
-                        .setExtras(extras)
-                        .setAutoCancel(true)
-                        .addAction(android.R.drawable.ic_menu_delete, getString(R.string.decline), piRejectIntent)
-                        .addAction(android.R.drawable.ic_menu_call, getString(R.string.answer), piAcceptIntent)
-                        .setFullScreenIntent(pendingIntent, true);
-
-        return builder.build();
+        callRecord.callInviteNotificationId = notificationId;
+        // create notification
+        return new NotificationCompat.Builder(this, channelId)
+                .setSmallIcon(R.drawable.ic_call_end_white_24dp)
+                .setContentTitle(getString(R.string.app_name))
+                .setContentText(callRecord.callInvite.getFrom() + " is calling")
+                .setCategory(Notification.CATEGORY_CALL)
+                .setExtras(extras)
+                .setAutoCancel(true)
+                .addAction(android.R.drawable.ic_menu_delete, getString(R.string.decline), pendingRejectIntent)
+                .addAction(android.R.drawable.ic_menu_call, getString(R.string.answer), pendingAcceptIntent)
+                .setFullScreenIntent(pendingForegroundIntent, true)
+                .build();
     }
 
-    @TargetApi(Build.VERSION_CODES.O)
-    private String createChannel(int channelImportance) {
-        NotificationChannel callInviteChannel = new NotificationChannel(Constants.VOICE_CHANNEL_HIGH_IMPORTANCE,
-                "Primary Voice Channel", NotificationManager.IMPORTANCE_HIGH);
-        String channelId = Constants.VOICE_CHANNEL_HIGH_IMPORTANCE;
-
-        if (channelImportance == NotificationManager.IMPORTANCE_LOW) {
-            callInviteChannel = new NotificationChannel(Constants.VOICE_CHANNEL_LOW_IMPORTANCE,
-                    "Primary Voice Channel", NotificationManager.IMPORTANCE_LOW);
-            channelId = Constants.VOICE_CHANNEL_LOW_IMPORTANCE;
+    private UUID findAssociatedCallId(final String callSid) {
+        for (Map.Entry<UUID, CallRecord> entry: callDatabase.entrySet()) {
+            if (null != entry.getValue().callInvite &&
+                    entry.getValue().callInvite.getCallSid().equals(callSid)) {
+                return entry.getKey();
+            }
         }
-        callInviteChannel.setLightColor(Color.GREEN);
-        callInviteChannel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
-        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.createNotificationChannel(callInviteChannel);
-
-        return channelId;
+        return null;
     }
 
-    private void accept(CallInvite callInvite, int notificationId) {
-        endForeground();
-    }
-
-    private void reject(CallInvite callInvite) {
-        endForeground();
-        callInvite.reject(getApplicationContext());
-    }
-
-    private void handleCancelledCall(Intent intent) {
-        endForeground();
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-    }
-
-    private void handleIncomingCall(Intent intent, CallInvite callInvite, int notificationId) {
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            setCallInProgressNotification(callInvite, notificationId);
+    private UUID findAssociatedCallId(final Call call) {
+        for (Map.Entry<UUID, CallRecord> entry: callDatabase.entrySet()) {
+            if (null != entry.getValue().activeCall && entry.getValue().activeCall == call) {
+                return entry.getKey();
+            }
         }
-    }
-
-    private void endForeground() {
-        stopForeground(true);
-    }
-
-    @TargetApi(Build.VERSION_CODES.O)
-    private void setCallInProgressNotification(CallInvite callInvite, int notificationId) {
-        if (isAppVisible()) {
-            Log.i(TAG, "setCallInProgressNotification - app is visible.");
-            startForegroundService(notificationId, createNotification(callInvite, notificationId, NotificationManager.IMPORTANCE_LOW));
-        } else {
-            Log.i(TAG, "setCallInProgressNotification - app is NOT visible.");
-            startForeground(notificationId, createNotification(callInvite, notificationId, NotificationManager.IMPORTANCE_HIGH));
-        }
-    }
-
-    @TargetApi(Build.VERSION_CODES.O)
-    private void startForegroundService(final int id, final Notification notification) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            startForeground(id, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
-        } else {
-            startForeground(id, notification);
-        }
+        return null;
     }
 
     private boolean isAppVisible() {
@@ -317,4 +330,147 @@ public class VoiceService extends Service {
                 .getCurrentState()
                 .isAtLeast(Lifecycle.State.STARTED);
     }
+
+    private int generateRandomId() {
+        int newId;
+        Random generator = new Random(System.currentTimeMillis());
+        for (newId = generator.nextInt(); newId == 0; newId = generator.nextInt()) { }
+        return newId;
+    }
+
+    private final RegistrationListener registrationListener = new RegistrationListener() {
+        @Override
+        public void onRegistered(@NonNull String accessToken, @NonNull String fcmToken) {
+            log.debug("Successfully registered FCM");
+            // notify voice activity
+            if (null != voiceActivity.get()) {
+                voiceActivity.get().registrationSuccessful(fcmToken);
+            }
+        }
+
+        @Override
+        public void onError(@NonNull RegistrationException registrationException,
+                            @NonNull String accessToken,
+                            @NonNull String fcmToken) {
+            log.warning("failed to registered FCM");
+            // notify voice activity
+            if (null != voiceActivity.get()) {
+                voiceActivity.get().registrationFailed(registrationException);
+            }
+        }
+    };
+
+    private final Call.Listener callListener = new Call.Listener() {
+        @Override
+        public void onRinging(@NonNull Call call) {
+            log.debug("Ringing");
+
+            // find call record & remove
+            final UUID callId = Objects.requireNonNull(findAssociatedCallId(call));
+            final CallRecord callRecord = Objects.requireNonNull(callDatabase.get(callId));
+
+            // When [answerOnBridge](https://www.twilio.com/docs/voice/twiml/dial#answeronbridge)
+            // is enabled in the <Dial> TwiML verb, the caller will not hear the ringback while
+            // the call is ringing and awaiting to be accepted on the callee's side. The application
+            // can use the `SoundPoolManager` to play custom audio files between the
+            // `Call.Listener.onRinging()` and the `Call.Listener.onConnected()` callbacks.
+            if (1 == callRecord.ringCount++ && BuildConfig.playCustomRingback) {
+                soundPoolManager.playSound(SoundPoolManager.Sound.RINGER);
+            }
+
+            // notify voice activity
+            if (null != voiceActivity.get()) {
+                voiceActivity.get().onRinging(call);
+            }
+        }
+
+        @Override
+        public void onConnectFailure(@NonNull Call call, @NonNull CallException callException) {
+            log.debug("Connect failure: " + logException(callException));
+
+            // find call record & remove
+            final UUID callId = Objects.requireNonNull(findAssociatedCallId(call));
+            Objects.requireNonNull(callDatabase.remove(callId));
+
+            // kill ringer
+            if (BuildConfig.playCustomRingback) {
+                soundPoolManager.stopSound(SoundPoolManager.Sound.RINGER);
+            }
+
+            // notify voice activity
+            if (null != voiceActivity.get()) {
+                voiceActivity.get().onConnectFailure(call, callException);
+            }
+        }
+
+        @Override
+        public void onConnected(@NonNull Call call) {
+            log.debug("Connected");
+
+            // kill ringer
+            if (BuildConfig.playCustomRingback) {
+                soundPoolManager.playSound(SoundPoolManager.Sound.RINGER);
+            }
+
+            // notify voice activity
+            if (null != voiceActivity.get()) {
+                voiceActivity.get().onConnected(call);
+            }
+        }
+
+        @Override
+        public void onReconnecting(@NonNull Call call, @NonNull CallException callException) {
+            log.debug("Reconnecting: " + logException(callException));
+
+            // notify voice activity
+            if (null != voiceActivity.get()) {
+                voiceActivity.get().onReconnecting(call, callException);
+            }
+        }
+
+        @Override
+        public void onReconnected(@NonNull Call call) {
+            log.debug("Reconnected");
+
+            // notify voice activity
+            if (null != voiceActivity.get()) {
+                voiceActivity.get().onReconnected(call);
+            }
+        }
+
+        @Override
+        public void onDisconnected(@NonNull Call call, @Nullable CallException callException) {
+            log.debug("Disconnected: " + logException(callException));
+
+            // find call record & remove
+            final UUID callId = Objects.requireNonNull(findAssociatedCallId(call));
+            Objects.requireNonNull(callDatabase.remove(callId));
+
+            // notify voice activity
+            if (null != voiceActivity.get()) {
+                voiceActivity.get().onDisconnected(call, callException);
+            }
+        }
+
+        public void onCallQualityWarningsChanged(@NonNull Call call,
+                                                 @NonNull Set<Call.CallQualityWarning> currentWarnings,
+                                                 @NonNull Set<Call.CallQualityWarning> previousWarnings) {
+            log.debug("onCallQualityWarningsChanged");
+
+            // notify voice activity
+            if (null != voiceActivity.get()) {
+                voiceActivity.get().onCallQualityWarningsChanged(
+                        call, currentWarnings, previousWarnings);
+            }
+        }
+
+        private String logException(@Nullable CallException callException) {
+            return (null != callException)
+                    ? format(Locale.US,
+                    "%d, %s",
+                            callException.getErrorCode(),
+                            callException.getMessage())
+                    : "";
+        }
+    };
 }
