@@ -186,20 +186,24 @@ public class VoiceService extends Service {
         callRecord.activeCall.disconnect();
     }
 
-    public Call getCall(@NonNull final UUID callId) {
+    public boolean muteCall(@NonNull final UUID callId) {
         // find call record
         final CallRecord callRecord = Objects.requireNonNull(callDatabase.get(callId));
 
-        // return call
-        return callRecord.activeCall;
+        // mute call
+        boolean muteState = callRecord.activeCall.isMuted();
+        callRecord.activeCall.mute(!muteState);
+        return !muteState;
     }
 
-    public CallInvite getCallInvite(@NonNull final UUID callId) {
+    public boolean holdCall(@NonNull final UUID callId) {
         // find call record
         final CallRecord callRecord = Objects.requireNonNull(callDatabase.get(callId));
 
-        // return call inviate
-        return callRecord.callInvite;
+        // hold call
+        boolean holdState = callRecord.activeCall.isOnHold();
+        callRecord.activeCall.hold(!holdState);
+        return !holdState;
     }
 
     public void rejectIncomingCall(final UUID callId) {
@@ -244,7 +248,7 @@ public class VoiceService extends Service {
 
         // notify voice activity
         if (null != voiceActivity.get()) {
-            voiceActivity.get().incomingCall(uuid);
+            voiceActivity.get().incomingCall(uuid, callInvite);
         }
     }
 
@@ -283,6 +287,7 @@ public class VoiceService extends Service {
         Intent foregroundIntent = new Intent(this, VoiceActivity.class);
         foregroundIntent.setAction(Constants.ACTION_INCOMING_CALL_NOTIFICATION);
         foregroundIntent.putExtra(Constants.CALL_UUID, callId);
+        foregroundIntent.putExtra(Constants.INCOMING_CALL_INVITE, callRecord.callInvite);
         foregroundIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingForegroundIntent = PendingIntent.getActivity(this,
                 notificationId, foregroundIntent, PendingIntent.FLAG_IMMUTABLE);

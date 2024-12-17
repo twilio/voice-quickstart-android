@@ -160,17 +160,13 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
         super.onDestroy();
     }
 
-    public void incomingCall(UUID callId) {
+    public void incomingCall(@NonNull final UUID callId, @NonNull final CallInvite invite) {
         activeCallId = callId;
-        voiceService.invoke(
-                voiceService -> {
-                    final CallInvite callInvite = voiceService.getCallInvite(callId);
-                    if (Build.VERSION.SDK_INT < VERSION_CODES.O) {
-                        showIncomingCallDialog(callInvite);
-                    } else if (isAppVisible()) {
-                        showIncomingCallDialog(callInvite);
-                    }
-                });
+        if (Build.VERSION.SDK_INT < VERSION_CODES.O) {
+            showIncomingCallDialog(invite);
+        } else if (isAppVisible()) {
+            showIncomingCallDialog(invite);
+        }
     }
 
     public void canceledCall() {
@@ -449,24 +445,18 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
     private void hold() {
         if (activeCallId != null) {
             voiceService.invoke(
-                    voiceService -> {
-                        final Call activeCall = Objects.requireNonNull(voiceService).getCall(activeCallId);
-                        boolean hold = !activeCall.isOnHold();
-                        activeCall.hold(hold);
-                        applyFabState(holdActionFab, hold);
-                    });
+                    voiceService -> applyFabState(
+                            holdActionFab,
+                            Objects.requireNonNull(voiceService).holdCall(activeCallId)));
         }
     }
 
     private void mute() {
         if (activeCallId != null) {
             voiceService.invoke(
-            voiceService -> {
-                final Call activeCall = Objects.requireNonNull(voiceService).getCall(activeCallId);
-                boolean mute = !activeCall.isMuted();
-                activeCall.mute(mute);
-                applyFabState(muteActionFab, mute);
-            });
+            voiceService -> applyFabState(
+                    muteActionFab,
+                    Objects.requireNonNull(voiceService).muteCall(activeCallId)));
         }
     }
 
@@ -636,15 +626,15 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
     }
 
     private static class ServiceConnectionManager {
+        private VoiceService voiceService = null;
         private final List<Task> pendingTasks = new LinkedList<>();
         private final String accessToken;
         private final Context context;
-        private VoiceService voiceService = null;
-        private ServiceConnection serviceConnection = new ServiceConnection() {
+        private final ServiceConnection serviceConnection = new ServiceConnection() {
 
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
-                // verify is main thread, all Voice SDK calls must be made on the same thread
+                // verify is main thread, all Voice SDK calls must be made on the same Looper thread
                 assert(Looper.myLooper() == Looper.getMainLooper());
                 // link to voice service
                 voiceService = ((VoiceService.VideoServiceBinder)service).getService();
@@ -681,7 +671,7 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
 
         public void invoke(Task task) {
             if (null != voiceService) {
-                // verify is main thread, all Voice SDK calls must be made on the same thread
+                // verify is main thread, all Voice SDK calls must be made on the same Looper thread
                 assert(Looper.myLooper() == Looper.getMainLooper());
                 // run task
                 synchronized (this) {
