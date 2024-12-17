@@ -194,6 +194,14 @@ public class VoiceService extends Service {
         return callRecord.activeCall;
     }
 
+    public CallInvite getCallInvite(@NonNull final UUID callId) {
+        // find call record
+        final CallRecord callRecord = Objects.requireNonNull(callDatabase.get(callId));
+
+        // return call inviate
+        return callRecord.callInvite;
+    }
+
     public void rejectIncomingCall(final UUID callId) {
         // find & remove call record
         final CallRecord callRecord = Objects.requireNonNull(callDatabase.remove(callId));
@@ -204,6 +212,9 @@ public class VoiceService extends Service {
 
         // kill ringer
         soundPoolManager.stopSound(SoundPoolManager.Sound.RINGER);
+
+        // reject call
+        callRecord.callInvite.reject(this);
 
         // notify voice activity
         if (null != voiceActivity.get()) {
@@ -279,7 +290,7 @@ public class VoiceService extends Service {
         Intent rejectIntent = new Intent(getApplicationContext(), VoiceService.class);
         rejectIntent.setAction(Constants.ACTION_REJECT_CALL);
         rejectIntent.putExtra(Constants.CALL_UUID, callId);
-        PendingIntent pendingRejectIntent = PendingIntent.getActivity(
+        PendingIntent pendingRejectIntent = PendingIntent.getService(
                 this, notificationId, rejectIntent, PendingIntent.FLAG_IMMUTABLE);
 
         Intent acceptIntent = new Intent(getApplicationContext(), VoiceActivity.class);

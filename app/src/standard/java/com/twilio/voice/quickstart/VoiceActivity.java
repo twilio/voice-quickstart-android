@@ -7,13 +7,10 @@ import static java.lang.String.format;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.NotificationManager;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.res.ColorStateList;
 import android.media.AudioManager;
@@ -21,8 +18,8 @@ import android.os.Build;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.SystemClock;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -40,7 +37,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ProcessLifecycleOwner;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -52,12 +48,11 @@ import com.twilio.voice.CallException;
 import com.twilio.voice.CallInvite;
 import com.twilio.voice.ConnectOptions;
 import com.twilio.voice.RegistrationException;
-import com.twilio.voice.RegistrationListener;
-import com.twilio.voice.Voice;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -71,7 +66,7 @@ import kotlin.Unit;
 public class VoiceActivity extends AppCompatActivity implements Call.Listener {
     private static final Logger log = new Logger(VoiceService.class);
     private static final int PERMISSIONS_ALL = 100;
-    private final String accessToken = "PASTE_YOUR_ACCESS_TOKEN_HERE";
+    private final String accessToken = "PASTE_TOKEN_HERE";
 
     private AudioSwitch audioSwitch;
     private int savedVolumeControlStream;
@@ -85,9 +80,8 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
     private Chronometer chronometer;
 
     private AlertDialog alertDialog;
-    private CallInvite activeCallInvite;
     private UUID activeCallId;
-    private VoiceService voiceService;
+    private ServiceConnectionManager voiceService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,11 +110,11 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
 
         resetUI();
 
-        // bind to service
-        bindService(
-                new Intent(this, VoiceService.class),
-                serviceConnection,
-                BIND_AUTO_CREATE);
+        // create voice service binding agent
+        voiceService = new ServiceConnectionManager(this, accessToken);
+
+        // register incoming calls
+        registerIncomingCalls();
 
         // handle incoming intents
         handleIntent(getIntent());
@@ -158,7 +152,7 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
     @Override
     public void onDestroy() {
         // unbind from service
-        unbindService(serviceConnection);
+        voiceService.unbind();
 
         // Tear down audio device management and restore previous volume stream
         audioSwitch.stop();
@@ -168,17 +162,22 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
 
     public void incomingCall(UUID callId) {
         activeCallId = callId;
-        if (Build.VERSION.SDK_INT < VERSION_CODES.O) {
-            showIncomingCallDialog();
-        } else if (isAppVisible()) {
-            showIncomingCallDialog();
-        }
+        voiceService.invoke(
+                voiceService -> {
+                    final CallInvite callInvite = voiceService.getCallInvite(callId);
+                    if (Build.VERSION.SDK_INT < VERSION_CODES.O) {
+                        showIncomingCallDialog(callInvite);
+                    } else if (isAppVisible()) {
+                        showIncomingCallDialog(callInvite);
+                    }
+                });
     }
 
     public void canceledCall() {
         if (alertDialog != null && alertDialog.isShowing()) {
             alertDialog.cancel();
         }
+        activeCallId = null;
     }
 
     public void registrationFailed(@NonNull RegistrationException error) {
@@ -334,14 +333,16 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
         chronometer.stop();
     }
 
-    private void handleIntent(Intent intent) {
+    private void handleIntent(final Intent intent) {
         if (intent != null && intent.getAction() != null) {
             String action = intent.getAction();
-            activeCallId = (UUID) intent.getSerializableExtra(Constants.CALL_SID);
+            activeCallId = (UUID) intent.getSerializableExtra(Constants.CALL_UUID);
 
             switch (action) {
                 case Constants.ACTION_INCOMING_CALL_NOTIFICATION:
-                    showIncomingCallDialog();
+                    showIncomingCallDialog(
+                            Objects.requireNonNull(
+                                    intent.getParcelableExtra(Constants.INCOMING_CALL_INVITE)));
                     break;
                 case Constants.ACTION_ACCEPT_CALL:
                     answerCall();
@@ -359,9 +360,10 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
         };
     }
 
-    private DialogInterface.OnClickListener cancelCallClickListener() {
+    private DialogInterface.OnClickListener rejectCallClickListener() {
         return (dialogInterface, i) -> {
-            Objects.requireNonNull(voiceService).rejectIncomingCall(activeCallId);
+            voiceService.invoke(
+                    voiceService -> voiceService.rejectIncomingCall(activeCallId));
             if (alertDialog != null && alertDialog.isShowing()) {
                 alertDialog.dismiss();
             }
@@ -378,7 +380,8 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
             ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
                     .params(params)
                     .build();
-            activeCallId = Objects.requireNonNull(voiceService).connectCall(connectOptions);
+            voiceService.invoke(
+                    voiceService -> activeCallId = voiceService.connectCall(connectOptions));
             setCallUI();
             alertDialog.dismiss();
         };
@@ -401,14 +404,16 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
 
     private View.OnClickListener callActionFabClickListener() {
         return v -> {
-            alertDialog = createCallDialog(callClickListener(), cancelCallClickListener(), VoiceActivity.this);
+            alertDialog = createCallDialog(
+                    callClickListener(), rejectCallClickListener(), VoiceActivity.this);
             alertDialog.show();
         };
     }
 
     private View.OnClickListener hangupActionFabClickListener() {
         return v -> {
-            Objects.requireNonNull(voiceService).disconnectCall(activeCallId);
+            voiceService.invoke(
+                    voiceService -> voiceService.disconnectCall(activeCallId));
             resetUI();
         };
     }
@@ -423,7 +428,8 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
 
     private void answerCall() {
         // call voice service
-        Objects.requireNonNull(voiceService).acceptCall(activeCallId);
+        voiceService.invoke(
+                voiceService -> voiceService.acceptCall(activeCallId));
 
         // update ui
         setCallUI();
@@ -434,19 +440,25 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
 
     private void hold() {
         if (activeCallId != null) {
-            final Call activeCall = Objects.requireNonNull(voiceService).getCall(activeCallId);
-            boolean hold = !activeCall.isOnHold();
-            activeCall.hold(hold);
-            applyFabState(holdActionFab, hold);
+            voiceService.invoke(
+                    voiceService -> {
+                        final Call activeCall = Objects.requireNonNull(voiceService).getCall(activeCallId);
+                        boolean hold = !activeCall.isOnHold();
+                        activeCall.hold(hold);
+                        applyFabState(holdActionFab, hold);
+                    });
         }
     }
 
     private void mute() {
         if (activeCallId != null) {
-            final Call activeCall = Objects.requireNonNull(voiceService).getCall(activeCallId);
-            boolean mute = !activeCall.isMuted();
-            activeCall.mute(mute);
-            applyFabState(muteActionFab, mute);
+            voiceService.invoke(
+            voiceService -> {
+                final Call activeCall = Objects.requireNonNull(voiceService).getCall(activeCallId);
+                boolean mute = !activeCall.isMuted();
+                activeCall.mute(mute);
+                applyFabState(muteActionFab, mute);
+            });
         }
     }
 
@@ -576,14 +588,12 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
 
     }
 
-    private void showIncomingCallDialog() {
-        if (activeCallInvite != null) {
-            alertDialog = createIncomingCallDialog(VoiceActivity.this,
-                    activeCallInvite,
-                    answerCallClickListener(),
-                    cancelCallClickListener());
-            alertDialog.show();
-        }
+    private void showIncomingCallDialog(@NonNull final CallInvite callInvite) {
+        alertDialog = createIncomingCallDialog(VoiceActivity.this,
+                callInvite,
+                answerCallClickListener(),
+                rejectCallClickListener());
+        alertDialog.show();
     }
 
     private boolean isAppVisible() {
@@ -608,25 +618,76 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
         FirebaseMessaging.getInstance().getToken()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        Objects.requireNonNull(voiceService).registerFCMToken(task.getResult());
+                        voiceService.invoke(
+                                voiceService -> voiceService.registerFCMToken(task.getResult()));
                     } else {
-                        log.error("FCM token retreival failed: " + task.getException().getMessage());
+                        log.error("FCM token retrieval failed: " +
+                                Objects.requireNonNull(task.getException()).getMessage());
                     }
                 });
     }
 
-    private final ServiceConnection serviceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            voiceService = ((VoiceService.VideoServiceBinder)service).getService();
-            voiceService.registerVoiceActivity(VoiceActivity.this, accessToken);
-            // register for incoming calls
-            registerIncomingCalls();
+    private static class ServiceConnectionManager {
+        private final List<Task> pendingTasks = new LinkedList<>();
+        private final String accessToken;
+        private final Context context;
+        private VoiceService voiceService = null;
+        private ServiceConnection serviceConnection = new ServiceConnection() {
+
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                // verify is main thread, all Voice SDK calls must be made on the same thread
+                assert(Looper.myLooper() == Looper.getMainLooper());
+                // link to voice service
+                voiceService = ((VoiceService.VideoServiceBinder)service).getService();
+                voiceService.registerVoiceActivity((VoiceActivity) context, accessToken);
+                // run tasks
+                synchronized(ServiceConnectionManager.this) {
+                    for (Task task : pendingTasks) {
+                        task.run(voiceService);
+                    }
+                    pendingTasks.clear();
+                }
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                voiceService = null;
+            }
+        };
+
+        public interface Task {
+            void run(final VoiceService voiceService);
         }
 
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            voiceService = null;
+        public ServiceConnectionManager(final Context context, final String accessToken) {
+            this.context = context;
+            this.accessToken = accessToken;
         }
-    };
+
+        public void unbind() {
+            if (null != voiceService) {
+                context.unbindService(serviceConnection);
+            }
+        }
+
+        public void invoke(Task task) {
+            if (null != voiceService) {
+                // verify is main thread, all Voice SDK calls must be made on the same thread
+                assert(Looper.myLooper() == Looper.getMainLooper());
+                // run task
+                synchronized (this) {
+                    task.run(voiceService);
+                }
+            } else {
+                // queue runnable
+                pendingTasks.add(task);
+                // bind to service
+                context.bindService(
+                        new Intent(context, VoiceService.class),
+                        serviceConnection,
+                        BIND_AUTO_CREATE);
+            }
+        }
+    }
 }
