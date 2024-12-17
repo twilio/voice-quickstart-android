@@ -370,6 +370,14 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
         };
     }
 
+    private DialogInterface.OnClickListener cancelCallClickListener() {
+        return (dialogInterface, i) -> {
+            if (alertDialog != null && alertDialog.isShowing()) {
+                alertDialog.dismiss();
+            }
+        };
+    }
+
     private DialogInterface.OnClickListener callClickListener() {
         return (dialog, which) -> {
             // Place a call
@@ -405,7 +413,7 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
     private View.OnClickListener callActionFabClickListener() {
         return v -> {
             alertDialog = createCallDialog(
-                    callClickListener(), rejectCallClickListener(), VoiceActivity.this);
+                    callClickListener(), cancelCallClickListener(), VoiceActivity.this);
             alertDialog.show();
         };
     }
