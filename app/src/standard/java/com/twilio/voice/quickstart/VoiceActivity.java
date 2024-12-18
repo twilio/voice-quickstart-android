@@ -63,7 +63,7 @@ import java.util.Vector;
 
 import kotlin.Unit;
 
-public class VoiceActivity extends AppCompatActivity implements Call.Listener {
+public class VoiceActivity extends AppCompatActivity implements VoiceService.Observer {
     private static final Logger log = new Logger(VoiceService.class);
     private static final int PERMISSIONS_ALL = 100;
     private final String accessToken = "PASTE_TOKEN_HERE";
@@ -111,7 +111,7 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
         resetUI();
 
         // create voice service binding agent
-        voiceService = new ServiceConnectionManager(this, accessToken);
+        voiceService = new ServiceConnectionManager(this, accessToken, this);
 
         // register incoming calls
         registerIncomingCalls();
@@ -160,6 +160,7 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
         super.onDestroy();
     }
 
+    @Override
     public void incomingCall(@NonNull final UUID callId, @NonNull final CallInvite invite) {
         activeCallId = callId;
         if (Build.VERSION.SDK_INT < VERSION_CODES.O) {
@@ -169,13 +170,30 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
         }
     }
 
-    public void canceledCall() {
+    @Override
+    public void connectCall(@NonNull UUID callId, @NonNull ConnectOptions options) {
+        // does nothing
+    }
+
+    @Override
+    public void rejectIncomingCall(@NonNull final UUID callId) {
+        cancelledCall(callId);
+    }
+
+    @Override
+    public void cancelledCall(@NonNull final UUID callId) {
         if (alertDialog != null && alertDialog.isShowing()) {
             alertDialog.cancel();
         }
         activeCallId = null;
     }
 
+    @Override
+    public void registrationSuccessful(@NonNull String fcmToken) {
+        log.debug("Successfully registered FCM " + fcmToken);
+    }
+
+    @Override
     public void registrationFailed(@NonNull RegistrationException error) {
         String message = format(
                 Locale.US,
@@ -184,10 +202,6 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
                 error.getMessage());
         log.error(message);
         Snackbar.make(coordinatorLayout, message, Snackbar.LENGTH_LONG).show();
-    }
-
-    public void registrationSuccessful(@NonNull String fcmToken) {
-        log.debug("Successfully registered FCM " + fcmToken);
     }
 
     /*
@@ -204,12 +218,12 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
      * raised, irrespective of the value of answerOnBridge being set to true or false
      */
     @Override
-    public void onRinging(@NonNull Call call) {
+    public void onRinging(@NonNull UUID callId) {
         // does nothing
     }
 
     @Override
-    public void onConnectFailure(@NonNull Call call, @NonNull CallException error) {
+    public void onConnectFailure(@NonNull UUID callId, @NonNull CallException error) {
         audioSwitch.deactivate();
 
         String message = format(
@@ -222,23 +236,23 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
     }
 
     @Override
-    public void onConnected(@NonNull Call call) {
+    public void onConnected(@NonNull UUID callId) {
         audioSwitch.activate();
     }
 
     @Override
-    public void onReconnecting(@NonNull Call call, @NonNull CallException callException) {
+    public void onReconnecting(@NonNull UUID callId, @NonNull CallException callException) {
         Snackbar.make(
                 coordinatorLayout, "Call attempting reconnection", Snackbar.LENGTH_LONG).show();
     }
 
     @Override
-    public void onReconnected(@NonNull Call call) {
+    public void onReconnected(@NonNull UUID callId) {
         Snackbar.make(coordinatorLayout, "Call reconnected", Snackbar.LENGTH_LONG).show();
     }
 
     @Override
-    public void onDisconnected(@NonNull Call call, CallException error) {
+    public void onDisconnected(@NonNull UUID callId, CallException error) {
         audioSwitch.deactivate();
 
         if (error != null) {
@@ -253,7 +267,8 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
         activeCallId = null;
     }
 
-    public void onCallQualityWarningsChanged(@NonNull Call call,
+    @Override
+    public void onCallQualityWarningsChanged(@NonNull UUID callId,
                                              @NonNull Set<Call.CallQualityWarning> currentWarnings,
                                              @NonNull Set<Call.CallQualityWarning> previousWarnings) {
         // currentWarnings: existing quality warnings that have not been cleared yet
@@ -630,6 +645,7 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
         private final List<Task> pendingTasks = new LinkedList<>();
         private final String accessToken;
         private final Context context;
+        private final VoiceService.Observer observer;
         private final ServiceConnection serviceConnection = new ServiceConnection() {
 
             @Override
@@ -638,7 +654,7 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
                 assert(Looper.myLooper() == Looper.getMainLooper());
                 // link to voice service
                 voiceService = ((VoiceService.VideoServiceBinder)service).getService();
-                voiceService.registerVoiceActivity((VoiceActivity) context, accessToken);
+                voiceService.registerObserver(observer);
                 // run tasks
                 synchronized(ServiceConnectionManager.this) {
                     for (Task task : pendingTasks) {
@@ -658,9 +674,12 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
             void run(final VoiceService voiceService);
         }
 
-        public ServiceConnectionManager(final Context context, final String accessToken) {
+        public ServiceConnectionManager(final Context context,
+                                        final String accessToken,
+                                        final VoiceService.Observer observer) {
             this.context = context;
             this.accessToken = accessToken;
+            this.observer = observer;
         }
 
         public void unbind() {
@@ -681,8 +700,10 @@ public class VoiceActivity extends AppCompatActivity implements Call.Listener {
                 // queue runnable
                 pendingTasks.add(task);
                 // bind to service
+                Intent intent = new Intent(context, VoiceService.class);
+                intent.putExtra(Constants.ACCESS_TOKEN, accessToken);
                 context.bindService(
-                        new Intent(context, VoiceService.class),
+                        intent,
                         serviceConnection,
                         BIND_AUTO_CREATE);
             }
