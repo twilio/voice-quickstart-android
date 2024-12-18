@@ -3,6 +3,7 @@ package com.twilio.voice.quickstart;
 public class Constants {
     public static final String CALL_UUID = "CALL_UUID";
     public static final String ACCESS_TOKEN = "ACCESS_TOKEN";
+    public static final String CUSTOM_RINGBACK = "CUSTOM_RINGBACK";
     public static final String VOICE_CHANNEL_LOW_IMPORTANCE = "notification-channel-low-importance";
     public static final String VOICE_CHANNEL_HIGH_IMPORTANCE = "notification-channel-high-importance";
     public static final String INCOMING_CALL_INVITE = "INCOMING_CALL_INVITE";

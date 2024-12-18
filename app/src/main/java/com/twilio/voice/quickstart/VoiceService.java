@@ -4,21 +4,18 @@ import static com.twilio.voice.quickstart.Constants.ACCESS_TOKEN;
 import static com.twilio.voice.quickstart.Constants.ACTION_CANCEL_CALL;
 import static com.twilio.voice.quickstart.Constants.ACTION_INCOMING_CALL;
 import static com.twilio.voice.quickstart.Constants.ACTION_REJECT_CALL;
+import static com.twilio.voice.quickstart.Constants.CUSTOM_RINGBACK;
 
 import static java.lang.String.format;
 
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.graphics.Color;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.Looper;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -40,7 +37,6 @@ import com.twilio.voice.Voice;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -56,6 +52,7 @@ public class VoiceService extends Service {
     private final List<WeakReference<Observer>> observerList;
     private SoundPoolManager soundPoolManager;
     private String accessToken;
+    private boolean playCustomRingback;
 
     private enum NotificationPriority {
         LOW,
@@ -103,6 +100,7 @@ public class VoiceService extends Service {
     public class VideoServiceBinder extends Binder {
         VideoServiceBinder(Intent intent) {
             accessToken =  intent.getStringExtra(ACCESS_TOKEN);
+            playCustomRingback = intent.getBooleanExtra(CUSTOM_RINGBACK, false);
         }
         VoiceService getService() {
             return VoiceService.this;
@@ -139,6 +137,23 @@ public class VoiceService extends Service {
         for (NotificationChannelCompat notificationChannel : notificationChannels) {
             notificationManager.createNotificationChannel(notificationChannel);
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        // cleanup sounds
+        soundPoolManager = null;
+
+        // remove notification channels
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        for (NotificationChannelCompat notificationChannel : notificationChannels) {
+            notificationManager.deleteNotificationChannel(notificationChannel.getId());
+        }
+        notificationChannels[NotificationPriority.LOW.ordinal()] = null;
+        notificationChannels[NotificationPriority.HIGH.ordinal()] = null;
+
+        // call super
+        super.onDestroy();
     }
 
     @Override
@@ -434,7 +449,7 @@ public class VoiceService extends Service {
             // the call is ringing and awaiting to be accepted on the callee's side. The application
             // can use the `SoundPoolManager` to play custom audio files between the
             // `Call.Listener.onRinging()` and the `Call.Listener.onConnected()` callbacks.
-            if (1 == callRecord.ringCount++ && BuildConfig.playCustomRingback) {
+            if (1 == callRecord.ringCount++ && playCustomRingback) {
                 soundPoolManager.playSound(SoundPoolManager.Sound.RINGER);
             }
 
@@ -455,7 +470,7 @@ public class VoiceService extends Service {
             Objects.requireNonNull(callDatabase.remove(callId));
 
             // kill ringer
-            if (BuildConfig.playCustomRingback) {
+            if (playCustomRingback) {
                 soundPoolManager.stopSound(SoundPoolManager.Sound.RINGER);
             }
 
@@ -475,7 +490,7 @@ public class VoiceService extends Service {
             final UUID callId = Objects.requireNonNull(findAssociatedCallId(call));
 
             // kill ringer
-            if (BuildConfig.playCustomRingback) {
+            if (playCustomRingback) {
                 soundPoolManager.playSound(SoundPoolManager.Sound.RINGER);
             }
 
