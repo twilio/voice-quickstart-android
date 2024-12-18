@@ -11,6 +11,7 @@ import static java.lang.String.format;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Binder;
@@ -35,6 +36,7 @@ import com.twilio.voice.RegistrationListener;
 import com.twilio.voice.Voice;
 
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -81,6 +83,8 @@ public class VoiceService extends Service {
 
     public interface Observer {
         void connectCall(@NonNull final UUID callId, @NonNull final ConnectOptions options);
+        void disconnectCall(@NonNull final UUID callId);
+        void acceptIncomingCall(@NonNull final UUID callId);
         void rejectIncomingCall(@NonNull final UUID callId);
         void incomingCall(@NonNull final UUID callId, @NonNull final CallInvite callInvite);
         void cancelledCall(@NonNull final UUID callId);
@@ -137,6 +141,16 @@ public class VoiceService extends Service {
         for (NotificationChannelCompat notificationChannel : notificationChannels) {
             notificationManager.createNotificationChannel(notificationChannel);
         }
+
+        // try to register VoiceConnectionService as an observer when using connection_service flavor
+        try {
+            Class<?> clazz = Class.forName("com.twilio.voice.quickstart.VoiceConnectionService");
+            Method method = clazz.getMethod("getObserver", Context.class);
+            registerObserver((Observer) Objects.requireNonNull(method.invoke(null, this)));
+            log.debug("registered VoiceConnectionService");
+        } catch (Exception e) {
+            log.debug("VoiceConnectionService not available");
+        }
     }
 
     @Override
@@ -187,7 +201,9 @@ public class VoiceService extends Service {
     }
 
     public void registerObserver(@NonNull final Observer observer) {
-        observerList.add(new WeakReference<>(observer));
+        if (!hasObserver(observer)) {
+            observerList.add(new WeakReference<>(observer));
+        }
     }
 
     public void acceptCall(@NonNull final UUID callId) {
@@ -203,6 +219,13 @@ public class VoiceService extends Service {
 
         // accept call
         callRecord.activeCall = callRecord.callInvite.accept(this, callListener);
+
+        // invoke observers
+        for (WeakReference<Observer> observer: observerList) {
+            if (null != observer.get()) {
+                observer.get().acceptIncomingCall(callId);
+            }
+        }
     }
 
     public UUID connectCall(@NonNull final ConnectOptions options) {
@@ -233,6 +256,13 @@ public class VoiceService extends Service {
 
         // disconnect call
         callRecord.activeCall.disconnect();
+
+        // invoke observers
+        for (WeakReference<Observer> observer: observerList) {
+            if (null != observer.get()) {
+                observer.get().disconnectCall(callId);
+            }
+        }
     }
 
     public boolean muteCall(@NonNull final UUID callId) {
@@ -407,6 +437,15 @@ public class VoiceService extends Service {
         Random generator = new Random(System.currentTimeMillis());
         for (newId = generator.nextInt(); newId == 0; newId = generator.nextInt()) { }
         return newId;
+    }
+
+    private boolean hasObserver(@NonNull final Observer observer) {
+        for (WeakReference<Observer> observerWeakReference : observerList) {
+            if (observerWeakReference.get() == observer) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private final RegistrationListener registrationListener = new RegistrationListener() {

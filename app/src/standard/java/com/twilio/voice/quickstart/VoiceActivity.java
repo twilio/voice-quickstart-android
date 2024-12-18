@@ -64,7 +64,7 @@ import java.util.Vector;
 import kotlin.Unit;
 
 public class VoiceActivity extends AppCompatActivity implements VoiceService.Observer {
-    private static final Logger log = new Logger(VoiceService.class);
+    private static final Logger log = new Logger(VoiceActivity.class);
     private static final int PERMISSIONS_ALL = 100;
     private final String accessToken = "PASTE_TOKEN_HERE";
 
@@ -85,6 +85,8 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        log.debug("onCreate");
+
         super.onCreate(savedInstanceState);
 
         // These flags ensure that the activity can be launched when the screen is locked.
@@ -141,16 +143,20 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
 
     @Override
     protected void onResume() {
+        log.debug("onResume");
         super.onResume();
     }
 
     @Override
     protected void onPause() {
+        log.debug("onPause");
         super.onPause();
     }
 
     @Override
     public void onDestroy() {
+        log.debug("onDestroy");
+
         // unbind from service
         voiceService.unbind();
 
@@ -172,6 +178,16 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
 
     @Override
     public void connectCall(@NonNull UUID callId, @NonNull ConnectOptions options) {
+        // does nothing
+    }
+
+    @Override
+    public void disconnectCall(@NonNull UUID callId) {
+        // does nothing
+    }
+
+    @Override
+    public void acceptIncomingCall(@NonNull UUID callId) {
         // does nothing
     }
 
@@ -456,9 +472,9 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
     private void mute() {
         if (activeCallId != null) {
             voiceService.invoke(
-            voiceService -> applyFabState(
-                    muteActionFab,
-                    Objects.requireNonNull(voiceService).muteCall(activeCallId)));
+                    voiceService -> applyFabState(
+                            muteActionFab,
+                            Objects.requireNonNull(voiceService).muteCall(activeCallId)));
         }
     }
 
