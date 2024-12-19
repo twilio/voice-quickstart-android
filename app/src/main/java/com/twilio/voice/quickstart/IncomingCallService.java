@@ -1,8 +1,6 @@
 package com.twilio.voice.quickstart;
 
-import static com.twilio.voice.quickstart.Constants.ACTION_FCM_TOKEN;
 import static com.twilio.voice.quickstart.Constants.ACTION_INCOMING_CALL;
-import static com.twilio.voice.quickstart.Constants.FCM_TOKEN;
 import static com.twilio.voice.quickstart.Constants.INCOMING_CALL_INVITE;
 import static com.twilio.voice.quickstart.Constants.ACTION_CANCEL_CALL;
 import static com.twilio.voice.quickstart.Constants.CANCELLED_CALL_INVITE;

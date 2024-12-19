@@ -1,8 +1,12 @@
 package com.twilio.voice.quickstart;
 
 import static com.twilio.voice.quickstart.Constants.ACCESS_TOKEN;
+import static com.twilio.voice.quickstart.Constants.ACTION_ACCEPT_CALL;
 import static com.twilio.voice.quickstart.Constants.ACTION_CANCEL_CALL;
+import static com.twilio.voice.quickstart.Constants.ACTION_DISCONNECT_CALL;
+import static com.twilio.voice.quickstart.Constants.ACTION_HOLD_CALL;
 import static com.twilio.voice.quickstart.Constants.ACTION_INCOMING_CALL;
+import static com.twilio.voice.quickstart.Constants.ACTION_MUTE_CALL;
 import static com.twilio.voice.quickstart.Constants.ACTION_REJECT_CALL;
 import static com.twilio.voice.quickstart.Constants.CUSTOM_RINGBACK;
 
@@ -51,7 +55,7 @@ public class VoiceService extends Service {
     private static final Logger log = new Logger(VoiceService.class);
     private final NotificationChannelCompat[] notificationChannels;
     private final Map<UUID, CallRecord> callDatabase;
-    private final List<WeakReference<Observer>> observerList;
+    private final List<Observer> observerList;
     private SoundPoolManager soundPoolManager;
     private String accessToken;
     private boolean playCustomRingback;
@@ -88,6 +92,8 @@ public class VoiceService extends Service {
         void rejectIncomingCall(@NonNull final UUID callId);
         void incomingCall(@NonNull final UUID callId, @NonNull final CallInvite callInvite);
         void cancelledCall(@NonNull final UUID callId);
+        void muteCall(@NonNull final UUID callId, boolean isMuted);
+        void holdCall(@NonNull final UUID callId, boolean isOnHold);
         void registrationSuccessful(@NonNull final String fcmToken);
         void registrationFailed(@NonNull final RegistrationException registrationException);
         void onRinging(@NonNull final UUID callId);
@@ -99,6 +105,15 @@ public class VoiceService extends Service {
         void onCallQualityWarningsChanged(@NonNull final UUID callId,
                                           @NonNull Set<Call.CallQualityWarning> currentWarnings,
                                           @NonNull Set<Call.CallQualityWarning> previousWarnings);
+    }
+
+    public static void sendToVoiceService(final Context context,
+                                           final String action,
+                                           final UUID callId) {
+        final Intent intent = new Intent(context, VoiceService.class);
+        intent.setAction(action);
+        intent.putExtra(Constants.CALL_UUID, callId);
+        context.startService(intent);
     }
 
     public class VideoServiceBinder extends Binder {
@@ -190,7 +205,28 @@ public class VoiceService extends Service {
                                     intent.getParcelableExtra(Constants.CANCELLED_CALL_INVITE)));
                     break;
                 case ACTION_REJECT_CALL:
-                    rejectIncomingCall((UUID)Objects.requireNonNull(intent.getSerializableExtra(
+                    rejectIncomingCall(
+                            (UUID)Objects.requireNonNull(intent.getSerializableExtra(
+                                    Constants.CALL_UUID)));
+                    break;
+                case ACTION_ACCEPT_CALL:
+                    acceptCall(
+                            (UUID)Objects.requireNonNull(intent.getSerializableExtra(
+                                    Constants.CALL_UUID)));
+                    break;
+                case ACTION_DISCONNECT_CALL:
+                    disconnectCall(
+                            (UUID)Objects.requireNonNull(intent.getSerializableExtra(
+                                    Constants.CALL_UUID)));
+                    break;
+                case ACTION_HOLD_CALL:
+                    holdCall(
+                            (UUID)Objects.requireNonNull(intent.getSerializableExtra(
+                                    Constants.CALL_UUID)));
+                    break;
+                case ACTION_MUTE_CALL:
+                    muteCall(
+                            (UUID)Objects.requireNonNull(intent.getSerializableExtra(
                                     Constants.CALL_UUID)));
                     break;
                 default:
@@ -201,9 +237,34 @@ public class VoiceService extends Service {
     }
 
     public void registerObserver(@NonNull final Observer observer) {
-        if (!hasObserver(observer)) {
-            observerList.add(new WeakReference<>(observer));
+        if (!observerList.contains(observer)) {
+            observerList.add(observer);
         }
+    }
+
+    public void unregisterObserver(@NonNull final Observer observer) {
+        observerList.remove(observer);
+    }
+
+    public void registerFCMToken(@NonNull final String fcmToken) {
+        Voice.register(accessToken, Voice.RegistrationChannel.FCM, fcmToken, registrationListener);
+    }
+
+    public UUID connectCall(@NonNull final ConnectOptions options) {
+        final UUID callId = UUID.randomUUID();
+
+        // connect call & create call record
+        callDatabase.put(
+                callId,
+                new CallRecord(Voice.connect(this, options, callListener)));
+
+        // invoke observers
+        for (Observer observer: observerList) {
+            observer.connectCall(callId, options);
+        }
+
+        // return call Id
+        return callId;
     }
 
     public void acceptCall(@NonNull final UUID callId) {
@@ -221,30 +282,9 @@ public class VoiceService extends Service {
         callRecord.activeCall = callRecord.callInvite.accept(this, callListener);
 
         // invoke observers
-        for (WeakReference<Observer> observer: observerList) {
-            if (null != observer.get()) {
-                observer.get().acceptIncomingCall(callId);
-            }
+        for (Observer observer: observerList) {
+            observer.acceptIncomingCall(callId);
         }
-    }
-
-    public UUID connectCall(@NonNull final ConnectOptions options) {
-        final UUID callId = UUID.randomUUID();
-
-        // connect call & create call record
-        callDatabase.put(
-                callId,
-                new CallRecord(Voice.connect(this, options, callListener)));
-
-        // invoke observers
-        for (WeakReference<Observer> observer: observerList) {
-            if (null != observer.get()) {
-                observer.get().connectCall(callId, options);
-            }
-        }
-
-        // return call Id
-        return callId;
     }
 
     public void disconnectCall(@NonNull final UUID callId) {
@@ -258,31 +298,37 @@ public class VoiceService extends Service {
         callRecord.activeCall.disconnect();
 
         // invoke observers
-        for (WeakReference<Observer> observer: observerList) {
-            if (null != observer.get()) {
-                observer.get().disconnectCall(callId);
-            }
+        for (Observer observer: observerList) {
+            observer.disconnectCall(callId);
         }
     }
 
-    public boolean muteCall(@NonNull final UUID callId) {
+    public void muteCall(@NonNull final UUID callId) {
         // find call record
         final CallRecord callRecord = Objects.requireNonNull(callDatabase.get(callId));
 
         // mute call
         boolean muteState = callRecord.activeCall.isMuted();
         callRecord.activeCall.mute(!muteState);
-        return !muteState;
+
+        // invoke observers
+        for (Observer observer: observerList) {
+            observer.muteCall(callId, !muteState);
+        }
     }
 
-    public boolean holdCall(@NonNull final UUID callId) {
+    public void holdCall(@NonNull final UUID callId) {
         // find call record
         final CallRecord callRecord = Objects.requireNonNull(callDatabase.get(callId));
 
         // hold call
         boolean holdState = callRecord.activeCall.isOnHold();
         callRecord.activeCall.hold(!holdState);
-        return !holdState;
+
+        // invoke observers
+        for (Observer observer: observerList) {
+            observer.holdCall(callId, !holdState);
+        }
     }
 
     public void rejectIncomingCall(final UUID callId) {
@@ -300,15 +346,9 @@ public class VoiceService extends Service {
         callRecord.callInvite.reject(this);
 
         // notify observers
-        for (WeakReference<Observer> observer: observerList) {
-            if (null != observer.get()) {
-                observer.get().rejectIncomingCall(callId);
-            }
+        for (Observer observer: observerList) {
+            observer.rejectIncomingCall(callId);
         }
-    }
-
-    public void registerFCMToken(@NonNull final String fcmToken) {
-        Voice.register(accessToken, Voice.RegistrationChannel.FCM, fcmToken, registrationListener);
     }
 
     private void incomingCall(@NonNull final CallInvite callInvite) {
@@ -328,10 +368,8 @@ public class VoiceService extends Service {
         soundPoolManager.playSound(SoundPoolManager.Sound.RINGER);
 
         // notify observers
-        for (WeakReference<Observer> observer: observerList) {
-            if (null != observer.get()) {
-                observer.get().incomingCall(uuid, callInvite);
-            }
+        for (Observer observer: observerList) {
+            observer.incomingCall(uuid, callInvite);
         }
     }
 
@@ -349,10 +387,8 @@ public class VoiceService extends Service {
         soundPoolManager.stopSound(SoundPoolManager.Sound.RINGER);
 
         // notify observers
-        for (WeakReference<Observer> observer: observerList) {
-            if (null != observer.get()) {
-                observer.get().cancelledCall(callId);
-            }
+        for (Observer observer: observerList) {
+            observer.cancelledCall(callId);
         }
     }
 
@@ -384,7 +420,7 @@ public class VoiceService extends Service {
                 this, notificationId, rejectIntent, PendingIntent.FLAG_IMMUTABLE);
 
         Intent acceptIntent = new Intent(getApplicationContext(), VoiceActivity.class);
-        acceptIntent.setAction(Constants.ACTION_ACCEPT_CALL);
+        acceptIntent.setAction(ACTION_ACCEPT_CALL);
         acceptIntent.putExtra(Constants.CALL_UUID, callId);
         acceptIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingAcceptIntent = PendingIntent.getActivity(
@@ -439,24 +475,13 @@ public class VoiceService extends Service {
         return newId;
     }
 
-    private boolean hasObserver(@NonNull final Observer observer) {
-        for (WeakReference<Observer> observerWeakReference : observerList) {
-            if (observerWeakReference.get() == observer) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private final RegistrationListener registrationListener = new RegistrationListener() {
         @Override
         public void onRegistered(@NonNull String accessToken, @NonNull String fcmToken) {
             log.debug("Successfully registered FCM");
             // notify observers
-            for (WeakReference<Observer> observer: observerList) {
-                if (null != observer.get()) {
-                    observer.get().registrationSuccessful(fcmToken);
-                }
+            for (Observer observer: observerList) {
+                observer.registrationSuccessful(fcmToken);
             }
         }
 
@@ -466,10 +491,8 @@ public class VoiceService extends Service {
                             @NonNull String fcmToken) {
             log.warning("failed to registered FCM");
             // notify observers
-            for (WeakReference<Observer> observer: observerList) {
-                if (null != observer.get()) {
-                    observer.get().registrationFailed(registrationException);
-                }
+            for (Observer observer: observerList) {
+                observer.registrationFailed(registrationException);
             }
         }
     };
@@ -493,10 +516,8 @@ public class VoiceService extends Service {
             }
 
             // notify observers
-            for (WeakReference<Observer> observer: observerList) {
-                if (null != observer.get()) {
-                    observer.get().onRinging(callId);
-                }
+            for (Observer observer: observerList) {
+                observer.onRinging(callId);
             }
         }
 
@@ -514,10 +535,8 @@ public class VoiceService extends Service {
             }
 
             // notify observers
-            for (WeakReference<Observer> observer: observerList) {
-                if (null != observer.get()) {
-                    observer.get().onConnectFailure(callId, callException);
-                }
+            for (Observer observer: observerList) {
+                observer.onConnectFailure(callId, callException);
             }
         }
 
@@ -534,10 +553,8 @@ public class VoiceService extends Service {
             }
 
             // notify observers
-            for (WeakReference<Observer> observer: observerList) {
-                if (null != observer.get()) {
-                    observer.get().onConnected(callId);
-                }
+            for (Observer observer: observerList) {
+                observer.onConnected(callId);
             }
         }
 
@@ -549,10 +566,8 @@ public class VoiceService extends Service {
             final UUID callId = Objects.requireNonNull(findAssociatedCallId(call));
 
             // notify observers
-            for (WeakReference<Observer> observer: observerList) {
-                if (null != observer.get()) {
-                    observer.get().onReconnecting(callId, callException);
-                }
+            for (Observer observer: observerList) {
+                observer.onReconnecting(callId, callException);
             }
         }
 
@@ -564,10 +579,8 @@ public class VoiceService extends Service {
             final UUID callId = Objects.requireNonNull(findAssociatedCallId(call));
 
             // notify observers
-            for (WeakReference<Observer> observer: observerList) {
-                if (null != observer.get()) {
-                    observer.get().onReconnected(callId);
-                }
+            for (Observer observer: observerList) {
+                observer.onReconnected(callId);
             }
         }
 
@@ -580,10 +593,8 @@ public class VoiceService extends Service {
             Objects.requireNonNull(callDatabase.remove(callId));
 
             // notify observers
-            for (WeakReference<Observer> observer: observerList) {
-                if (null != observer.get()) {
-                    observer.get().onDisconnected(callId, callException);
-                }
+            for (Observer observer: observerList) {
+                observer.onDisconnected(callId, callException);
             }
         }
 
@@ -596,11 +607,8 @@ public class VoiceService extends Service {
             final UUID callId = Objects.requireNonNull(findAssociatedCallId(call));
 
             // notify observers
-            for (WeakReference<Observer> observer: observerList) {
-                if (null != observer.get()) {
-                    observer.get().onCallQualityWarningsChanged(
-                            callId, currentWarnings, previousWarnings);
-                }
+            for (Observer observer: observerList) {
+                observer.onCallQualityWarningsChanged(callId, currentWarnings, previousWarnings);
             }
         }
 

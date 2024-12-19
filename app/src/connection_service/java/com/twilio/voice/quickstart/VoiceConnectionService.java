@@ -1,5 +1,7 @@
 package com.twilio.voice.quickstart;
 
+import static com.twilio.voice.quickstart.VoiceService.sendToVoiceService;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.ComponentName;
@@ -40,7 +42,6 @@ public class VoiceConnectionService extends ConnectionService {
     private static final Logger log = new Logger(VoiceConnectionService.class);
     private static final Map<UUID, Connection> connectionDatabase = new HashMap<>();
     private static final String CALL_RECIPIENT = "to";
-    private static VoiceObserver observer;
 
     private static class VoiceConnection extends Connection {
         private static final Map<Integer, String> stateMappingTbl = new HashMap<>() {{
@@ -55,9 +56,11 @@ public class VoiceConnectionService extends ConnectionService {
         }};
 
         private final UUID callId;
+        private final Context context;
 
-        public VoiceConnection(final UUID callID) {
+        public VoiceConnection(final Context context, final UUID callID) {
             this.callId = callID;
+            this.context = context;
         }
 
         @Override
@@ -85,7 +88,7 @@ public class VoiceConnectionService extends ConnectionService {
         @Override
         public void onDisconnect() {
             log.debug("Connection:onDisconnect");
-            // todo
+            sendToVoiceService(context, Constants.ACTION_DISCONNECT_CALL, callId);
         }
 
         @Override
@@ -96,31 +99,32 @@ public class VoiceConnectionService extends ConnectionService {
         @Override
         public void onAbort() {
             log.debug("Connection:onAbort");
+            sendToVoiceService(context, Constants.ACTION_DISCONNECT_CALL, callId);
         }
 
         @CallSuper
         @Override
         public void onAnswer() {
             log.debug("Connection:onAnswer");
-            // todo
+            sendToVoiceService(context, Constants.ACTION_ACCEPT_CALL, callId);
         }
 
         @Override
         public void onReject() {
             log.debug("Connection:onReject");
-            // todo
+            sendToVoiceService(context, Constants.ACTION_REJECT_CALL, callId);
         }
 
         @Override
         public void onHold() {
             log.debug("Connection:onHold");
-            // todo
+            sendToVoiceService(context, Constants.ACTION_HOLD_CALL, callId);
         }
 
         @Override
         public void onUnhold() {
             log.debug("Connection:onUnhold");
-            // todo
+            sendToVoiceService(context, Constants.ACTION_HOLD_CALL, callId);
         }
 
         @Override
@@ -191,6 +195,16 @@ public class VoiceConnectionService extends ConnectionService {
             VoiceConnectionService
                     .getConnection(callId)
                     .setDisconnected(new DisconnectCause(DisconnectCause.CANCELED));
+        }
+
+        @Override
+        public void muteCall(@NonNull final UUID callId, boolean isMuted) {
+            // does nothing
+        }
+
+        @Override
+        public void holdCall(@NonNull final UUID callId, boolean isOnHold) {
+            // does nothing
         }
 
         @Override
@@ -268,10 +282,7 @@ public class VoiceConnectionService extends ConnectionService {
     }
 
     public static VoiceObserver getObserver(final Context context) {
-        if (null == observer) {
-            observer = new VoiceObserver(context);
-        }
-        return observer;
+        return new VoiceObserver(context);
     }
 
     public static void selectAudioDevice(@NonNull final UUID callId,
@@ -380,7 +391,7 @@ public class VoiceConnectionService extends ConnectionService {
 
     private Connection createConnection(ConnectionRequest request) {
         final UUID callId = (UUID) request.getExtras().getSerializable(Constants.CALL_UUID);
-        Connection connection = new VoiceConnection(callId);
+        Connection connection = new VoiceConnection(this, callId);
 
         // self managed isn't available before version O
         connection.setConnectionProperties(Connection.PROPERTY_SELF_MANAGED);

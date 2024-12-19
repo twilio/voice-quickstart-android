@@ -122,7 +122,7 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
         handleIntent(getIntent());
 
         // Setup audio device management and set the volume control stream
-        audioSwitch = new AudioSwitch(getApplicationContext());
+        audioSwitch = new AudioSwitch(getApplicationContext(), null, true);
         savedVolumeControlStream = getVolumeControlStream();
         setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
 
@@ -183,12 +183,15 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
 
     @Override
     public void disconnectCall(@NonNull UUID callId) {
-        // does nothing
+        resetUI();
     }
 
     @Override
     public void acceptIncomingCall(@NonNull UUID callId) {
-        // does nothing
+        setCallUI();
+        if (alertDialog != null && alertDialog.isShowing()) {
+            alertDialog.dismiss();
+        }
     }
 
     @Override
@@ -202,6 +205,16 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
             alertDialog.cancel();
         }
         activeCallId = null;
+    }
+
+    @Override
+    public void muteCall(@NonNull final UUID callId, boolean isMuted) {
+        applyFabState(muteActionFab, isMuted);
+    }
+
+    @Override
+    public void holdCall(@NonNull final UUID callId, boolean isOnHold) {
+        applyFabState(holdActionFab, isOnHold);
     }
 
     @Override
@@ -236,6 +249,7 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
                 error.getMessage());
         Snackbar.make(coordinatorLayout, message, Snackbar.LENGTH_LONG).show();
         resetUI();
+        activeCallId = null;
     }
 
     @Override
@@ -375,13 +389,8 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
     }
 
     private DialogInterface.OnClickListener rejectCallClickListener() {
-        return (dialogInterface, i) -> {
-            voiceService.invoke(
+        return (dialogInterface, i) -> voiceService.invoke(
                     voiceService -> voiceService.rejectIncomingCall(activeCallId));
-            if (alertDialog != null && alertDialog.isShowing()) {
-                alertDialog.dismiss();
-            }
-        };
     }
 
     private DialogInterface.OnClickListener cancelCallClickListener() {
@@ -433,11 +442,7 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
     }
 
     private View.OnClickListener hangupActionFabClickListener() {
-        return v -> {
-            voiceService.invoke(
-                    voiceService -> voiceService.disconnectCall(activeCallId));
-            resetUI();
-        };
+        return v -> voiceService.invoke(voiceService -> voiceService.disconnectCall(activeCallId));
     }
 
     private View.OnClickListener holdActionFabClickListener() {
@@ -449,32 +454,18 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
     }
 
     private void answerCall() {
-        // call voice service
-        voiceService.invoke(
-                voiceService -> voiceService.acceptCall(activeCallId));
-
-        // update ui
-        setCallUI();
-        if (alertDialog != null && alertDialog.isShowing()) {
-            alertDialog.dismiss();
-        }
+        voiceService.invoke(voiceService -> voiceService.acceptCall(activeCallId));
     }
 
     private void hold() {
         if (activeCallId != null) {
-            voiceService.invoke(
-                    voiceService -> applyFabState(
-                            holdActionFab,
-                            Objects.requireNonNull(voiceService).holdCall(activeCallId)));
+            voiceService.invoke(voiceService -> voiceService.holdCall(activeCallId));
         }
     }
 
     private void mute() {
         if (activeCallId != null) {
-            voiceService.invoke(
-                    voiceService -> applyFabState(
-                            muteActionFab,
-                            Objects.requireNonNull(voiceService).muteCall(activeCallId)));
+            voiceService.invoke(voiceService -> voiceService.muteCall(activeCallId));
         }
     }
 
@@ -517,7 +508,7 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(@NonNull Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu, menu);
         audioDeviceMenuItem = menu.findItem(R.id.menu_audio_device);
@@ -563,20 +554,18 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
 
     // Update the menu icon based on the currently selected audio device.
     private void updateAudioDeviceIcon(AudioDevice selectedAudioDevice) {
-        int audioDeviceMenuIcon = R.drawable.ic_phonelink_ring_white_24dp;
-
-        if (selectedAudioDevice instanceof AudioDevice.BluetoothHeadset) {
-            audioDeviceMenuIcon = R.drawable.ic_bluetooth_white_24dp;
-        } else if (selectedAudioDevice instanceof AudioDevice.WiredHeadset) {
-            audioDeviceMenuIcon = R.drawable.ic_headset_mic_white_24dp;
-        } else if (selectedAudioDevice instanceof AudioDevice.Earpiece) {
-            audioDeviceMenuIcon = R.drawable.ic_phonelink_ring_white_24dp;
-        } else if (selectedAudioDevice instanceof AudioDevice.Speakerphone) {
-            audioDeviceMenuIcon = R.drawable.ic_volume_up_white_24dp;
-        }
-
         if (audioDeviceMenuItem != null) {
-            audioDeviceMenuItem.setIcon(audioDeviceMenuIcon);
+            if (selectedAudioDevice instanceof AudioDevice.BluetoothHeadset) {
+                audioDeviceMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
+            } else if (selectedAudioDevice instanceof AudioDevice.WiredHeadset) {
+                audioDeviceMenuItem.setIcon(R.drawable.ic_headset_mic_white_24dp);
+            } else if (selectedAudioDevice instanceof AudioDevice.Earpiece) {
+                audioDeviceMenuItem.setIcon(R.drawable.ic_phonelink_ring_white_24dp);
+            } else if (selectedAudioDevice instanceof AudioDevice.Speakerphone) {
+                audioDeviceMenuItem.setIcon(R.drawable.ic_volume_up_white_24dp);
+            } else {
+                audioDeviceMenuItem.setIcon(R.drawable.ic_phonelink_ring_white_24dp);
+            }
         }
     }
 
@@ -687,6 +676,7 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
 
         public void unbind() {
             if (null != voiceService) {
+                voiceService.unregisterObserver(observer);
                 context.unbindService(serviceConnection);
             }
         }
