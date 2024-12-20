@@ -20,6 +20,7 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.SystemClock;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -69,6 +70,7 @@ public class VoiceService extends Service {
         public int callInviteNotificationId;
         public Call activeCall;
         public int ringCount;
+        public long startTime;
 
         public CallRecord(final Call activeCall) {
             this.callInvite = null;
@@ -110,10 +112,12 @@ public class VoiceService extends Service {
         public static class CallRecord {
             final boolean isMuted;
             final boolean onHold;
+            final long timestamp;
 
-            protected CallRecord(final boolean isMuted, final boolean onHold) {
+            protected CallRecord(final boolean isMuted, final boolean onHold, final long timestamp) {
                 this.isMuted = isMuted;
                 this.onHold = onHold;
+                this.timestamp = timestamp;
             }
         }
         final Map<UUID, CallInvite> pendingCalls;
@@ -256,7 +260,8 @@ public class VoiceService extends Service {
             } else {
                 callMap.put(callEntry.getKey(), new Status.CallRecord(
                         callEntry.getValue().activeCall.isMuted(),
-                        callEntry.getValue().activeCall.isOnHold()));
+                        callEntry.getValue().activeCall.isOnHold(),
+                        callEntry.getValue().startTime));
                 if (null == activeCall) {
                     activeCall = callEntry.getKey();
                 } else if (!callEntry.getValue().activeCall.isOnHold()) {
@@ -288,9 +293,11 @@ public class VoiceService extends Service {
         CallRecord callRecord = new CallRecord(Voice.connect(this, options, callListener));
         callDatabase.put(callId, callRecord);
 
+        // set call start time
+        callRecord.startTime = SystemClock.elapsedRealtime();
+
         // create & post notification for call
         final Notification notification = createCallNotification(callRecord, NotificationPriority.LOW);
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
         foregroundService(callRecord.callInviteNotificationId, notification);
 
         // invoke observers
@@ -316,6 +323,9 @@ public class VoiceService extends Service {
 
         // kill ringer
         soundPoolManager.stopSound(SoundPoolManager.Sound.RINGER);
+
+        // set call start time
+        callRecord.startTime = SystemClock.elapsedRealtime();
 
         // accept call
         callRecord.activeCall = callRecord.callInvite.accept(this, callListener);

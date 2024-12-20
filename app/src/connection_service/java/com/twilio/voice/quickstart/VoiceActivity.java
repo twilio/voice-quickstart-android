@@ -353,7 +353,8 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
             holdActionFab.show();
             muteActionFab.show();
             chronometer.setVisibility(View.VISIBLE);
-            chronometer.setBase(SystemClock.elapsedRealtime());
+            chronometer.setBase(
+                    Objects.requireNonNull(status.callMap.get(status.activeCall)).timestamp);
             chronometer.start();
         }
         // if there are any pending calls, show incoming call dialog

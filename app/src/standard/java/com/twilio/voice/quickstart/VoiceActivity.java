@@ -60,7 +60,7 @@ import java.util.Vector;
 import kotlin.Unit;
 
 public class VoiceActivity extends AppCompatActivity implements VoiceService.Observer {
-    static final String accessToken = "PASTE_TOKEN_HERE"
+    static final String accessToken = "PASTE_TOKEN_HERE";
 
     private static final Logger log = new Logger(VoiceActivity.class);
     private static final int PERMISSIONS_ALL = 100;
@@ -349,7 +349,8 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
             holdActionFab.show();
             muteActionFab.show();
             chronometer.setVisibility(View.VISIBLE);
-            chronometer.setBase(SystemClock.elapsedRealtime());
+            chronometer.setBase(
+                    Objects.requireNonNull(status.callMap.get(status.activeCall)).timestamp);
             chronometer.start();
         }
         // if there are any pending calls, show incoming call dialog
