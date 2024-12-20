@@ -552,7 +552,9 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
                     dialog.dismiss();
                     VoiceConnectionService.AudioDevices selectedDevice = audioDevices.get(index);
                     updateAudioDeviceIcon(selectedDevice);
-                    VoiceConnectionService.selectAudioDevice(activeCallId, selectedDevice);
+                    if (null != activeCallId) {
+                        VoiceConnectionService.selectAudioDevice(activeCallId, selectedDevice);
+                    }
                     Collections.swap(audioDevices, 0, index);
                 }).create().show();
     }
@@ -647,20 +649,28 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
         return new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                int state = intent.getIntExtra(BluetoothAdapter.EXTRA_CONNECTION_STATE, BluetoothAdapter.ERROR);
-                switch (state) {
-                    case BluetoothAdapter.STATE_CONNECTED:
-                        audioDevices.add(VoiceConnectionService.AudioDevices.Bluetooth);
-                        updateAudioDeviceIcon(VoiceConnectionService.AudioDevices.Bluetooth);
-                        break;
-                    case BluetoothAdapter.STATE_DISCONNECTED:
-                        audioDevices.remove(VoiceConnectionService.AudioDevices.Bluetooth);
-                        if (audioDevices.contains(VoiceConnectionService.AudioDevices.Headset)) {
-                            updateAudioDeviceIcon(VoiceConnectionService.AudioDevices.Headset);
-                        } else {
-                            updateAudioDeviceIcon(VoiceConnectionService.AudioDevices.Earpiece);
-                        }
-                        break;
+                if (BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED.equals(intent.getAction())) {
+                    int state = intent.getIntExtra(
+                            BluetoothAdapter.EXTRA_CONNECTION_STATE, BluetoothAdapter.ERROR);
+                    switch (state) {
+                        case BluetoothAdapter.STATE_CONNECTED:
+                            addBluetoothDevice();
+                            break;
+                        case BluetoothAdapter.STATE_DISCONNECTED:
+                            removeBluetoothDevice();
+                            break;
+                    }
+                } else if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(intent.getAction())) {
+                    int state = intent.getIntExtra(
+                            BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
+                    switch (state) {
+                        case BluetoothAdapter.STATE_ON:
+                            addBluetoothDevice();
+                            break;
+                        case BluetoothAdapter.STATE_OFF:
+                            removeBluetoothDevice();
+                            break;
+                    }
                 }
             }
         };
@@ -668,11 +678,27 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
 
     @SuppressLint("MissingPermission")
     private boolean setupBluetooth() {
-        IntentFilter intentFilter = new IntentFilter(BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED);
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
+        intentFilter.addAction(BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED);
         registerReceiver(bluetoothReceiver, intentFilter);
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         return mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()
                 && mBluetoothAdapter.getProfileConnectionState(BluetoothHeadset.HEADSET) == BluetoothAdapter.STATE_CONNECTED;
+    }
+
+    private void addBluetoothDevice() {
+        audioDevices.add(VoiceConnectionService.AudioDevices.Bluetooth);
+        updateAudioDeviceIcon(VoiceConnectionService.AudioDevices.Bluetooth);
+    }
+
+    private void removeBluetoothDevice() {
+        audioDevices.remove(VoiceConnectionService.AudioDevices.Bluetooth);
+        if (audioDevices.contains(VoiceConnectionService.AudioDevices.Headset)) {
+            updateAudioDeviceIcon(VoiceConnectionService.AudioDevices.Headset);
+        } else {
+            updateAudioDeviceIcon(VoiceConnectionService.AudioDevices.Earpiece);
+        }
     }
 
     private void setupAudioDeviceManagement() {
@@ -684,8 +710,7 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
         setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
         audioDevices.add(VoiceConnectionService.AudioDevices.Earpiece);
         audioDevices.add(VoiceConnectionService.AudioDevices.Speaker);
-        boolean isBluetoothConnected = setupBluetooth();
-        if (isBluetoothConnected) {
+        if (setupBluetooth()) {
             audioDevices.add(VoiceConnectionService.AudioDevices.Bluetooth);
         }
         registerReceiver(wiredHeadsetReceiver, new IntentFilter(AudioManager.ACTION_HEADSET_PLUG));
