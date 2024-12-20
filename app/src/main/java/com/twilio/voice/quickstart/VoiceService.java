@@ -488,6 +488,7 @@ public class VoiceService extends Service {
                 .setAutoCancel(true)
                 .addAction(android.R.drawable.ic_menu_delete, getString(R.string.decline), pendingRejectIntent)
                 .addAction(android.R.drawable.ic_menu_call, getString(R.string.answer), pendingAcceptIntent)
+                .setContentIntent(pendingForegroundIntent)
                 .setFullScreenIntent(pendingForegroundIntent, true)
                 .build();
     }
@@ -512,7 +513,7 @@ public class VoiceService extends Service {
                 .setContentText("Active Call")
                 .setCategory(Notification.CATEGORY_CALL)
                 .setAutoCancel(false)
-                .setFullScreenIntent(pendingForegroundIntent, true)
+                .setContentIntent(pendingForegroundIntent)
                 .build();
     }
 
