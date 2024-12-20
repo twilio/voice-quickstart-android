@@ -107,6 +107,29 @@ public class VoiceService extends Service {
                                           @NonNull Set<Call.CallQualityWarning> previousWarnings);
     }
 
+    public static class Status {
+        public static class CallRecord {
+            final boolean isMuted;
+            final boolean onHold;
+
+            protected CallRecord(final boolean isMuted, final boolean onHold) {
+                this.isMuted = isMuted;
+                this.onHold = onHold;
+            }
+        }
+        final Map<UUID, CallInvite> pendingCalls;
+        final Map<UUID, CallRecord> callMap;
+        final UUID activeCall;
+
+        protected Status(final Map<UUID, CallInvite> pendingCalls,
+                         final Map<UUID, CallRecord> callList,
+                         final UUID activeCall) {
+            this.pendingCalls = pendingCalls;
+            this.callMap = callList;
+            this.activeCall = activeCall;
+        }
+    }
+
     public static void sendToVoiceService(final Context context,
                                            final String action,
                                            final UUID callId) {
@@ -236,6 +259,28 @@ public class VoiceService extends Service {
         return START_NOT_STICKY;
     }
 
+    public Status getStatus() {
+        Map<UUID, CallInvite> pendingCalls = new HashMap<>();
+        Map<UUID, Status.CallRecord> callMap = new HashMap<>();
+        UUID activeCall = null;
+        for (Map.Entry<UUID, CallRecord> callEntry: callDatabase.entrySet()) {
+            if (null == callEntry.getValue().activeCall &&
+                null != callEntry.getValue().callInvite) {
+                pendingCalls.put(callEntry.getKey(), callEntry.getValue().callInvite);
+            } else {
+                callMap.put(callEntry.getKey(), new Status.CallRecord(
+                        callEntry.getValue().activeCall.isMuted(),
+                        callEntry.getValue().activeCall.isOnHold()));
+                if (null == activeCall) {
+                    activeCall = callEntry.getKey();
+                } else if (!callEntry.getValue().activeCall.isOnHold()) {
+                    activeCall = callEntry.getKey();
+                }
+            }
+        }
+        return new Status(pendingCalls, callMap, activeCall);
+    }
+
     public void registerObserver(@NonNull final Observer observer) {
         if (!observerList.contains(observer)) {
             observerList.add(observer);
@@ -267,7 +312,7 @@ public class VoiceService extends Service {
         return callId;
     }
 
-    public void acceptCall(@NonNull final UUID callId) {
+    public UUID acceptCall(@NonNull final UUID callId) {
         // find call record
         final CallRecord callRecord = Objects.requireNonNull(callDatabase.get(callId));
 
@@ -285,6 +330,8 @@ public class VoiceService extends Service {
         for (Observer observer: observerList) {
             observer.acceptIncomingCall(callId);
         }
+
+        return callId;
     }
 
     public void disconnectCall(@NonNull final UUID callId) {

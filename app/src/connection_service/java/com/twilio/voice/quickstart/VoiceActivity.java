@@ -86,6 +86,7 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
 
     private AlertDialog alertDialog;
     private UUID activeCallId;
+    private UUID pendingCallId;
     private ServiceConnectionManager voiceService;
 
     @Override
@@ -115,8 +116,6 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
         holdActionFab.setOnClickListener(holdActionFabClickListener());
         muteActionFab.setOnClickListener(muteActionFabClickListener());
 
-        resetUI();
-
         // create voice service binding agent
         voiceService = new ServiceConnectionManager(this, accessToken, this);
 
@@ -145,6 +144,9 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
     protected void onResume() {
         log.debug("onResume");
         super.onResume();
+
+        // update ui
+        voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
     }
 
     @Override
@@ -171,51 +173,42 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
 
     @Override
     public void incomingCall(@NonNull final UUID callId, @NonNull final CallInvite invite) {
-        activeCallId = callId;
-        if (isAppVisible()) {
-            showIncomingCallDialog(invite);
-        }
+        voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
     }
 
     @Override
-    public void connectCall(@NonNull UUID callId, @NonNull ConnectOptions options) {
-        // does nothing
+    public void connectCall(@NonNull final UUID callId, @NonNull ConnectOptions options) {
+        voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
     }
 
     @Override
-    public void disconnectCall(@NonNull UUID callId) {
-        resetUI();
+    public void disconnectCall(@NonNull final UUID callId) {
+        voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
     }
 
     @Override
     public void acceptIncomingCall(@NonNull final UUID callId) {
-        setCallUI();
-        if (alertDialog != null && alertDialog.isShowing()) {
-            alertDialog.dismiss();
-        }
+        voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
     }
 
     @Override
     public void rejectIncomingCall(@NonNull final UUID callId) {
-        cancelledCall(callId);
+        voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
     }
 
     @Override
     public void cancelledCall(@NonNull final UUID callId) {
-        if (alertDialog != null && alertDialog.isShowing()) {
-            alertDialog.cancel();
-        }
-        activeCallId = null;
+        voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
     }
 
     @Override
     public void muteCall(@NonNull final UUID callId, boolean isMuted) {
-        applyFabState(muteActionFab, isMuted);
+        voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
     }
 
     @Override
     public void holdCall(@NonNull final UUID callId, boolean isOnHold) {
-        applyFabState(holdActionFab, isOnHold);
+        voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
     }
 
     @Override
@@ -247,8 +240,7 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
                 error.getErrorCode(),
                 error.getMessage());
         Snackbar.make(coordinatorLayout, message, Snackbar.LENGTH_LONG).show();
-        resetUI();
-        activeCallId = null;
+        voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
     }
 
     @Override
@@ -277,8 +269,7 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
                     error.getMessage());
             Snackbar.make(coordinatorLayout, message, Snackbar.LENGTH_LONG).show();
         }
-        resetUI();
-        activeCallId = null;
+        voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
     }
 
     @Override
@@ -335,43 +326,64 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
         }};
     }
 
-    // The UI state when there is an active call
-    private void setCallUI() {
-        callActionFab.hide();
-        hangupActionFab.show();
-        holdActionFab.show();
-        muteActionFab.show();
-        chronometer.setVisibility(View.VISIBLE);
-        chronometer.setBase(SystemClock.elapsedRealtime());
-        chronometer.start();
-    }
-
-    // Reset UI elements
-    private void resetUI() {
-        callActionFab.show();
-        muteActionFab.setImageDrawable(ContextCompat.getDrawable(VoiceActivity.this, R.drawable.ic_mic_white_24dp));
-        holdActionFab.hide();
-        holdActionFab.setBackgroundTintList(ColorStateList
-                .valueOf(ContextCompat.getColor(this, R.color.colorAccent)));
-        muteActionFab.hide();
-        hangupActionFab.hide();
-        chronometer.setVisibility(View.INVISIBLE);
-        chronometer.stop();
+    private void updateUI(VoiceService.Status  status) {
+        // if there are any active calls, show in-call UI
+        if (status.callMap.isEmpty()) {
+            // hide in-call buttons
+            muteActionFab.hide();
+            holdActionFab.hide();
+            hangupActionFab.hide();
+            chronometer.setVisibility(View.INVISIBLE);
+            chronometer.stop();
+            // show make-call ui
+            callActionFab.show();
+        } else {
+            // hide make-call ui
+            callActionFab.hide();
+            // setup in-call ui
+            muteActionFab.setImageDrawable(ContextCompat.getDrawable(
+                    VoiceActivity.this, R.drawable.ic_mic_white_24dp));
+            holdActionFab.setBackgroundTintList(ColorStateList
+                    .valueOf(ContextCompat.getColor(this, R.color.colorAccent)));
+            applyFabState(muteActionFab,
+                    Objects.requireNonNull(status.callMap.get(status.activeCall)).isMuted);
+            applyFabState(holdActionFab,
+                    Objects.requireNonNull(status.callMap.get(status.activeCall)).onHold);
+            // show ui
+            hangupActionFab.show();
+            holdActionFab.show();
+            muteActionFab.show();
+            chronometer.setVisibility(View.VISIBLE);
+            chronometer.setBase(SystemClock.elapsedRealtime());
+            chronometer.start();
+        }
+        // if there are any pending calls, show incoming call dialog
+        hideAlertDialog();
+        if (!status.pendingCalls.isEmpty()) {
+            // get the first call
+            for (Map.Entry<UUID, CallInvite> entry : status.pendingCalls.entrySet()) {
+                pendingCallId = entry.getKey();
+                if ((Build.VERSION.SDK_INT < VERSION_CODES.O) || isAppVisible()) {
+                    showIncomingCallDialog(entry.getValue());
+                }
+                break;
+            }
+        }
+        // set active call
+        activeCallId = status.activeCall;
     }
 
     private void handleIntent(Intent intent) {
         if (intent != null && intent.getAction() != null) {
             String action = intent.getAction();
-            activeCallId = (UUID) intent.getSerializableExtra(Constants.CALL_UUID);
+            pendingCallId = (UUID) intent.getSerializableExtra(Constants.CALL_UUID);
 
             switch (action) {
                 case Constants.ACTION_INCOMING_CALL_NOTIFICATION:
-                    showIncomingCallDialog(
-                            Objects.requireNonNull(
-                                    intent.getParcelableExtra(Constants.INCOMING_CALL_INVITE)));
+                    voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
                     break;
                 case Constants.ACTION_ACCEPT_CALL:
-                    answerCall();
+                    answerCall(pendingCallId);
                     break;
                 default:
                     break;
@@ -382,20 +394,18 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
     private DialogInterface.OnClickListener answerCallClickListener() {
         return (dialog, which) -> {
             log.debug("Clicked accept");
-            answerCall();
+            answerCall(pendingCallId);
         };
     }
 
     private DialogInterface.OnClickListener rejectCallClickListener() {
         return (dialogInterface, i) -> voiceService.invoke(
-                voiceService -> voiceService.rejectIncomingCall(activeCallId));
+                voiceService -> voiceService.rejectIncomingCall(pendingCallId));
     }
 
     private DialogInterface.OnClickListener cancelCallClickListener() {
         return (dialogInterface, i) -> {
-            if (alertDialog != null && alertDialog.isShowing()) {
-                alertDialog.dismiss();
-            }
+            hideAlertDialog();
         };
     }
 
@@ -409,10 +419,9 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
             ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
                     .params(params)
                     .build();
+            hideAlertDialog();
             voiceService.invoke(
                     voiceService -> activeCallId = voiceService.connectCall(connectOptions));
-            setCallUI();
-            alertDialog.dismiss();
         };
     }
 
@@ -450,8 +459,8 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
         return v -> mute();
     }
 
-    private void answerCall() {
-        voiceService.invoke(voiceService -> voiceService.acceptCall(activeCallId));
+    private void answerCall(final UUID callId) {
+        voiceService.invoke(voiceService -> activeCallId = voiceService.acceptCall(callId));
     }
 
     private void hold() {
@@ -527,9 +536,7 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
         return false;
     }
 
-    /*
-     * Show the current available audio devices.
-     */
+    // Show the current available audio devices.
     private void showAudioDevices() {
         List<String> devices = new ArrayList<>();
 
@@ -600,6 +607,13 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
                 answerCallClickListener(),
                 rejectCallClickListener());
         alertDialog.show();
+    }
+
+    private void hideAlertDialog() {
+        if (alertDialog != null && alertDialog.isShowing()) {
+            alertDialog.dismiss();
+            alertDialog = null;
+        }
     }
 
     private boolean isAppVisible() {
