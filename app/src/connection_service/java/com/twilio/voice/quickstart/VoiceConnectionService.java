@@ -1,6 +1,6 @@
 package com.twilio.voice.quickstart;
 
-import static com.twilio.voice.quickstart.VoiceService.sendToVoiceService;
+import static com.twilio.voice.quickstart.VoiceApplication.voiceService;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -56,11 +56,9 @@ public class VoiceConnectionService extends ConnectionService {
         }};
 
         private final UUID callId;
-        private final Context context;
 
-        public VoiceConnection(final Context context, final UUID callID) {
+        public VoiceConnection(final UUID callID) {
             this.callId = callID;
-            this.context = context;
         }
 
         @Override
@@ -88,7 +86,7 @@ public class VoiceConnectionService extends ConnectionService {
         @Override
         public void onDisconnect() {
             log.debug("Connection:onDisconnect");
-            sendToVoiceService(context, Constants.ACTION_DISCONNECT_CALL, callId);
+            voiceService(voiceService -> voiceService.disconnectCall(callId));
         }
 
         @Override
@@ -99,32 +97,32 @@ public class VoiceConnectionService extends ConnectionService {
         @Override
         public void onAbort() {
             log.debug("Connection:onAbort");
-            sendToVoiceService(context, Constants.ACTION_DISCONNECT_CALL, callId);
+            voiceService(voiceService -> voiceService.disconnectCall(callId));
         }
 
         @CallSuper
         @Override
         public void onAnswer() {
             log.debug("Connection:onAnswer");
-            sendToVoiceService(context, Constants.ACTION_ACCEPT_CALL, callId);
+            voiceService(voiceService -> voiceService.acceptCall(callId));
         }
 
         @Override
         public void onReject() {
             log.debug("Connection:onReject");
-            sendToVoiceService(context, Constants.ACTION_REJECT_CALL, callId);
+            voiceService(voiceService -> voiceService.rejectIncomingCall(callId));
         }
 
         @Override
         public void onHold() {
             log.debug("Connection:onHold");
-            sendToVoiceService(context, Constants.ACTION_HOLD_CALL, callId);
+            voiceService(voiceService -> voiceService.holdCall(callId));
         }
 
         @Override
         public void onUnhold() {
             log.debug("Connection:onUnhold");
-            sendToVoiceService(context, Constants.ACTION_HOLD_CALL, callId);
+            voiceService(voiceService -> voiceService.holdCall(callId));
         }
 
         @Override
@@ -391,7 +389,7 @@ public class VoiceConnectionService extends ConnectionService {
 
     private Connection createConnection(ConnectionRequest request) {
         final UUID callId = (UUID) request.getExtras().getSerializable(Constants.CALL_UUID);
-        Connection connection = new VoiceConnection(this, callId);
+        Connection connection = new VoiceConnection(callId);
 
         // self managed isn't available before version O
         connection.setConnectionProperties(Connection.PROPERTY_SELF_MANAGED);

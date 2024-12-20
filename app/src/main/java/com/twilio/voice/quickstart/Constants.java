@@ -13,7 +13,4 @@ public class Constants {
     public static final String ACTION_CANCEL_CALL = "ACTION_CANCEL_CALL";
     public static final String ACTION_ACCEPT_CALL = "ACTION_ACCEPT";
     public static final String ACTION_REJECT_CALL = "ACTION_REJECT";
-    public static final String ACTION_DISCONNECT_CALL = "ACTION_DISCONNECT";
-    public static final String ACTION_HOLD_CALL = "ACTION_HOLD";
-    public static final String ACTION_MUTE_CALL = "ACTION_MUTE";
 }

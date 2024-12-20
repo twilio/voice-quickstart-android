@@ -3,10 +3,7 @@ package com.twilio.voice.quickstart;
 import static com.twilio.voice.quickstart.Constants.ACCESS_TOKEN;
 import static com.twilio.voice.quickstart.Constants.ACTION_ACCEPT_CALL;
 import static com.twilio.voice.quickstart.Constants.ACTION_CANCEL_CALL;
-import static com.twilio.voice.quickstart.Constants.ACTION_DISCONNECT_CALL;
-import static com.twilio.voice.quickstart.Constants.ACTION_HOLD_CALL;
 import static com.twilio.voice.quickstart.Constants.ACTION_INCOMING_CALL;
-import static com.twilio.voice.quickstart.Constants.ACTION_MUTE_CALL;
 import static com.twilio.voice.quickstart.Constants.ACTION_REJECT_CALL;
 import static com.twilio.voice.quickstart.Constants.CUSTOM_RINGBACK;
 
@@ -17,8 +14,10 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.graphics.Color;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 
@@ -27,6 +26,7 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationChannelCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.app.ServiceCompat;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ProcessLifecycleOwner;
 
@@ -39,7 +39,6 @@ import com.twilio.voice.RegistrationException;
 import com.twilio.voice.RegistrationListener;
 import com.twilio.voice.Voice;
 
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -157,6 +156,7 @@ public class VoiceService extends Service {
 
     @Override
     public void onCreate() {
+        log.debug("onCreate");
         super.onCreate();
         soundPoolManager = new SoundPoolManager(getApplicationContext());
 
@@ -193,6 +193,7 @@ public class VoiceService extends Service {
 
     @Override
     public void onDestroy() {
+        log.debug("onDestroy");
         // cleanup sounds
         soundPoolManager = null;
 
@@ -234,21 +235,6 @@ public class VoiceService extends Service {
                     break;
                 case ACTION_ACCEPT_CALL:
                     acceptCall(
-                            (UUID)Objects.requireNonNull(intent.getSerializableExtra(
-                                    Constants.CALL_UUID)));
-                    break;
-                case ACTION_DISCONNECT_CALL:
-                    disconnectCall(
-                            (UUID)Objects.requireNonNull(intent.getSerializableExtra(
-                                    Constants.CALL_UUID)));
-                    break;
-                case ACTION_HOLD_CALL:
-                    holdCall(
-                            (UUID)Objects.requireNonNull(intent.getSerializableExtra(
-                                    Constants.CALL_UUID)));
-                    break;
-                case ACTION_MUTE_CALL:
-                    muteCall(
                             (UUID)Objects.requireNonNull(intent.getSerializableExtra(
                                     Constants.CALL_UUID)));
                     break;
@@ -299,9 +285,13 @@ public class VoiceService extends Service {
         final UUID callId = UUID.randomUUID();
 
         // connect call & create call record
-        callDatabase.put(
-                callId,
-                new CallRecord(Voice.connect(this, options, callListener)));
+        CallRecord callRecord = new CallRecord(Voice.connect(this, options, callListener));
+        callDatabase.put(callId, callRecord);
+
+        // create & post notification for call
+        final Notification notification = createCallNotification(callRecord, NotificationPriority.LOW);
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        foregroundService(callRecord.callInviteNotificationId, notification);
 
         // invoke observers
         for (Observer observer: observerList) {
@@ -316,9 +306,13 @@ public class VoiceService extends Service {
         // find call record
         final CallRecord callRecord = Objects.requireNonNull(callDatabase.get(callId));
 
-        // remove notification
+        // remove incoming call notification
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
         notificationManager.cancel(callRecord.callInviteNotificationId);
+
+        // create & post notification for call
+        final Notification notification = createCallNotification(callRecord, NotificationPriority.LOW);
+        foregroundService(callRecord.callInviteNotificationId, notification);
 
         // kill ringer
         soundPoolManager.stopSound(SoundPoolManager.Sound.RINGER);
@@ -488,6 +482,30 @@ public class VoiceService extends Service {
                 .build();
     }
 
+    private Notification createCallNotification(
+            final CallRecord callRecord,
+            final NotificationPriority priority) {
+        final int notificationId = generateRandomId();
+        String channelId = (priority == NotificationPriority.LOW) ?
+                Constants.VOICE_CHANNEL_LOW_IMPORTANCE : Constants.VOICE_CHANNEL_HIGH_IMPORTANCE;
+
+        // create pending intents
+        Intent foregroundIntent = new Intent(this, VoiceActivity.class);
+        PendingIntent pendingForegroundIntent = PendingIntent.getActivity(this,
+                notificationId, foregroundIntent, PendingIntent.FLAG_IMMUTABLE);
+
+        callRecord.callInviteNotificationId = notificationId;
+        // create notification
+        return new NotificationCompat.Builder(this, channelId)
+                .setSmallIcon(R.drawable.ic_call_end_white_24dp)
+                .setContentTitle(getString(R.string.app_name))
+                .setContentText("Active Call")
+                .setCategory(Notification.CATEGORY_CALL)
+                .setAutoCancel(false)
+                .setFullScreenIntent(pendingForegroundIntent, true)
+                .build();
+    }
+
     private UUID findAssociatedCallId(final String callSid) {
         for (Map.Entry<UUID, CallRecord> entry: callDatabase.entrySet()) {
             if (null != entry.getValue().callInvite &&
@@ -520,6 +538,18 @@ public class VoiceService extends Service {
         Random generator = new Random(System.currentTimeMillis());
         for (newId = generator.nextInt(); newId == 0; newId = generator.nextInt()) { }
         return newId;
+    }
+
+    private void foregroundService(final int notificationId, Notification notification) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            ServiceCompat.startForeground(
+                    this,
+                    notificationId,
+                    notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
+        } else {
+            startForeground(notificationId, notification);
+        }
     }
 
     private final RegistrationListener registrationListener = new RegistrationListener() {
@@ -581,6 +611,10 @@ public class VoiceService extends Service {
                 soundPoolManager.stopSound(SoundPoolManager.Sound.RINGER);
             }
 
+            // remove in-call notification
+            ServiceCompat.stopForeground(
+                    VoiceService.this, ServiceCompat.STOP_FOREGROUND_REMOVE);
+
             // notify observers
             for (Observer observer: observerList) {
                 observer.onConnectFailure(callId, callException);
@@ -638,6 +672,10 @@ public class VoiceService extends Service {
             // find call record & remove
             final UUID callId = Objects.requireNonNull(findAssociatedCallId(call));
             Objects.requireNonNull(callDatabase.remove(callId));
+
+            // remove in-call notification
+            ServiceCompat.stopForeground(
+                    VoiceService.this, ServiceCompat.STOP_FOREGROUND_REMOVE);
 
             // notify observers
             for (Observer observer: observerList) {

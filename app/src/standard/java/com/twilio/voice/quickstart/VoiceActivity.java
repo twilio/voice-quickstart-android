@@ -2,23 +2,20 @@ package com.twilio.voice.quickstart;
 
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
+import static com.twilio.voice.quickstart.VoiceApplication.voiceService;
 import static java.lang.String.format;
 
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.res.ColorStateList;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
-import android.os.IBinder;
-import android.os.Looper;
 import android.os.SystemClock;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -52,7 +49,6 @@ import com.twilio.voice.RegistrationException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -64,10 +60,10 @@ import java.util.Vector;
 import kotlin.Unit;
 
 public class VoiceActivity extends AppCompatActivity implements VoiceService.Observer {
+    static final String accessToken = "PASTE_TOKEN_HERE"
+
     private static final Logger log = new Logger(VoiceActivity.class);
     private static final int PERMISSIONS_ALL = 100;
-    private final String accessToken = "PASTE_TOKEN_HERE";
-
     private AudioSwitch audioSwitch;
     private int savedVolumeControlStream;
     private MenuItem audioDeviceMenuItem;
@@ -82,7 +78,6 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
     private AlertDialog alertDialog;
     private UUID activeCallId;
     private UUID pendingCallId;
-    private ServiceConnectionManager voiceService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -111,8 +106,8 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
         holdActionFab.setOnClickListener(holdActionFabClickListener());
         muteActionFab.setOnClickListener(muteActionFabClickListener());
 
-        // create voice service binding agent
-        voiceService = new ServiceConnectionManager(this, accessToken, this);
+        // register with voice service
+        voiceService(voiceService -> voiceService.registerObserver(this));
 
         // register incoming calls
         registerIncomingCalls();
@@ -146,7 +141,7 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
         super.onResume();
 
         // update ui
-        voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
+        voiceService(voiceService -> updateUI(voiceService.getStatus()));
     }
 
     @Override
@@ -159,8 +154,8 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
     public void onDestroy() {
         log.debug("onDestroy");
 
-        // unbind from service
-        voiceService.unbind();
+        // unregister with voice service
+        voiceService(voiceService -> voiceService.unregisterObserver(this));
 
         // Tear down audio device management and restore previous volume stream
         audioSwitch.stop();
@@ -170,42 +165,42 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
 
     @Override
     public void incomingCall(@NonNull final UUID callId, @NonNull final CallInvite invite) {
-        voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
+        voiceService(voiceService -> updateUI(voiceService.getStatus()));
     }
 
     @Override
     public void connectCall(@NonNull final UUID callId, @NonNull ConnectOptions options) {
-        voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
+        voiceService(voiceService -> updateUI(voiceService.getStatus()));
     }
 
     @Override
     public void disconnectCall(@NonNull final UUID callId) {
-        voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
+        voiceService(voiceService -> updateUI(voiceService.getStatus()));
     }
 
     @Override
     public void acceptIncomingCall(@NonNull final UUID callId) {
-        voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
+        voiceService(voiceService -> updateUI(voiceService.getStatus()));
     }
 
     @Override
     public void rejectIncomingCall(@NonNull final UUID callId) {
-        voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
+        voiceService(voiceService -> updateUI(voiceService.getStatus()));
     }
 
     @Override
     public void cancelledCall(@NonNull final UUID callId) {
-        voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
+        voiceService(voiceService -> updateUI(voiceService.getStatus()));
     }
 
     @Override
     public void muteCall(@NonNull final UUID callId, boolean isMuted) {
-        voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
+        voiceService(voiceService -> updateUI(voiceService.getStatus()));
     }
 
     @Override
     public void holdCall(@NonNull final UUID callId, boolean isOnHold) {
-        voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
+        voiceService(voiceService -> updateUI(voiceService.getStatus()));
     }
 
     @Override
@@ -239,7 +234,7 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
                 error.getErrorCode(),
                 error.getMessage());
         Snackbar.make(coordinatorLayout, message, Snackbar.LENGTH_LONG).show();
-        voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
+        voiceService(voiceService -> updateUI(voiceService.getStatus()));
     }
 
     @Override
@@ -270,7 +265,7 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
                     error.getMessage());
             Snackbar.make(coordinatorLayout, message, Snackbar.LENGTH_LONG).show();
         }
-        voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
+        voiceService(voiceService -> updateUI(voiceService.getStatus()));
     }
 
     @Override
@@ -379,7 +374,7 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
             pendingCallId = (UUID) intent.getSerializableExtra(Constants.CALL_UUID);
             switch (action) {
                 case Constants.ACTION_INCOMING_CALL_NOTIFICATION:
-                    voiceService.invoke(voiceService -> updateUI(voiceService.getStatus()));
+                    voiceService(voiceService -> updateUI(voiceService.getStatus()));
                     break;
                 case Constants.ACTION_ACCEPT_CALL:
                     answerCall(pendingCallId);
@@ -398,8 +393,8 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
     }
 
     private DialogInterface.OnClickListener rejectCallClickListener() {
-        return (dialogInterface, i) -> voiceService.invoke(
-                    voiceService -> voiceService.rejectIncomingCall(pendingCallId));
+        return (dialogInterface, i) ->
+                voiceService(voiceService -> voiceService.rejectIncomingCall(pendingCallId));
     }
 
     private DialogInterface.OnClickListener cancelCallClickListener() {
@@ -419,8 +414,7 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
                     .params(params)
                     .build();
             hideAlertDialog();
-            voiceService.invoke(
-                    voiceService -> activeCallId = voiceService.connectCall(connectOptions));
+            voiceService(voiceService -> activeCallId = voiceService.connectCall(connectOptions));
         };
     }
 
@@ -448,7 +442,7 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
     }
 
     private View.OnClickListener hangupActionFabClickListener() {
-        return v -> voiceService.invoke(voiceService -> voiceService.disconnectCall(activeCallId));
+        return v -> voiceService(voiceService -> voiceService.disconnectCall(activeCallId));
     }
 
     private View.OnClickListener holdActionFabClickListener() {
@@ -460,18 +454,18 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
     }
 
     private void answerCall(final UUID callId) {
-        voiceService.invoke(voiceService -> activeCallId = voiceService.acceptCall(callId));
+        voiceService(voiceService -> activeCallId = voiceService.acceptCall(callId));
     }
 
     private void hold() {
         if (activeCallId != null) {
-            voiceService.invoke(voiceService -> voiceService.holdCall(activeCallId));
+            voiceService(voiceService -> voiceService.holdCall(activeCallId));
         }
     }
 
     private void mute() {
         if (activeCallId != null) {
-            voiceService.invoke(voiceService -> voiceService.muteCall(activeCallId));
+            voiceService(voiceService -> voiceService.muteCall(activeCallId));
         }
     }
 
@@ -636,84 +630,12 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
         FirebaseMessaging.getInstance().getToken()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        voiceService.invoke(
-                                voiceService -> voiceService.registerFCMToken(task.getResult()));
+                        voiceService(voiceService ->
+                                voiceService.registerFCMToken(task.getResult()));
                     } else {
                         log.error("FCM token retrieval failed: " +
                                 Objects.requireNonNull(task.getException()).getMessage());
                     }
                 });
-    }
-
-    private static class ServiceConnectionManager {
-        private VoiceService voiceService = null;
-        private final List<Task> pendingTasks = new LinkedList<>();
-        private final String accessToken;
-        private final Context context;
-        private final VoiceService.Observer observer;
-        private final ServiceConnection serviceConnection = new ServiceConnection() {
-
-            @Override
-            public void onServiceConnected(ComponentName name, IBinder service) {
-                // verify is main thread, all Voice SDK calls must be made on the same Looper thread
-                assert(Looper.myLooper() == Looper.getMainLooper());
-                // link to voice service
-                voiceService = ((VoiceService.VideoServiceBinder)service).getService();
-                voiceService.registerObserver(observer);
-                // run tasks
-                synchronized(ServiceConnectionManager.this) {
-                    for (Task task : pendingTasks) {
-                        task.run(voiceService);
-                    }
-                    pendingTasks.clear();
-                }
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName name) {
-                voiceService = null;
-            }
-        };
-
-        public interface Task {
-            void run(final VoiceService voiceService);
-        }
-
-        public ServiceConnectionManager(final Context context,
-                                        final String accessToken,
-                                        final VoiceService.Observer observer) {
-            this.context = context;
-            this.accessToken = accessToken;
-            this.observer = observer;
-        }
-
-        public void unbind() {
-            if (null != voiceService) {
-                voiceService.unregisterObserver(observer);
-                context.unbindService(serviceConnection);
-            }
-        }
-
-        public void invoke(Task task) {
-            if (null != voiceService) {
-                // verify is main thread, all Voice SDK calls must be made on the same Looper thread
-                assert(Looper.myLooper() == Looper.getMainLooper());
-                // run task
-                synchronized (this) {
-                    task.run(voiceService);
-                }
-            } else {
-                // queue runnable
-                pendingTasks.add(task);
-                // bind to service
-                Intent intent = new Intent(context, VoiceService.class);
-                intent.putExtra(Constants.ACCESS_TOKEN, accessToken);
-                intent.putExtra(Constants.CUSTOM_RINGBACK, BuildConfig.playCustomRingback);
-                context.bindService(
-                        intent,
-                        serviceConnection,
-                        BIND_AUTO_CREATE);
-            }
-        }
     }
 }
