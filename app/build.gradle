@@ -93,11 +93,11 @@ dependencies {
     implementation "com.google.android.material:material:${versions.material}"
     implementation "com.google.firebase:firebase-messaging:${versions.firebase}"
     implementation "androidx.lifecycle:lifecycle-extensions:${versions.androidxLifecycle}"
-    implementation 'com.google.firebase:firebase-auth:22.1.1'
+    implementation 'com.google.firebase:firebase-auth:23.1.0'
     androidTestImplementation "androidx.test.ext:junit:${versions.junit}"
 
     // Import the BoM
-    implementation platform('com.google.firebase:firebase-bom:32.2.0')
+    implementation platform('com.google.firebase:firebase-bom:33.7.0')
 }
 
 apply plugin: 'com.google.gms.google-services'

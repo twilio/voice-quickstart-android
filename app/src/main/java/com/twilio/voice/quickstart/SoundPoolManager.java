@@ -1,94 +1,133 @@
 package com.twilio.voice.quickstart;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.SoundPool;
-import android.os.Build;
+
 
 import static android.content.Context.AUDIO_SERVICE;
 
-public class SoundPoolManager {
+import static java.lang.String.format;
 
-    private boolean playing = false;
-    private boolean loaded = false;
-    private boolean playingCalled = false;
-    private float volume;
-    private SoundPool soundPool;
-    private int ringingSoundId;
-    private int ringingStreamId;
-    private int disconnectSoundId;
-    private static SoundPoolManager instance;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
-    private SoundPoolManager(Context context) {
+@SuppressLint("DefaultLocale")
+class SoundPoolManager {
+    enum Sound {
+        RINGER,
+        DISCONNECT
+    }
+
+    enum SoundState {
+        LOADING,
+        READY,
+        PLAYING,
+        ERROR
+    }
+
+    private static class SoundRecord {
+        final int id;
+        final boolean loop;
+        SoundState state;
+
+        public SoundRecord(Context context,
+                           SoundPool soundPool,
+                           final int resource,
+                           final boolean loop) {
+            this.id = soundPool.load(context, resource, 1);
+            this.state = SoundState.LOADING;
+            this.loop = loop;
+        }
+    }
+
+    private static final Logger log = new Logger(SoundPoolManager.class);
+    private final float volume;
+    private final SoundPool soundPool;
+
+    private Map<Sound, SoundRecord> soundBank;
+    private int lastActiveAudioStreamId;
+
+    SoundPoolManager(final Context context) {
+        // construct sound pool
+        soundPool = new SoundPool.Builder().setMaxStreams(1).build();
+        soundPool.setOnLoadCompleteListener((soundPool, sampleId, status) -> {
+            for (Map.Entry<Sound, SoundRecord> entry : soundBank.entrySet()) {
+                final SoundRecord record = entry.getValue();
+                if (record.id == sampleId) {
+                    record.state = (0 == status) ? SoundState.READY : SoundState.ERROR;
+                    if (0 != status) {
+                        log.error(
+                                format("Failed to load sound %s, error: %d",
+                                        entry.getKey().name(), status));
+                    }
+                }
+            }
+        });
+
+        // construct sound bank & load
+        soundBank = new HashMap<>() {{
+            put(Sound.RINGER, new SoundRecord(context, soundPool, R.raw.incoming, true));
+            put(Sound.DISCONNECT, new SoundRecord(context, soundPool, R.raw.disconnect, false));
+        }};
+
+        // no active stream
+        lastActiveAudioStreamId = -1;
+
         // AudioManager audio settings for adjusting the volume
         AudioManager audioManager = (AudioManager) context.getSystemService(AUDIO_SERVICE);
         float actualVolume = (float) audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
         float maxVolume = (float) audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         volume = actualVolume / maxVolume;
+    }
 
-        // Load the sounds
-        int maxStreams = 1;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            soundPool = new SoundPool.Builder()
-                    .setMaxStreams(maxStreams)
-                    .build();
+    void playSound(final Sound sound) {
+        final SoundRecord soundRecord = Objects.requireNonNull(soundBank.get(sound));
+        if (!isSoundPlaying() && SoundState.READY == soundRecord.state) {
+            lastActiveAudioStreamId = soundPool.play(
+                    soundRecord.id, volume, volume, 1, soundRecord.loop ? -1 : 0, 1f);
+            soundRecord.state = soundRecord.loop ? SoundState.PLAYING : SoundState.READY;
+        } else if (isSoundPlaying()) {
+            log.warning(
+                    format("cannot play sound %s: %d sound stream already active",
+                            sound.name(), lastActiveAudioStreamId));
         } else {
-            soundPool = new SoundPool(maxStreams, AudioManager.STREAM_MUSIC, 0);
+            log.warning(format("cannot play sound %s: invalid state", sound.name()));
         }
+    }
 
-        soundPool.setOnLoadCompleteListener(new SoundPool.OnLoadCompleteListener() {
-            @Override
-            public void onLoadComplete(SoundPool soundPool, int sampleId, int status) {
-                loaded = true;
-                if (playingCalled) {
-                    playRinging();
-                    playingCalled = false;
-                }
+    void stopSound(final Sound sound) {
+        final SoundRecord soundRecord = Objects.requireNonNull(soundBank.get(sound));
+        if (SoundState.PLAYING == soundRecord.state) {
+            soundPool.stop(lastActiveAudioStreamId);
+        } else {
+            log.warning(format("cannot stop sound %s: invalid state", sound.name()));
+        }
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        for (SoundRecord record : soundBank.values()) {
+            switch (record.state) {
+                case PLAYING:
+                    soundPool.stop(lastActiveAudioStreamId);
+                    // intentionally fall through
+                case READY:
+                    soundPool.unload(record.id);
+                    break;
             }
-
-        });
-        ringingSoundId = soundPool.load(context, R.raw.incoming, 1);
-        disconnectSoundId = soundPool.load(context, R.raw.disconnect, 1);
-    }
-
-    public static SoundPoolManager getInstance(Context context) {
-        if (instance == null) {
-            instance = new SoundPoolManager(context);
         }
-        return instance;
+        soundPool.release();
+        super.finalize();
     }
 
-    public void playRinging() {
-        if (loaded && !playing) {
-            ringingStreamId = soundPool.play(ringingSoundId, volume, volume, 1, -1, 1f);
-            playing = true;
-        } else {
-            playingCalled = true;
+    private boolean isSoundPlaying() {
+        boolean playbackActive = false;
+        for (SoundRecord record : soundBank.values()) {
+            playbackActive |= (SoundState.PLAYING == record.state);
         }
+        return playbackActive;
     }
-
-    public void stopRinging() {
-        if (playing) {
-            soundPool.stop(ringingStreamId);
-            playing = false;
-        }
-    }
-
-    public void playDisconnect() {
-        if (loaded && !playing) {
-            soundPool.play(disconnectSoundId, volume, volume, 1, 0, 1f);
-            playing = false;
-        }
-    }
-
-    public void release() {
-        if (soundPool != null) {
-            soundPool.unload(ringingSoundId);
-            soundPool.unload(disconnectSoundId);
-            soundPool.release();
-            soundPool = null;
-        }
-        instance = null;
-    }
-
 }
