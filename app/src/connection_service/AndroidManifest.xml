@@ -27,16 +27,6 @@
                 <action android:name="android.bluetooth.headset.profile.action.CONNECTION_STATE_CHANGED" />
             </intent-filter>
         </activity>
-        <service
-            android:enabled="true"
-            android:name=".IncomingCallNotificationService"
-            android:foregroundServiceType="microphone"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="ACTION_ACCEPT" />
-                <action android:name="ACTION_REJECT" />
-            </intent-filter>
-        </service>
         <service android:name=".VoiceConnectionService"
             android:label="@string/connection_service_name"
             android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE"
