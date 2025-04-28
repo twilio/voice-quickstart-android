@@ -24,8 +24,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 
-import tvo.webrtc.voiceengine.WebRtcAudioUtils;
-
 public class FileAndMicAudioDevice implements AudioDevice {
     private static final String TAG = FileAndMicAudioDevice.class.getSimpleName();
     // TIMEOUT for rendererThread and capturerThread to wait for successful call to join()
