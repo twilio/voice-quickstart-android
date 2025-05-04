@@ -13,7 +13,7 @@
     "dotenv": "^4.0.0",
     "express": "^4.21.1",
     "twilio": "^5.1.0",
-    "twilio-run": "^2.0.0"
+    "twilio-run": "^4.1.0"
   },
   "engines": {
     "node": "16.20.1"
