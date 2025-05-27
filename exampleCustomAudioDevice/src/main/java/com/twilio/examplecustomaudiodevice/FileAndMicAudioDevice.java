@@ -125,27 +125,31 @@ public class FileAndMicAudioDevice implements AudioDevice {
             this.releaseAudioResources();
             return;
         }
+        try {
+            while (keepAliveRendererRunnable) {
+                // Get 10ms of PCM data from the SDK. Audio data is written into the ByteBuffer provided.
+                AudioDevice.audioDeviceReadRenderData(renderingAudioDeviceContext, readByteBuffer);
 
-        while (keepAliveRendererRunnable) {
-            // Get 10ms of PCM data from the SDK. Audio data is written into the ByteBuffer provided.
-            AudioDevice.audioDeviceReadRenderData(renderingAudioDeviceContext, readByteBuffer);
-
-            int bytesWritten = 0;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                bytesWritten = writeOnLollipop(audioTrack, readByteBuffer, readByteBuffer.capacity());
-            } else {
-                bytesWritten = writePreLollipop(audioTrack, readByteBuffer, readByteBuffer.capacity());
-            }
-            if (bytesWritten != readByteBuffer.capacity()) {
-                Log.e(TAG, "AudioTrack.write failed: " + bytesWritten);
-                if (bytesWritten == AudioTrack.ERROR_INVALID_OPERATION) {
-                    keepAliveRendererRunnable = false;
-                    break;
+                int bytesWritten = 0;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    bytesWritten = writeOnLollipop(audioTrack, readByteBuffer, readByteBuffer.capacity());
+                } else {
+                    bytesWritten = writePreLollipop(audioTrack, readByteBuffer, readByteBuffer.capacity());
                 }
+                if (bytesWritten != readByteBuffer.capacity()) {
+                    Log.e(TAG, "AudioTrack.write failed: " + bytesWritten);
+                    if (bytesWritten == AudioTrack.ERROR_INVALID_OPERATION) {
+                        keepAliveRendererRunnable = false;
+                        break;
+                    }
+                }
+                // The byte buffer must be rewinded since byteBuffer.position() is increased at each
+                // call to AudioTrack.write(). If we don't do this, will fail the next  AudioTrack.write().
+                readByteBuffer.rewind();
             }
-            // The byte buffer must be rewinded since byteBuffer.position() is increased at each
-            // call to AudioTrack.write(). If we don't do this, will fail the next  AudioTrack.write().
-            readByteBuffer.rewind();
+        } catch (IllegalStateException error) {
+            error.printStackTrace();
+            releaseAudioResources();
         }
     };
 
