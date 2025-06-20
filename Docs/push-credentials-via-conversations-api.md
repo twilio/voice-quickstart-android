@@ -1,6 +1,6 @@
-## Create Push Credentials via the Conversations Credential Resource API
+## Create Push Credentials via the Notify Credential Resource API
 
-Voice SDK users can manage their Push Credentials in the developer console (**Console > Account > Keys & Credentials > Credentials**). Currently the Push Credential management page only supports the default region (US1). To create or update Push Credentials for other regional (i.e. Australia) usage, developers can use the Conversations public API to manage their Push Credentials. Follow the instructions of the [Credential Resource API](https://www.twilio.com/docs/conversations/api/credential-resource) and replace the endpoint with the regional endpoint, for example https://conversations.dublin.ie1.twilio.com for the Australia region.
+Voice SDK users can manage their Push Credentials in the developer console (**Console > Account > Keys & Credentials > Credentials**). Currently the Push Credential management page only supports the default region (US1). To create or update Push Credentials for other regional (i.e. Australia or Ireland) usage, developers can use the Credential Resource API to manage their Push Credentials. Follow the instructions of the [Credential Resource API](https://www.twilio.com/docs/conversations/api/credential-resource) and replace the endpoint with the regional endpoint, for example https://notify.sydney.au1.twilio.com for the Australia region or https://notify.dublin.ie1.twilio.com for Ireland region.
 
 You will also need:
 - FCM key: follow the [instructions]((https://github.com/twilio/voice-quickstart-android#1-generate-google-servicesjson)) to get the FCM key.
@@ -9,7 +9,7 @@ You will also need:
 Example of creating an `IE1` Push Credential for FCM:
 
 ```
-curl -X POST https://conversations.dublin.ie1.twilio.com/v1/Credentials \
+curl -X POST https://notify.dublin.ie1.twilio.com/v1/Credentials \
 --data-urlencode "Type=fcm" \
 --data-urlencode "Secret=$FCM_SERVER_KEY" \
 -u $TWILIO_ACCOUNT_SID:$TWILIO_AUTH_TOKEN
@@ -18,10 +18,8 @@ curl -X POST https://conversations.dublin.ie1.twilio.com/v1/Credentials \
 To update a Push Credential (CR****) in `IE1`:
 
 ```
-curl -X POST https://conversations.dublin.ie1.twilio.com/v1/Credentials/CR**** \
+curl -X POST https://notify.dublin.ie1.twilio.com/v1/Credentials/CR**** \
 --data-urlencode "Type=fcm" \
 --data-urlencode "Secret=$FCM_SERVER_KEY" \
 -u $TWILIO_ACCOUNT_SID:$TWILIO_AUTH_TOKEN
 ```
-
-# Note that currently the Conversations Credential Resource API is not available for the Australia region. Please reach out to the [Twilio Help Center](https://help.twilio.com/) if you need help managing your Push Credentials for the Australia region.
