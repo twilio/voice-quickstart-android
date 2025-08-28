@@ -73,8 +73,8 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
     private FloatingActionButton hangupActionFab;
     private FloatingActionButton holdActionFab;
     private FloatingActionButton muteActionFab;
+    private FloatingActionButton dialpadFab;
     private Chronometer chronometer;
-
     private AlertDialog alertDialog;
     private UUID activeCallId;
     private UUID pendingCallId;
@@ -99,12 +99,14 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
         hangupActionFab = findViewById(R.id.hangup_action_fab);
         holdActionFab = findViewById(R.id.hold_action_fab);
         muteActionFab = findViewById(R.id.mute_action_fab);
+        dialpadFab = findViewById(R.id.dialpad_fab);
         chronometer = findViewById(R.id.chronometer);
 
         callActionFab.setOnClickListener(callActionFabClickListener());
         hangupActionFab.setOnClickListener(hangupActionFabClickListener());
         holdActionFab.setOnClickListener(holdActionFabClickListener());
         muteActionFab.setOnClickListener(muteActionFabClickListener());
+        dialpadFab.setOnClickListener(dialpadFabClickListener());
 
         // register with voice service
         voiceService(voiceService -> voiceService.registerObserver(this));
@@ -328,6 +330,7 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
             muteActionFab.hide();
             holdActionFab.hide();
             hangupActionFab.hide();
+            dialpadFab.hide();
             chronometer.setVisibility(View.INVISIBLE);
             chronometer.stop();
             // show make-call ui
@@ -348,6 +351,7 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
             hangupActionFab.show();
             holdActionFab.show();
             muteActionFab.show();
+            dialpadFab.show();
             chronometer.setVisibility(View.VISIBLE);
             chronometer.setBase(
                     Objects.requireNonNull(status.callMap.get(status.activeCall)).timestamp);
@@ -452,6 +456,12 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
 
     private View.OnClickListener muteActionFabClickListener() {
         return v -> mute();
+    }
+    private View.OnClickListener dialpadFabClickListener() {
+        return v -> {
+            Intent intent = new Intent(v.getContext(), DialpadActivity.class);
+            v.getContext().startActivity(intent);
+        };
     }
 
     private void answerCall(final UUID callId) {

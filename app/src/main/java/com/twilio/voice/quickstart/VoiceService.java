@@ -64,6 +64,7 @@ public class VoiceService extends Service {
         LOW,
         HIGH
     }
+    public static Call activeCall;
 
     private static class CallRecord {
         public final CallInvite callInvite;
@@ -644,6 +645,8 @@ public class VoiceService extends Service {
                 soundPoolManager.playSound(SoundPoolManager.Sound.RINGER);
             }
 
+            activeCall = call;
+
             // notify observers
             for (Observer observer: observerList) {
                 observer.onConnected(callId);
@@ -691,6 +694,10 @@ public class VoiceService extends Service {
             // notify observers
             for (Observer observer: observerList) {
                 observer.onDisconnected(callId, callException);
+            }
+
+            if(activeCall != null) {
+                activeCall = null;
             }
         }
 
