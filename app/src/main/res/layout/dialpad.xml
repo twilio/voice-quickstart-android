@@ -18,7 +18,7 @@
             android:layout_height="wrap_content"
             android:paddingVertical="40dp"
             android:paddingHorizontal="20dp"
-            android:hint="Enter number"
+            android:hint="Enter digits"
             android:singleLine="true"
             android:maxLines="1" />
 
