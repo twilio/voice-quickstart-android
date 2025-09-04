@@ -355,6 +355,14 @@ public class VoiceService extends Service {
         }
     }
 
+    public void sendDigitToCall(@NonNull final UUID callId, String digits) {
+        // find call record
+        final CallRecord callRecord = Objects.requireNonNull(callDatabase.get(callId));
+
+        // send digits
+        callRecord.activeCall.sendDigits(digits);
+    }
+
     public void muteCall(@NonNull final UUID callId) {
         // find call record
         final CallRecord callRecord = Objects.requireNonNull(callDatabase.get(callId));
@@ -645,8 +653,6 @@ public class VoiceService extends Service {
                 soundPoolManager.playSound(SoundPoolManager.Sound.RINGER);
             }
 
-            activeCall = call;
-
             // notify observers
             for (Observer observer: observerList) {
                 observer.onConnected(callId);
@@ -694,10 +700,6 @@ public class VoiceService extends Service {
             // notify observers
             for (Observer observer: observerList) {
                 observer.onDisconnected(callId, callException);
-            }
-
-            if(activeCall != null) {
-                activeCall = null;
             }
         }
 

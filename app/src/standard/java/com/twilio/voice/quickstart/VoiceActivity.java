@@ -460,6 +460,7 @@ public class VoiceActivity extends AppCompatActivity implements VoiceService.Obs
     private View.OnClickListener dialpadFabClickListener() {
         return v -> {
             Intent intent = new Intent(v.getContext(), DialpadActivity.class);
+            intent.putExtra("activeCallId", activeCallId.toString());
             v.getContext().startActivity(intent);
         };
     }

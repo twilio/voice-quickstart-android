@@ -1,5 +1,7 @@
 package com.twilio.voice.quickstart;
 
+import static com.twilio.voice.quickstart.VoiceApplication.voiceService;
+
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import android.media.AudioManager;
@@ -7,13 +9,13 @@ import android.media.ToneGenerator;
 import android.widget.Button;
 import android.widget.EditText;
 import android.util.Log;
-import com.twilio.voice.Call;
+import android.view.View;
+
+import java.util.UUID;
 
 public class DialpadActivity extends AppCompatActivity {
     private ToneGenerator toneGenerator;
     private EditText dialpadEditText;
-    private final int[] digitIds = {R.id.button0, R.id.button1, R.id.button2, R.id.button3, R.id.button4, R.id.button5, R.id.button6, R.id.button7, R.id.button8, R.id.button9, R.id.buttonStar, R.id.buttonHash};
-    private final String[] digits = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "#"};
     private final int DTMF_TONE_VOLUME = 80;
     private final int DTMF_TONE_PLAYBACK_DURATION_MS = 150;
 
@@ -23,32 +25,28 @@ public class DialpadActivity extends AppCompatActivity {
         setContentView(R.layout.dialpad);
 
         dialpadEditText = findViewById(R.id.dialpadEditText);
-        Button buttonDone = findViewById(R.id.buttonDone);
-
         toneGenerator = new ToneGenerator(AudioManager.STREAM_VOICE_CALL, DTMF_TONE_VOLUME);
-
-        for (int i = 0; i < digitIds.length; i++) {
-            Button digitButton = findViewById(digitIds[i]);
-            final String digit = digits[i];
-            setDigitClickListener(digitButton, digit);
-        }
-
-        buttonDone.setOnClickListener(v -> {
-            finish();
-        });
     }
 
-    private void setDigitClickListener(Button button, String digit) {
-        Call activeCall = VoiceService.activeCall;
-        button.setOnClickListener(v -> {
-            dialpadEditText.append(String.valueOf(digit));
-            if (activeCall != null) {
-                activeCall.sendDigits(digit);
-            } else {
-                Log.w("DialpadActivity", "Active call is null");
-            }
-            playTone(digit);
-        });
+    public void onDoneTapped(View view) {
+        finish();
+    }
+
+    public void onDigitTapped(View view) {
+        Button digitButton = (Button) view;
+        String digit = digitButton.getText().toString();
+        playTone(digit);
+        appendAndSendDigit(digit);
+    }
+
+    private void appendAndSendDigit(String digit) {
+        UUID activeCallId = UUID.fromString(getIntent().getStringExtra("activeCallId"));
+        dialpadEditText.append(String.valueOf(digit));
+        if (activeCallId != null) {
+            voiceService(voiceService -> voiceService.sendDigitToCall(activeCallId, digit));
+        } else {
+            Log.w("DialpadActivity", "Active Call ID is null");
+        }
     }
 
     private void playTone(String digit) {
