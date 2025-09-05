@@ -64,7 +64,6 @@ public class VoiceService extends Service {
         LOW,
         HIGH
     }
-    public static Call activeCall;
 
     private static class CallRecord {
         public final CallInvite callInvite;
