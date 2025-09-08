@@ -354,6 +354,14 @@ public class VoiceService extends Service {
         }
     }
 
+    public void sendDigitToCall(@NonNull final UUID callId, String digits) {
+        // find call record
+        final CallRecord callRecord = Objects.requireNonNull(callDatabase.get(callId));
+
+        // send digits
+        callRecord.activeCall.sendDigits(digits);
+    }
+
     public void muteCall(@NonNull final UUID callId) {
         // find call record
         final CallRecord callRecord = Objects.requireNonNull(callDatabase.get(callId));
