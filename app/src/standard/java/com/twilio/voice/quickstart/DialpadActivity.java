@@ -40,10 +40,10 @@ public class DialpadActivity extends AppCompatActivity {
     }
 
     private void appendAndSendDigit(String digit) {
-        UUID activeCallId = UUID.fromString(getIntent().getStringExtra("activeCallId"));
+        UUID receivedUuid = (UUID)getIntent().getSerializableExtra("activeCallId");
         dialpadEditText.append(String.valueOf(digit));
-        if (activeCallId != null) {
-            voiceService(voiceService -> voiceService.sendDigitToCall(activeCallId, digit));
+        if (receivedUuid != null) {
+            voiceService(voiceService -> voiceService.sendDigitToCall(receivedUuid, digit));
         } else {
             Log.w("DialpadActivity", "Active Call ID is null");
         }
