@@ -12,8 +12,8 @@ buildscript {
             'targetSdk'          : 34,
             'material'           : '1.12.0',
             'firebase'           : '24.1.0',
-            'voiceAndroid'       : '6.9.+',
-            'audioSwitch'        : '1.2.0',
+            'voiceAndroid'       : '6.10.+',
+            'audioSwitch'        : '1.2.4',
             'androidxLifecycle'  : '2.2.0',
             'junit'              : '1.2.1'
     ]
