@@ -408,6 +408,7 @@ public class CustomDeviceActivity extends AppCompatActivity {
         /*
          * Check if microphone permissions is granted
          */
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == MIC_PERMISSION_REQUEST_CODE && permissions.length > 0) {
             if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                 Snackbar.make(coordinatorLayout,
