@@ -1,0 +1,19 @@
+{
+  "name": "conversation-relay",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/conversation-relay.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@fastify/websocket": "^11.2.0",
+    "dotenv": "^17.2.3",
+    "fastify": "^5.7.1",
+    "openai": "^6.16.0"
+  }
+}
