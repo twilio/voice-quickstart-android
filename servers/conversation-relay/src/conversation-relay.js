@@ -51,7 +51,7 @@ fastify.register(async function (fastify) {
                 sessions.set(ws.callSid, []);
                 break;
             case "prompt":
-                console.log("Processing prompt:", json_message.prompt);
+                console.log("Processing prompt for call:", json_message.callSid);
                 const conversation = sessions.get(ws.callSid);
                 conversation.push({ role: 'user', content: json_message.prompt });
 
@@ -77,7 +77,6 @@ fastify.register(async function (fastify) {
                     }
                 }
                 conversation.push({ role: 'assistant', content: collected_tokens });
-                console.log("OpenAI response for call:", json_message.callSid, " ", collected_tokens);
                 // send end of response message
                 const final_response = JSON.stringify({
                     type: 'text',
@@ -95,7 +94,7 @@ fastify.register(async function (fastify) {
             }
         });
         ws.on("close", () => {
-            console.log("WebSocket connection closed");
+            console.log("WebSocket connection closed for call:", ws.callSid);
             sessions.delete(ws.callSid);
         });
     });
