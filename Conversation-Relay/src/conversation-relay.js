@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import fastifyWs from "@fastify/websocket";
 import OpenAI from "openai";
 import dotenv from "dotenv";
+import Twilio from 'twilio';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -15,6 +16,32 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 fastify.register(fastifyWs)
 fastify.register(async function (fastify) {
     fastify.get("/conversation-relay", { websocket: true }, (ws, req) => {
+        // validate Twilio request
+        console.log("New WebSocket connection established");
+        const headers = req.headers;
+        try {
+            if (!headers['x-twilio-signature']) {
+                throw new Error("Missing Twilio signature");
+            }
+            if (!process.env.TWILIO_AUTH_TOKEN) {
+                throw new Error("Missing TWILIO_AUTH_TOKEN in environment variables");
+            }
+            if (!process.env.SERVER_PUBLIC_URL) {
+                throw new Error("Missing SERVER_PUBLIC_URL in environment variables");
+            }
+            if (!Twilio.validateRequest(
+                    process.env.TWILIO_AUTH_TOKEN,
+                    headers['x-twilio-signature'],
+                    process.env.SERVER_PUBLIC_URL,
+                    {})) {
+                throw new Error("Invalid Twilio signature");
+            }
+        } catch (error) {
+            console.log("Twilio request validation failed: " + error.message);
+            ws.close(1008, "Unauthorized: Twilio signature validation failed");
+            return;
+        }
+        // register handlers
         ws.on("message", async (message) => {
             const json_message = JSON.parse(message);
             switch (json_message.type) {
@@ -76,7 +103,7 @@ fastify.register(async function (fastify) {
 
 // start server
 try {
-    fastify.listen({ port: process.env.SERVER_PORT ?? 8080 });
+    fastify.listen({ port: process.env.SERVER_LOCAL_PORT ?? 8080 });
     console.log("Conversation Relay server is running.");
 } catch (err) {
     fastify.log.error(err);
