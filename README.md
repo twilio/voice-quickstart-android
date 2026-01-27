@@ -31,7 +31,7 @@ The quickstart is broken into two flavors, "standard" & "connection_service", th
 
 1. [Generate google-services.json](#bullet1)
 2. [Open this project in Android Studio](#bullet2)
-3. [Use Twilio CLI to deploy access token and TwiML application to Twilio Serverless](#bullet3)
+3. [Use Twilio CLI to deploy access token and TwiML application to Twilio Serverless](#3-use-twilio-cli-to-deploy-access-token-and-twiml-application-to-twilio-serverless)
 4. [Create a TwiML application for the access token](#bullet4)
 5. [Generate an access token for the quickstart](#bullet5)
 6. [Run the app](#bullet6)
@@ -58,7 +58,7 @@ Missing valid `google-services.json` will result in a build failure with the fol
 
 <img width="700px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/import_project.png"/>
 
-### <a name="bullet3"></a>3. Use Twilio CLI to deploy access token and TwiML application to Twilio Serverless
+### Use Twilio CLI to deploy access token and TwiML application to Twilio Serverless
 
 You must have the following installed:
 
