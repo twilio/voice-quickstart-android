@@ -5,7 +5,7 @@ exports.handler = function(context, event, callback) {
     const connect = twiml.connect();
     connect.conversationRelay({
         url: event.ConversationRelayUrl,
-        welcomeGreeting: 'Hi! I am a Javascript S D K voice assistant powered by Twilio and Open A I . Ask me anything!'
+        welcomeGreeting: 'Hi! I am an Android S D K voice assistant powered by Twilio and Open A I . Ask me anything!'
     });
     callback(null, twiml);
 };

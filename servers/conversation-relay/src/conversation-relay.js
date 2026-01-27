@@ -48,12 +48,15 @@ fastify.register(async function (fastify) {
             case "setup":
                 console.log("Setup for call:", json_message.callSid);
                 ws.callSid = json_message.callSid;
-                sessions.set(ws.callSid, []);
+                sessions.set(ws.callSid, [{
+                    role: 'system',
+                    content: "Hi! I am a Android S D K voice assistant powered by Twilio and Open A I . Ask me anything!"
+                }]);
                 break;
             case "prompt":
-                console.log("Processing prompt for call:", json_message.callSid);
+                console.log("Processing prompt for call:", ws.callSid);
                 const conversation = sessions.get(ws.callSid);
-                conversation.push({ role: 'user', content: json_message.prompt });
+                conversation.push({ role: 'user', content: json_message.voicePrompt });
 
                 // send prompt to AI and get response
                 const token_stream = await openai.chat.completions.create({
@@ -86,10 +89,10 @@ fastify.register(async function (fastify) {
                 ws.send(final_response);
                 break;
             case 'interrupt':
-                console.log("Handling interruption for call:", json_message.callSid);
+                console.log("Handling interruption for call:", ws.callSid);
                 break;
             default:
-                console.log("Unknown message type:", json_message.type);
+                console.log("Unknown message type:", ws.callSid);
                 break;
             }
         });
