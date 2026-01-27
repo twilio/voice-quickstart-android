@@ -3,7 +3,7 @@
 ## Table of Contents
 
 1. [Introduction](#introduction)  
-   1.1. [Purpose of this document](#purpose-of-this-document)  
+   1.1. [Purpose](#purpose-of-this-document)  
    1.2. [Document structure](#document-structure)  
 2. [The Demo](#the-demo)  
    2.1. [Deploying the Twilio Serverless demo](#deploying-the-twilio-serverless-demo)  
@@ -17,7 +17,7 @@
 
 ## 1. Introduction
 
-### 1.1. Purpose of this document
+### 1.1. Purpose
 
 This document describes an example implementation of Twilio Conversation Relay. It walks through how to deploy and run a demo that ties together Twilio Voice, a Node.js WebSocket server, and an LLM, and then explains how Conversation Relay works under the hood.
 
@@ -26,10 +26,10 @@ This document describes an example implementation of Twilio Conversation Relay. 
 The document is split into two main parts:
 
 1. **The Demo**  
-   How to:
+   How to:  
    \- Deploy the Twilio Serverless components using `twilio-cli`.  
    \- Set up and run the `conversation-relay` Node.js WebSocket server.  
-   \- Configure the Android client to connect to the Conversation Relay endpoint.
+   \- Configure the Android client to connect to the Conversation Relay endpoint.  
 
 2. **How Conversation Relay Works**  
    A conceptual and technical explanation of:  
