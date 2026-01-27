@@ -2,16 +2,16 @@
 
 ## Table of Contents
 
-1. [Introduction](#introduction)  
-   1.1. [Purpose](#purpose-of-this-document)  
+1. [Introduction](#1-introduction)  
+   1.1. [Purpose](#11-purpose-of-this-document)  
    1.2. [Document structure](#12-document-structure)  
-2. [The Demo](#the-demo)  
-   2.1. [Deploying the Twilio Serverless demo](#deploying-the-twilio-serverless-demo)  
-   2.2. [Setting up and running the conversation-relay server](#setting-up-and-running-the-conversation-relay-server)  
-   2.3. [Running the Android client](#running-the-android-client)  
-3. [How Conversation Relay Works](#how-conversation-relay-works)  
-   3.1. [High-level overview](#high-level-overview)  
-   3.2. [In-depth message flow](#in-depth-message-flow)  
+2. [The Demo](#2-the-demo)  
+   2.1. [Deploying the Twilio Serverless demo](#21-deploying-the-twilio-serverless-demo)  
+   2.2. [Setting up and running the conversation-relay server](#22-setting-up-and-running-the-conversation-relay-server)  
+   2.3. [Running the Android client](#23-running-the-android-client)  
+3. [How Conversation Relay Works](#3-how-conversation-relay-works)  
+   3.1. [High-level overview](#31-high-level-overview)  
+   3.2. [In-depth message flow](#32-in-depth-message-flow)  
 
 ---
 
