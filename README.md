@@ -58,7 +58,7 @@ Missing valid `google-services.json` will result in a build failure with the fol
 
 <img width="700px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/import_project.png"/>
 
-### Use Twilio CLI to deploy access token and TwiML application to Twilio Serverless
+### 3. Use Twilio CLI to deploy access token and TwiML application to Twilio Serverless
 
 You must have the following installed:
 
