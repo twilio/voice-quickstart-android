@@ -41,10 +41,10 @@ The document is split into two main parts:
 
 ### 2.1. Deploying the Twilio Serverless demo
 
-The first part of the demo uses Twilio Serverless functions and assets to provide a TwiML application for your client.
+The first part of the demo uses Twilio Serverless functions and assets to provide a TwiML application for your client.  
 
-1. Use the `twilio-cli` tool to publish the Serverless demo from the folder `servers/twilio-serverless`.
-2. Follow the instructions in the root [README](../README.md#3-use-twilio-cli-to-deploy-access-token-and-twiml-application-to-twilio-serverless)
+1. Use the `twilio-cli` tool to publish the Serverless demo from the folder `servers/twilio-serverless`.  
+2. Follow the instructions in the root [README](/twilio/voice-quickstart-android/blob/master/README.md#bullet3)  
 
 That README explains how to:
 
