@@ -1,4 +1,4 @@
-# Conversation Relay Demo & Architecture
+# Conversation Relay Example & Architecture
 
 ## Table of Contents
 
