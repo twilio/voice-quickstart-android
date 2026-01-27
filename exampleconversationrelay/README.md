@@ -61,7 +61,7 @@ The `servers/twilio-serverless` folder contains a basic server component which c
     $ cd servers/twilio-serverless
     $ twilio serverless:deploy
 
-For more information look at the root [README]](../README.md#bullet3) under the section  ***Use Twilio CLI to deploy access token and TwiML application to Twilio Serverless***
+For more information look at the root [README](../README.md#bullet3) under the section  ***Use Twilio CLI to deploy access token and TwiML application to Twilio Serverless***
 
 That README explains how to:
 
