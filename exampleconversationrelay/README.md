@@ -43,8 +43,25 @@ The document is split into two main parts:
 
 The first part of the demo uses Twilio Serverless functions and assets to provide a TwiML application for your client.  
 
-1. Use the `twilio-cli` tool to publish the Serverless demo from the folder `servers/twilio-serverless`.  
-2. Follow the instructions in the root [README](../README.md#3-use-twilio-cli-to-deploy-access-token-and-twiml-application-to-twilio-serverless)  
+Before deploying, create a `servers/twilio-serverless/.env` by copying from `servers/twilio-serverless/.env.example`
+
+    $ cp servers/twilio-serverless/.env.example servers/twilio-serverless/.env
+
+Update `servers/twilio-serverless/.env` with your Account SID, auth token, API Key and secret.
+    
+    ACCOUNT_SID=ACxxxx
+    AUTH_TOKEN=xxxxxx
+    API_KEY_SID=SKxxxx
+    API_SECRET=xxxxxx
+    APP_SID=APxxxx(available in step 4)
+    PUSH_CREDENTIAL_SID=CRxxxx(available in step 7)
+
+The `servers/twilio-serverless` folder contains a basic server component which can be used to vend access tokens or generate TwiML response for making call to a number or another client. The app is deployed to Twilio Serverless with the `serverless` plug-in:
+
+    $ cd servers/twilio-serverless
+    $ twilio serverless:deploy
+
+For more information look at the root [README]](../README.md#bullet3) under the section  ***Use Twilio CLI to deploy access token and TwiML application to Twilio Serverless***
 
 That README explains how to:
 
