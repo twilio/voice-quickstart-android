@@ -3,7 +3,7 @@
 ## Table of Contents
 
 1. [Introduction](#1-introduction)  
-   1.1. [Purpose](#11-purpose-of-this-document)  
+   1.1. [Purpose](#11-purpose)  
    1.2. [Document structure](#12-document-structure)  
 2. [The Demo](#2-the-demo)  
    2.1. [Deploying the Twilio Serverless demo](#21-deploying-the-twilio-serverless-demo)  
@@ -44,7 +44,7 @@ The document is split into two main parts:
 The first part of the demo uses Twilio Serverless functions and assets to provide a TwiML application for your client.
 
 1. Use the `twilio-cli` tool to publish the Serverless demo from the folder `servers/twilio-serverless`.
-2. Follow the instructions in the project README [here](https://github.com/twilio/voice-quickstart-android?tab=readme-ov-file#3-use-twilio-cli-to-deploy-access-token-and-twiml-application-to-twilio-serverless)
+2. Follow the instructions in the root [README](README.md#3-use-twilio-cli-to-deploy-access-token-and-twiml-application-to-twilio-serverless)
 
 That README explains how to:
 
