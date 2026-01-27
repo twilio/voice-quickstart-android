@@ -4,7 +4,7 @@
 
 1. [Introduction](#introduction)  
    1.1. [Purpose](#purpose-of-this-document)  
-   1.2. [Document structure](#document-structure)  
+   1.2. [Document structure](#12-document-structure)  
 2. [The Demo](#the-demo)  
    2.1. [Deploying the Twilio Serverless demo](#deploying-the-twilio-serverless-demo)  
    2.2. [Setting up and running the conversation-relay server](#setting-up-and-running-the-conversation-relay-server)  
