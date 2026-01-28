@@ -61,7 +61,7 @@ The `servers/twilio-serverless` folder contains a basic server component which c
     $ cd servers/twilio-serverless
     $ twilio serverless:deploy
 
-For more information look at the root [README](../README.md#bullet3) under the section  ***Use Twilio CLI to deploy access token and TwiML application to Twilio Serverless***
+For more information look at the root [README.md](../README.md#bullet3) under the section  ***Use Twilio CLI to deploy access token and TwiML application to Twilio Serverless***
 
 That README explains how to:
 
@@ -149,7 +149,19 @@ You should receive an Appliciation SID that looks like this
 
 To run the Android client with Conversation Relay support, configure two variables in the main activity of the Android app:
 
-1. Access Token : In the Android project, open `ConversationRelayActivity.java` and set the `accessToken` variable to a valid Twilio Access Token. This token is usually provided by using the twilio-cli tool to generate a token. When generating the token, make sure to use the application SID created in step 2.2.5. More information on how to do this can be found [here](https://github.com/twilio/voice-quickstart-android?tab=readme-ov-file#bullet5)
+1. Access Token : In the Android project, open `ConversationRelayActivity.java` and set the `accessToken` variable to a valid Twilio Access Token. This token is usually provided by using the twilio-cli tool to generate a token. When generating the token, make sure to use the application SID created in step 2.2.5. 
+
+Install the `token` plug-in
+
+    $ twilio plugins:install @twilio-labs/plugin-token
+
+Use the TwiML App SID you just created to generate an access token
+
+    $ twilio token:voice --identity=alice --voice-app-sid=APxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+Copy the access token string. Your Android app will use this token to connect to Twilio.
+
+More information on how to do this can be found at the root [README.md](../README.md#bullet5) under the section *** Generate an access token for the quickstart***.
 2. Conversation Relay URL: In the same file (`ConversationRelayActivity.java`), set the `conversationRelayUrl` variable to the same public server URL used in the .env file, including the WebSocket path. For example:
    `wss://abc123.ngrok.app/conversation-relay`
 
