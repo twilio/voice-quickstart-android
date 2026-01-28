@@ -151,19 +151,19 @@ To run the Android client with Conversation Relay support, configure two variabl
 
 #### 2.3.1 Access Token
 
-In the Android project, open `ConversationRelayActivity.java` and set the `accessToken` variable to a valid Twilio Access Token. This token is usually provided by using the twilio-cli tool to generate a token. When generating the token, make sure to use the application SID created in step 2.2.5. 
+In the Android project, open `ConversationRelayActivity.java` and set the `accessToken` variable to a valid Twilio Access Token. This token is usually provided by using the twilio-cli tool to generate a token.
 
-Install the `token` plug-in
+Install the `token` plug-in if not installed already
 
     $ twilio plugins:install @twilio-labs/plugin-token
 
-Use the TwiML App SID you just created to generate an access token
+Use the TwiML App SID you just created in step 2.2.5 to generate an access token
 
     $ twilio token:voice --identity=alice --voice-app-sid=APxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 Copy the access token string. Your Android app will use this token to connect to Twilio.
 
-More information on how to do this can be found at the root [README.md](../README.md#bullet5) under the section ***Generate an access token for the quickstart***.
+More information can be found at the root [README.md](../README.md#bullet5) under the section ***Generate an access token for the quickstart***.
 
 #### 2.3.2 Conversation Relay URL
 
