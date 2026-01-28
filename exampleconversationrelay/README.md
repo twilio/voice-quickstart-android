@@ -149,7 +149,9 @@ You should receive an Appliciation SID that looks like this
 
 To run the Android client with Conversation Relay support, configure two variables in the main activity of the Android app:
 
-1. Access Token : In the Android project, open `ConversationRelayActivity.java` and set the `accessToken` variable to a valid Twilio Access Token. This token is usually provided by using the twilio-cli tool to generate a token. When generating the token, make sure to use the application SID created in step 2.2.5. 
+#### 2.3.1 Access Token
+
+In the Android project, open `ConversationRelayActivity.java` and set the `accessToken` variable to a valid Twilio Access Token. This token is usually provided by using the twilio-cli tool to generate a token. When generating the token, make sure to use the application SID created in step 2.2.5. 
 
 Install the `token` plug-in
 
@@ -161,8 +163,11 @@ Use the TwiML App SID you just created to generate an access token
 
 Copy the access token string. Your Android app will use this token to connect to Twilio.
 
-More information on how to do this can be found at the root [README.md](../README.md#bullet5) under the section *** Generate an access token for the quickstart***.
-2. Conversation Relay URL: In the same file (`ConversationRelayActivity.java`), set the `conversationRelayUrl` variable to the same public server URL used in the .env file, including the WebSocket path. For example:
+More information on how to do this can be found at the root [README.md](../README.md#bullet5) under the section ***Generate an access token for the quickstart***.
+
+#### 2.3.2 Conversation Relay URL
+
+In the same file (`ConversationRelayActivity.java`), set the `conversationRelayUrl` variable to the same public server URL used in the .env file, including the WebSocket path. For example:
    `wss://abc123.ngrok.app/conversation-relay`
 
 Once those two values are in place, build and run the Android app. When a call is established and the `<ConversationRelay>` TwiML is invoked, the client and server will communicate via the Conversation Relay WebSocket endpoint.
