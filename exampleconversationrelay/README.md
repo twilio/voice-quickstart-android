@@ -41,7 +41,7 @@ The document is split into two main parts:
 
 ### 2.1. Deploying the Twilio Serverless demo
 
-The first part of the demo uses Twilio Serverless functions and assets to provide a TwiML application for your client.  
+The first part of the demo uses Twilio Serverless functions and assets to provide a TwiML application for your client. If you have deployed it before, you will need to deploy it again to insure that the new function/service is added (ai-conversation). 
 
 Before deploying, create a `servers/twilio-serverless/.env` by copying from `servers/twilio-serverless/.env.example`
 
