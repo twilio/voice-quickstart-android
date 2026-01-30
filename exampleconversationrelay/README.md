@@ -113,7 +113,7 @@ cp servers/conversation-relay/.env.example servers/conversation-relay/.env
    - `SERVER_LOCAL_PORT`: The local port where the Conversation Relay server will listen (for example, 8080).
    - `SERVER_PUBLIC_URL`: The public WebSocket URL exposed by ngrok. Should be in the form of `wss://<hostname-from-ngrok>/conversation-relay`.
    - `TWILIO_AUTH_TOKEN`: Your Twilio Auth Token, available in the Twilio Console.
-   - `OPENAI_API_KEY` : Your OpenAI API key, retrievable it from your OpenAI account dashboard.
+   - `OPENAI_API_KEY` : Your OpenAI API key, retrievable from your OpenAI account dashboard.
 
 #### 2.2.4. Install dependencies and run the server
 From the `servers/conversation-relay` folder, install the dependencies and start the server:
