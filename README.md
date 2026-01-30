@@ -75,7 +75,7 @@ Login to the Twilio CLI. You will be prompted for your Account SID and Auth Toke
 
     $ twilio login
 
-Once successfully logged in, an API Key, a secret get created and stored in your keychain as the twilio-cli password in `SKxxxx|secret` format. Please make a note of these values to use them in the `Server/.env` file.	
+Once successfully logged in, an API Key, a secret get created and stored in your keychain as the twilio-cli password in `SKxxxx|secret` format. Please make a note of these values to use them in the `servers/twilio-serverless/.env` file.	
  
 <img width="423px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/twilio_cli_key_chain_access.png">
 
@@ -83,11 +83,11 @@ This app requires the [Serverless plug-in](https://github.com/twilio-labs/plugin
 
     $ twilio plugins:install @twilio-labs/plugin-serverless
 
-Before deploying, create a `Server/.env` by copying from `Server/.env.example`
+Before deploying, create a `servers/twilio-serverless/.env` by copying from `servers/twilio-serverless/.env.example`
 
-    $ cp Server/.env.example Server/.env
+    $ cp servers/twilio-serverless/.env.example servers/twilio-serverless/.env
 
-Update `Server/.env` with your Account SID, auth token, API Key and secret.
+Update `servers/twilio-serverless/.env` with your Account SID, auth token, API Key and secret.
     
     ACCOUNT_SID=ACxxxx
     AUTH_TOKEN=xxxxxx
@@ -96,9 +96,9 @@ Update `Server/.env` with your Account SID, auth token, API Key and secret.
     APP_SID=APxxxx(available in step 4)
     PUSH_CREDENTIAL_SID=CRxxxx(available in step 7)
 
-The `Server` folder contains a basic server component which can be used to vend access tokens or generate TwiML response for making call to a number or another client. The app is deployed to Twilio Serverless with the `serverless` plug-in:
+The `servers/twilio-serverless` folder contains a basic server component which can be used to vend access tokens or generate TwiML response for making call to a number or another client. The app is deployed to Twilio Serverless with the `serverless` plug-in:
 
-    $ cd Server
+    $ cd servers/twilio-serverless
     $ twilio serverless:deploy
 
 The server component that's baked into this quickstart is in Node.js. If you’d like to roll your own or better understand the Twilio Voice server side implementations, please see the list of starter projects in the following supported languages below:
