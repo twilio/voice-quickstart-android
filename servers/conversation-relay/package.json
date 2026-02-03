@@ -16,7 +16,7 @@
   "dependencies": {
     "@fastify/websocket": "^11.2.0",
     "dotenv": "^17.2.3",
-    "fastify": "^5.7.1",
+    "fastify": "^5.7.3",
     "openai": "^6.16.0",
     "twilio": "^5.12.0"
   }
