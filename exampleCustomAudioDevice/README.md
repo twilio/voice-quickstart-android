@@ -31,7 +31,7 @@ You can switch to microphone by clicking the `♫` button.
 
 <kbd><img width="400px" src="../images/exampleCustomAudioDevice/audio_device_microphone.png"/></kbd>
 
-Note: The switch between audio file and microphone always starts the music from the begining of the file.
+Note: The switch between audio file and microphone always starts the music from the beginning of the file.
 
 ## Troubleshooting Audio
 The following sections provide guidance on how to ensure optimal audio quality in your applications using default audio device.

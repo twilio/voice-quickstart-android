@@ -121,7 +121,7 @@ Use Twilio CLI to create a TwiML app with the `make-call` endpoint you have just
         --voice-method=POST \
         --voice-url="https://my-quickstart-dev.twil.io/make-call"
 
-You should receive an Appliciation SID that looks like this
+You should receive an Application SID that looks like this
 
     APxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
