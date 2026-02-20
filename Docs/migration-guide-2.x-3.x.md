@@ -92,7 +92,7 @@ CallInvite.accept(context, acceptOptions, listener);
 
 #### <a name="migration6"></a>Media Establishment & Connectivity
 
-The Voice Android 3.x SDK uses WebRTC. The exchange of real-time media requires the use of Interactive Connectivity Establishment(ICE) to establish a media connection between the client and the media server. In some network environments where network access is restricted it may be necessary to provide ICE servers to establish a media connection. We reccomend using the [Network Traversal Service (NTS)](https://www.twilio.com/stun-turn) to obtain ICE servers. ICE servers can be provided when making or accepting a call by passing them into `ConnectOptions` or `AcceptOptions` in the following way:
+The Voice Android 3.x SDK uses WebRTC. The exchange of real-time media requires the use of Interactive Connectivity Establishment(ICE) to establish a media connection between the client and the media server. In some network environments where network access is restricted it may be necessary to provide ICE servers to establish a media connection. We recommend using the [Network Traversal Service (NTS)](https://www.twilio.com/stun-turn) to obtain ICE servers. ICE servers can be provided when making or accepting a call by passing them into `ConnectOptions` or `AcceptOptions` in the following way:
 
 ```Java
 // Obtain the set of ICE servers from your preferred ICE server provider
