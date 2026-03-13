@@ -2,6 +2,7 @@
 -keep class com.twilio.** { *; }
 -keep class tvo.webrtc.** { *; }
 -dontwarn tvo.webrtc.**
+-keep class org.jni_zero.** { *; }
 -keep class com.twilio.voice.** { *; }
 -keepattributes InnerClasses
 # needed with AGP 8.x
