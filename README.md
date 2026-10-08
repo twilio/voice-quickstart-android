@@ -35,7 +35,7 @@ The quickstart is broken into two flavors, "standard" & "connection_service", th
 4. [Create a TwiML application for the access token](#bullet4)
 5. [Generate an access token for the quickstart](#bullet5)
 6. [Run the app](#bullet6)
-7. [Create a Push Credential using your FCM Server API Key](#bullet7)
+7. [Create a Push Credential using your FCM service account key](#bullet7)
 8. [Receive an incoming call](#bullet8)
 9. [Make client to client call](#bullet9)
 10. [Make client to PSTN call](#bullet10)
@@ -46,8 +46,6 @@ The quickstart is broken into two flavors, "standard" & "connection_service", th
 The Programmable Voice Android SDK uses Firebase Cloud Messaging push notifications to let your application know when it is receiving an incoming call. If you want your users to receive incoming calls, you’ll need to enable FCM in your application.
 
 Follow the steps under **Use the Firebase Assistant** in the [Firebase Developers Guide](https://firebase.google.com/docs/android/setup). Once you connect and sync to Firebase successfully, you will be able to download the `google-services.json` for your application. 
-
-Login to Firebase console and make a note of generated `Server Key`. You will need them in [step 7](#bullet7).
 
 Make sure the generated `google-services.json` is downloaded to the `app` directory of the quickstart project to replace the existing `app/google-services.json` stub json file. If you are using the Firebase plugin make sure to remove the stub `google-services.json` file first.
 
@@ -89,12 +87,16 @@ Before deploying, create a `servers/twilio-serverless/.env` by copying from `ser
 
 Update `servers/twilio-serverless/.env` with your Account SID, auth token, API Key and secret.
     
-    ACCOUNT_SID=ACxxxx
-    AUTH_TOKEN=xxxxxx
+    ACCOUNT_SID=ACxxxx(optional, see note below)
+    AUTH_TOKEN=xxxxxx(optional, see note below)
     API_KEY_SID=SKxxxx
     API_SECRET=xxxxxx
     APP_SID=APxxxx(available in step 4)
     PUSH_CREDENTIAL_SID=CRxxxx(available in step 7)
+
+**Note:** `ACCOUNT_SID` and `AUTH_TOKEN` are optional. `twilio serverless:deploy` signs in with your Twilio CLI login, and Twilio provides these values to the deployed functions. You only need them to run the functions locally with `twilio serverless:start`, or to deploy with `npm run deploy`.
+
+**Warning:** Together, `ACCOUNT_SID` and `AUTH_TOKEN` give full access to your Twilio account. Keep them safe: never commit `.env` (it is already listed in `.gitignore`) and don't share it. If your Auth Token is ever exposed, rotate it in the Twilio Console.
 
 The `servers/twilio-serverless` folder contains a basic server component which can be used to vend access tokens or generate TwiML response for making call to a number or another client. The app is deployed to Twilio Serverless with the `serverless` plug-in:
 
@@ -159,11 +161,11 @@ Leave the dialog text field empty and press the call button to start a call. You
 <img width="423px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/voice_make_call.png">
 
 
-### <a name="bullet7"></a>7. Create a Push Credential using your FCM Server Key
+### <a name="bullet7"></a>7. Create a Push Credential using your FCM service account key
 
-You will need to store the FCM Server key (The **Server key** of your project from the Firebase console, found under Settings/Cloud messaging) with Twilio so that we can send push notifications to your app on your behalf. Once you store the Server key with Twilio, it will get assigned a Push Credential SID so that you can later specify which key we should use to send push notifications.
+You will need to store your FCM service account key with Twilio so that we can send push notifications to your app on your behalf. Once you store the key with Twilio, it will get assigned a Push Credential SID so that you can later specify which key we should use to send push notifications.
 
-A FCMv1 server key can be generated from a Firebase Service account by selecting `Create New Key` and subsequently selecting a 'JSON' key type. Keep track of this generated key due to its limited accessibility. For more information on how to create a FCMv1 token,  please follow this [document](https://help.twilio.com/articles/20768292997147-Updating-Twilio-Push-for-FCM-HTTP-v1-API).
+A FCMv1 service account key can be generated from a Firebase Service account by selecting `Create New Key` and subsequently selecting a 'JSON' key type. Keep track of this generated key due to its limited accessibility. For more information on how to create a FCMv1 token,  please follow this [document](https://help.twilio.com/articles/20768292997147-Updating-Twilio-Push-for-FCM-HTTP-v1-API).
 
 <img width="446px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/firebase-fcm-token-creation.png">
 
@@ -175,7 +177,7 @@ From the within the "Credentials" page, select the tab labeled "Push Credentials
 
 <img width="660px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/credentials-tab.png">
 
-After providing a friendly name, from the drop-down menu labeled "Type" select "FCM Push Credentials" and paste the key you generated in Firebase in the third box labeled "FCM Secret". Under the list of created "Push Credentials" you should now find your new push credential SID.
+After providing a friendly name, from the drop-down menu labeled "Type" select "FCM Push Credentials" and paste the key you generated in Firebase in the third box labeled "FCM Secret". Make sure to paste the **entire contents** of the JSON key file, including the opening and closing braces, not just a single value from it. Under the list of created "Push Credentials" you should now find your new push credential SID.
 
 <img width="1080px" src="https://raw.githubusercontent.com/twilio/voice-quickstart-android/master/images/quickstart/credentials-sid.png">
 
