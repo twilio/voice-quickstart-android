@@ -85,7 +85,7 @@ Before deploying, create a `servers/twilio-serverless/.env` by copying from `ser
 
     $ cp servers/twilio-serverless/.env.example servers/twilio-serverless/.env
 
-Update `servers/twilio-serverless/.env` with your Account SID, auth token, API Key and secret.
+Update `servers/twilio-serverless/.env` with your API Key and secret (and optionally your Account SID and Auth Token, see the note below).
     
     ACCOUNT_SID=ACxxxx(optional, see note below)
     AUTH_TOKEN=xxxxxx(optional, see note below)
