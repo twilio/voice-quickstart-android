@@ -25,7 +25,7 @@ Voice.setModuleLogLevel(LogModule.WEBRTC, LogLevel.DEBUG);
 The following sections provide guidance on how to ensure optimal audio quality in your applications.
 
 ### Managing Audio Devices with AudioSwitch
-The quickstart uses [AudioSwitch](https://github.com/twilio/audioswitch) to control [audio focus](https://developer.android.com/guide/topics/media-apps/audio-focus) and manage audio devices within the application. If you have an issue or question related to audio management, please open an issue in the [AudioSwitch](https://github.com/twilio/audioswitch) project.
+The quickstart uses [AudioSwitch](https://github.com/twilio/audioswitch) to control [audio focus](https://developer.android.com/guide/topics/media-apps/audio-focus) and manage audio devices within the application. For reproducible audio management bugs, please open an issue in the [AudioSwitch](https://github.com/twilio/audioswitch/issues) project. For general usage questions, contact [Twilio Support](https://help.twilio.com/).
 
 ### Configuring Hardware Audio Effects
 

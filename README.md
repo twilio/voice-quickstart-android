@@ -16,7 +16,7 @@
 - [Emulator Support](#emulator-support) - Android emulator support
 - [Reducing APK Size](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/reducing-apk-size.md) - Use ABI splits to reduce APK size
 - [Twilio Helper Libraries](#twilio-helper-libraries) - TwiML quickstarts.
-- [Issues & Support](#issues-and-support) - Filing issues and general support
+- [Community Contributions and Support](#community-contributions-and-support) - Bug reports, feature feedback, and support options
 
 ## Voice Android SDK Versions
 - [Migration Guide 4.x to 5.x](https://github.com/twilio/voice-quickstart-android/blob/master/Docs/migration-guide-4.x-5.x.md) - Migrating from 4.x to 5.x
@@ -253,13 +253,23 @@ To learn more about how to use TwiML and the Programmable Voice Calls API, check
 * [TwiML Quickstart for Java](https://www.twilio.com/docs/voice/quickstart/java)
 * [TwiML Quickstart for C#](https://www.twilio.com/docs/voice/quickstart/csharp)
 
-## Issues and Support
+<a id="issues-and-support"></a>
 
-Please file any issues you find here on Github.
-For general inquiries related to the Voice SDK you can file a support ticket.
-Please ensure that you are not sharing any
-[Personally Identifiable Information(PII)](https://www.twilio.com/docs/glossary/what-is-personally-identifiable-information-pii)
-or sensitive account information (API keys, credentials, etc.) when reporting an issue.
+## Community Contributions and Support
+
+This repository is publicly available and maintained by Twilio under a limited external contribution model.
+
+Due to limited maintenance capacity, external pull requests are not currently accepted.
+
+GitHub Issues may be used to report reproducible bugs or provide feature feedback about these samples or the Twilio Voice Android SDK. Issues are reviewed on a best-effort basis, with no SLA or guaranteed response.
+
+GitHub Issues are not an official Twilio support channel. For production issues, general usage questions, or account-specific assistance, please contact [Twilio Support](https://help.twilio.com/). If you have a Twilio account manager, you may also escalate through them.
+
+Do not share [Personally Identifiable Information (PII)](https://www.twilio.com/docs/glossary/what-is-personally-identifiable-information-pii) or sensitive account information, including access tokens, API keys, and credentials, in issues, logs, or screenshots.
+
+Report security vulnerabilities privately through [Twilio's Vulnerability Disclosure Program](https://www.twilio.com/en-us/security/vulnerability-disclosure-program), rather than public GitHub Issues.
+
+See [CONTRIBUTING.md](https://github.com/twilio/voice-quickstart-android/blob/master/CONTRIBUTING.md) for reporting guidance.
 
 ## License
 MIT
