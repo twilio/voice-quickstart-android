@@ -1,2 +1,2 @@
-include ':app', ':exampleCustomAudioDevice'
+include ':app', ':exampleCustomAudioDevice', ':exampleCustomLogger'
 include ':exampleconversationrelay'
