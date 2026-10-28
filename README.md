@@ -234,6 +234,7 @@ Enter a PSTN number and press the call button to place a call.
 In addition to the quickstart we've also added an example that shows how to create and customize media experience in your app:
 
 - [Custom Audio Device](https://github.com/twilio/voice-quickstart-android/tree/master/exampleCustomAudioDevice) - Demonstrates how to use Twilio's Programmable Voice SDK with audio playback and recording functionality provided by a custom `AudioDevice`. 
+- [Custom Logger](https://github.com/twilio/voice-quickstart-android/tree/master/exampleCustomLogger) - Demonstrates how to use Twilio's Programmable Voice SDK with a custom `LoggerInterface` that writes the SDK's log messages to a file.
 
 ## More Documentation
 
