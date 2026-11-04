@@ -42,15 +42,56 @@ If external storage is unavailable the file is written to the app's internal `fi
 
 ### Streaming logs to a websocket
 
-The file is always written. To also stream the logs live, set `logServerUrl` to a websocket URL, either in `local.properties`:
+The log file is always written. To also stream the logs live, run a websocket server on your computer, expose it with ngrok, and build the app with the public `wss://` URL. If `logServerUrl` is empty, the app does not create the websocket writer and nothing is streamed.
 
-    logServerUrl=ws://192.168.1.10:8080
+#### 1. WebSocket Server Setup
 
-or on the command line:
+Any websocket server that accepts text messages works. Here is a minimal Node.js implementation:
 
-    ./gradlew :exampleCustomLogger:installDebug -PlogServerUrl=ws://192.168.1.10:8080
+##### 1.1 Initialize the project and install the library:
+```bash
+npm init -y
+npm install ws
+```
 
-If it is not set, the websocket writer is not installed. Use a host the device can reach, not `localhost` (on the Android emulator, `10.0.2.2` is the host machine). Each websocket message is one log line in the same format as the file. Prefer `wss://` outside a local network, since the logs can contain call details.
+##### 1.2 Create a file named `log-server.js` and paste the following code:
+```javascript
+const { WebSocketServer } = require('ws');
+const wss = new WebSocketServer({ port: 8080 });
+
+wss.on('connection', (socket) => {
+  socket.on('message', (line) => console.log(line.toString()));
+});
+```
+
+##### 1.3 Start the server:
+```bash
+node log-server.js
+```
+
+#### 2. Expose it with ngrok
+
+Install [ngrok](https://ngrok.com) and forward the port:
+
+    ngrok http 8080
+
+Copy the host from the `Forwarding` line of ngrok's output (for example `abc123.ngrok.app`).
+
+#### 3. Build the app with the URL
+
+Set `logServerUrl` to that host with the `wss://` scheme, either in `local.properties`:
+
+    logServerUrl=wss://abc123.ngrok.app
+
+or on the command line, which overrides `local.properties`:
+
+    ./gradlew :exampleCustomLogger:installDebug -PlogServerUrl=wss://abc123.ngrok.app
+
+The URL is compiled into the app, so rebuild and reinstall after changing it. Run the app and make a call. Each SDK log line appears in the terminal running `log-server.js`, in the same format as the file.
+
+#### Notes
+
+- Logs can contain call details. Keep the tunnel running only while you are debugging.
 
 ### Choosing what is logged
 
