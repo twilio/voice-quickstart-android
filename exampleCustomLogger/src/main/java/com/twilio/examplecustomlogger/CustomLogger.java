@@ -2,31 +2,25 @@ package com.twilio.examplecustomlogger;
 
 import android.util.Log;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import com.twilio.voice.LogLevel;
 import com.twilio.voice.LogModule;
 import com.twilio.voice.LogParameters;
 import com.twilio.voice.LoggerInterface;
+import java.util.List;
 import java.util.Locale;
 
 /**
  * A {@link LoggerInterface} that receives every log message the Voice SDK emits. It writes each
- * one to Logcat and, when a {@link FileLogWriter} is given, to a file as well.
+ * one to Logcat and to each {@link LogWriter} it is given (for example a file or a WebSocket).
  *
  * <p>Install it with {@code Voice.setLogger(...)}. The SDK's log level still decides which
  * messages reach it: see {@code Voice.setLogLevel(...)} and {@code Voice.setModuleLogLevel(...)}.
  */
 public class CustomLogger implements LoggerInterface {
-    private final FileLogWriter fileWriter;
+    private final List<LogWriter> writers;
 
-    /** Logs to Logcat only. */
-    public CustomLogger() {
-        this(null);
-    }
-
-    /** Logs to Logcat and, when {@code fileWriter} is not null, also to a file. */
-    public CustomLogger(@Nullable FileLogWriter fileWriter) {
-        this.fileWriter = fileWriter;
+    public CustomLogger(@NonNull List<LogWriter> writers) {
+        this.writers = writers;
     }
 
     @Override
@@ -53,15 +47,18 @@ public class CustomLogger implements LoggerInterface {
             message += "\n" + Log.getStackTraceString(parameters.tr);
         }
 
-        if (fileWriter != null && parameters.level != LogLevel.OFF) {
-            fileWriter.write(
+        if (parameters.level != LogLevel.OFF && !writers.isEmpty()) {
+            String line =
                     String.format(
                             Locale.US,
                             "%s %-7s %s %s",
                             parameters.timestamp,
                             parameters.level,
                             tag,
-                            message));
+                            message);
+            for (LogWriter writer : writers) {
+                writer.write(line);
+            }
         }
 
         switch (parameters.level) {

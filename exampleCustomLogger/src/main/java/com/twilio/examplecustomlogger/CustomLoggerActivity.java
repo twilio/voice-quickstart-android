@@ -1,12 +1,19 @@
 package com.twilio.examplecustomlogger;
 
 import android.Manifest;
+import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ScrollView;
@@ -16,17 +23,24 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.twilio.voice.Call;
 import com.twilio.voice.CallException;
+import com.twilio.voice.CallInvite;
 import com.twilio.voice.ConnectOptions;
+import com.twilio.voice.RegistrationException;
+import com.twilio.voice.RegistrationListener;
 import com.twilio.voice.Voice;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -50,6 +64,34 @@ public class CustomLoggerActivity extends AppCompatActivity {
     private ScrollView logScroll;
     private File logFile;
     private Call activeCall;
+    private CallInvite callInvite;
+    private View incomingPanel;
+    private TextView incomingText;
+
+    private final BroadcastReceiver cancelReceiver =
+            new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    hideIncoming();
+                }
+            };
+
+    private final RegistrationListener registrationListener =
+            new RegistrationListener() {
+                @Override
+                public void onRegistered(@NonNull String accessToken, @NonNull String fcmToken) {
+                    Log.d(TAG, "Registered for incoming calls");
+                }
+
+                @Override
+                public void onError(
+                        @NonNull RegistrationException error,
+                        @NonNull String accessToken,
+                        @NonNull String fcmToken) {
+                    Log.e(TAG, "Registration failed: " + error.getErrorCode() + " " + error.getMessage());
+                    showMessage("Registration Error: " + error.getErrorCode() + ", " + error.getMessage());
+                }
+            };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,22 +117,112 @@ public class CustomLoggerActivity extends AppCompatActivity {
                 });
         findViewById(R.id.refresh_log_button).setOnClickListener(v -> refreshLog());
 
+        incomingPanel = findViewById(R.id.incoming_panel);
+        incomingText = findViewById(R.id.incoming_text);
+        findViewById(R.id.accept_button).setOnClickListener(v -> acceptInvite());
+        findViewById(R.id.reject_button).setOnClickListener(v -> rejectInvite());
+        ContextCompat.registerReceiver(
+                this,
+                cancelReceiver,
+                new IntentFilter(IncomingCallService.ACTION_CANCELLED),
+                ContextCompat.RECEIVER_NOT_EXPORTED);
+
+        List<String> permissions = new ArrayList<>();
         if (!checkPermissionForMicrophone()) {
-            ActivityCompat.requestPermissions(
-                    this, new String[] {Manifest.permission.RECORD_AUDIO}, MIC_PERMISSION_REQUEST_CODE);
+            permissions.add(Manifest.permission.RECORD_AUDIO);
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                        != PackageManager.PERMISSION_GRANTED) {
+            permissions.add(Manifest.permission.POST_NOTIFICATIONS);
+        }
+        if (!permissions.isEmpty()) {
+            ActivityCompat.requestPermissions(
+                    this, permissions.toArray(new String[0]), MIC_PERMISSION_REQUEST_CODE);
+        }
+
+        registerForIncomingCalls();
+        handleIntent(getIntent());
         refreshLog();
     }
 
     @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleIntent(intent);
+    }
+
+    @Override
     protected void onDestroy() {
+        unregisterReceiver(cancelReceiver);
         executor.shutdown();
         super.onDestroy();
     }
 
+    private void registerForIncomingCalls() {
+        if (FirebaseApp.getApps(this).isEmpty()) {
+            Log.w(TAG, "Firebase is not configured (no google-services.json): incoming calls disabled");
+            return;
+        }
+        FirebaseMessaging.getInstance()
+                .getToken()
+                .addOnCompleteListener(
+                        task -> {
+                            if (!task.isSuccessful()) {
+                                Log.e(TAG, "FCM token retrieval failed", task.getException());
+                                return;
+                            }
+                            Voice.register(
+                                    accessToken,
+                                    Voice.RegistrationChannel.FCM,
+                                    task.getResult(),
+                                    registrationListener);
+                        });
+    }
+
+    private void handleIntent(Intent intent) {
+        CallInvite invite = IncomingCallService.getInvite(intent);
+        if (invite != null) {
+            intent.removeExtra(IncomingCallService.EXTRA_CALL_INVITE);
+            callInvite = invite;
+            incomingText.setText(getString(R.string.incoming_call, invite.getFrom()));
+            incomingPanel.setVisibility(View.VISIBLE);
+            if (intent.getBooleanExtra(IncomingCallService.EXTRA_ACCEPT, false)) {
+                intent.removeExtra(IncomingCallService.EXTRA_ACCEPT);
+                acceptInvite();
+            }
+        }
+    }
+
+    private void acceptInvite() {
+        if (callInvite == null) {
+            return;
+        }
+        if (!ensureMicrophone()) {
+            return;
+        }
+        activeCall = callInvite.accept(this, callListener());
+        hideIncoming();
+        callButton.setEnabled(false);
+        hangupButton.setVisibility(View.VISIBLE);
+    }
+
+    private void rejectInvite() {
+        if (callInvite != null) {
+            callInvite.reject(this);
+        }
+        hideIncoming();
+    }
+
+    private void hideIncoming() {
+        callInvite = null;
+        incomingPanel.setVisibility(View.GONE);
+        getSystemService(NotificationManager.class).cancel(IncomingCallService.NOTIFICATION_ID);
+    }
+
     private void makeCall() {
-        if (!checkPermissionForMicrophone()) {
-            showMessage("Microphone permissions needed. Please allow in your application settings.");
+        if (!ensureMicrophone()) {
             return;
         }
         HashMap<String, String> params = new HashMap<>();
@@ -102,25 +234,20 @@ public class CustomLoggerActivity extends AppCompatActivity {
                 new ConnectOptions.Builder(accessToken).params(params).build();
         activeCall = Voice.connect(this, connectOptions, callListener());
         callButton.setEnabled(false);
-        hangupButton.setEnabled(true);
     }
 
     private Call.Listener callListener() {
         return new Call.Listener() {
             @Override
             public void onRinging(@NonNull Call call) {
+                hangupButton.setVisibility(View.VISIBLE);
                 Log.d(TAG, "Ringing");
             }
 
             @Override
             public void onConnectFailure(@NonNull Call call, @NonNull CallException error) {
                 Log.e(TAG, "Connect failure: " + error.getErrorCode() + " " + error.getMessage());
-                showMessage(
-                        String.format(
-                                Locale.US,
-                                "Call Error: %d, %s",
-                                error.getErrorCode(),
-                                error.getMessage()));
+                showCallError(error);
                 resetUI();
             }
 
@@ -144,12 +271,7 @@ public class CustomLoggerActivity extends AppCompatActivity {
             public void onDisconnected(@NonNull Call call, CallException error) {
                 Log.d(TAG, "Disconnected");
                 if (error != null) {
-                    showMessage(
-                            String.format(
-                                    Locale.US,
-                                    "Call Error: %d, %s",
-                                    error.getErrorCode(),
-                                    error.getMessage()));
+                    showCallError(error);
                 }
                 resetUI();
             }
@@ -159,7 +281,7 @@ public class CustomLoggerActivity extends AppCompatActivity {
     private void resetUI() {
         activeCall = null;
         callButton.setEnabled(true);
-        hangupButton.setEnabled(false);
+        hangupButton.setVisibility(View.GONE);
         refreshLog();
     }
 
@@ -197,6 +319,20 @@ public class CustomLoggerActivity extends AppCompatActivity {
         Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG).show();
     }
 
+    private boolean ensureMicrophone() {
+        if (checkPermissionForMicrophone()) {
+            return true;
+        }
+        showMessage(getString(R.string.microphone_permission_needed));
+        return false;
+    }
+
+    private void showCallError(CallException error) {
+        showMessage(
+                String.format(
+                        Locale.US, "Call Error: %d, %s", error.getErrorCode(), error.getMessage()));
+    }
+
     private boolean checkPermissionForMicrophone() {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
                 == PackageManager.PERMISSION_GRANTED;
@@ -206,10 +342,14 @@ public class CustomLoggerActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(
             int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == MIC_PERMISSION_REQUEST_CODE
-                && grantResults.length > 0
-                && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-            showMessage("Microphone permissions needed. Please allow in your application settings.");
+        if (requestCode != MIC_PERMISSION_REQUEST_CODE) {
+            return;
+        }
+        for (int i = 0; i < permissions.length; i++) {
+            if (Manifest.permission.RECORD_AUDIO.equals(permissions[i])
+                    && grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+                showMessage(getString(R.string.microphone_permission_needed));
+            }
         }
     }
 }

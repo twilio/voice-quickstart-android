@@ -1,5 +1,13 @@
 apply plugin: 'com.android.application'
 
+def localProps = new Properties()
+def localFile = rootProject.file('local.properties')
+if (localFile.exists()) {
+    localFile.withInputStream { localProps.load(it) }
+}
+// -PlogServerUrl=... on the command line wins over local.properties.
+def logServerUrl = project.findProperty('logServerUrl') ?: localProps.getProperty('logServerUrl') ?: ''
+
 android {
     namespace 'com.twilio.examplecustomlogger'
     compileSdkVersion versions.compileSdk
@@ -16,6 +24,7 @@ android {
         targetSdkVersion versions.targetSdk
         versionCode 1
         versionName "1.0"
+        buildConfigField "String", "LOG_SERVER_URL", "\"${logServerUrl}\""
     }
 
     buildFeatures {
@@ -33,4 +42,10 @@ android {
 dependencies {
     implementation "com.twilio:voice-android:${versions.voiceAndroid}"
     implementation "com.google.android.material:material:${versions.material}"
+    implementation "com.squareup.okhttp3:okhttp:4.12.0"
+    implementation "com.google.firebase:firebase-messaging:${versions.firebase}"
+}
+
+if (file('google-services.json').exists()) {
+    apply plugin: 'com.google.gms.google-services'
 }

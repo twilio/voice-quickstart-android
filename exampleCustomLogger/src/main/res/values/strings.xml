@@ -3,7 +3,12 @@
     <string name="callee">client identity or phone number (optional)</string>
     <string name="call">Call</string>
     <string name="hangup">Hang up</string>
+    <string name="accept">Accept</string>
+    <string name="decline">Decline</string>
+    <string name="reject">Reject</string>
+    <string name="incoming_call">Incoming call from %1$s</string>
     <string name="refresh_log">Refresh log</string>
     <string name="log_file">Log file: %1$s</string>
     <string name="log_empty">The log file is empty or does not exist yet.</string>
+    <string name="microphone_permission_needed">Microphone permissions needed. Please allow in your application settings.</string>
 </resources>

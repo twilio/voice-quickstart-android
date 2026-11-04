@@ -5,6 +5,8 @@ import com.twilio.voice.LogLevel;
 import com.twilio.voice.LogModule;
 import com.twilio.voice.Voice;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CustomLoggerApplication extends Application {
 
@@ -18,7 +20,12 @@ public class CustomLoggerApplication extends Application {
         Voice.setLogLevel(LogLevel.DEBUG);
         Voice.setModuleLogLevel(LogModule.SIGNALING, LogLevel.ALL);
         Voice.setModuleLogLevel(LogModule.WEBRTC, LogLevel.ALL);
-        Voice.setLogger(new CustomLogger(new FileLogWriter(getLogFile())));
+        List<LogWriter> writers = new ArrayList<>();
+        writers.add(new FileLogWriter(getLogFile()));
+        if (!BuildConfig.LOG_SERVER_URL.isEmpty()) {
+            writers.add(new WebSocketLogWriter(BuildConfig.LOG_SERVER_URL));
+        }
+        Voice.setLogger(new CustomLogger(writers));
     }
 
     /**

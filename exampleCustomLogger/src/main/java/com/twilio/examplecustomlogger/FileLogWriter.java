@@ -14,7 +14,7 @@ import java.util.concurrent.Executors;
  * file exceeds {@link #MAX_FILE_BYTES} it is renamed to <code>&lt;name&gt;.1</code> (replacing any
  * previous one) and a new file is started, which bounds disk usage to about twice that size.
  */
-public class FileLogWriter {
+public class FileLogWriter implements LogWriter {
     private static final String TAG = "FileLogWriter";
     static final long MAX_FILE_BYTES = 5L * 1024 * 1024;
 
@@ -29,6 +29,7 @@ public class FileLogWriter {
         this.rotatedFile = new File(logFile.getPath() + ".1");
     }
 
+    @Override
     public void write(@NonNull final String line) {
         executor.execute(
                 () -> {
